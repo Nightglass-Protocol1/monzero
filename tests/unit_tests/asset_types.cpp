@@ -55,6 +55,68 @@ TEST(asset_types, deterministic_canonical_identity)
   ASSERT_GT(encoded.size(), descriptor.metadata_reference.size());
 }
 
+TEST(asset_types, canonical_descriptor_round_trip)
+{
+  for (const auto network : {cryptonote::MAINNET, cryptonote::TESTNET, cryptonote::STAGENET})
+  {
+    const auto original = make_descriptor(network);
+    std::vector<uint8_t> encoded;
+    ASSERT_TRUE(cryptonote::assets::encode_issuance_descriptor(original, encoded));
+
+    cryptonote::assets::issuance_descriptor decoded;
+    ASSERT_TRUE(cryptonote::assets::decode_issuance_descriptor(encoded, decoded));
+    EXPECT_EQ(original.version, decoded.version);
+    EXPECT_EQ(original.network, decoded.network);
+    EXPECT_EQ(original.type, decoded.type);
+    EXPECT_EQ(original.issuer_key, decoded.issuer_key);
+    EXPECT_EQ(original.issuance_nonce, decoded.issuance_nonce);
+    EXPECT_EQ(original.atomic_supply, decoded.atomic_supply);
+    EXPECT_EQ(original.display_decimals, decoded.display_decimals);
+    EXPECT_EQ(original.metadata_hash, decoded.metadata_hash);
+    EXPECT_EQ(original.collection_id, decoded.collection_id);
+    EXPECT_EQ(original.metadata_reference, decoded.metadata_reference);
+
+    std::vector<uint8_t> reencoded;
+    ASSERT_TRUE(cryptonote::assets::encode_issuance_descriptor(decoded, reencoded));
+    EXPECT_EQ(encoded, reencoded);
+  }
+}
+
+TEST(asset_types, descriptor_decoder_rejects_truncation_and_noncanonical_lengths)
+{
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_issuance_descriptor(
+    make_descriptor(cryptonote::TESTNET), encoded));
+
+  cryptonote::assets::issuance_descriptor decoded;
+  std::string error;
+  for (size_t size = 0; size < encoded.size(); ++size)
+  {
+    const std::vector<uint8_t> truncated(encoded.begin(), encoded.begin() + size);
+    EXPECT_FALSE(cryptonote::assets::decode_issuance_descriptor(truncated, decoded, &error))
+      << "accepted truncated size " << size;
+  }
+
+  auto trailing = encoded;
+  trailing.push_back(0);
+  EXPECT_FALSE(cryptonote::assets::decode_issuance_descriptor(trailing, decoded, &error));
+
+  auto bad_domain = encoded;
+  bad_domain[0] ^= 1;
+  EXPECT_FALSE(cryptonote::assets::decode_issuance_descriptor(bad_domain, decoded, &error));
+
+  auto bad_version = encoded;
+  bad_version[sizeof("MonzeroAssetIssuanceV2") - 1]++;
+  EXPECT_FALSE(cryptonote::assets::decode_issuance_descriptor(bad_version, decoded, &error));
+
+  // The final two bytes before the reference are its little-endian length.
+  const size_t length_offset = encoded.size() - make_descriptor(cryptonote::TESTNET).metadata_reference.size() - 2;
+  auto oversized = encoded;
+  oversized[length_offset] = 1;
+  oversized[length_offset + 1] = 1;
+  EXPECT_FALSE(cryptonote::assets::decode_issuance_descriptor(oversized, decoded, &error));
+}
+
 TEST(asset_types, network_domain_separation)
 {
   auto mainnet = make_descriptor(cryptonote::MAINNET);

@@ -128,6 +128,13 @@ on-chain issuance, whether it can rotate, and how it is permanently closed.
 Until that complete path exists, wallets must not display a collection as
 verified.
 
+The prototype now includes a strict decoder for this canonical descriptor. It
+rejects truncated inputs at every byte boundary, unknown network UUIDs,
+unsupported versions and classes, oversized references, embedded NUL bytes,
+trailing bytes, mismatched lengths, and any encoding that does not reproduce
+the canonical byte sequence exactly. This parser is still not connected to
+transaction or block deserialization.
+
 ### 4.2 Inactive registry and reorganisation model
 
 The prototype includes an in-memory reference registry, disconnected from the

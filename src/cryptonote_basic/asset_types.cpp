@@ -5,6 +5,8 @@
 #include <limits>
 #include <map>
 
+#include <boost/uuid/uuid.hpp>
+
 #include "crypto/hash.h"
 
 namespace cryptonote
@@ -41,6 +43,36 @@ namespace assets
     {
       for (unsigned shift = 0; shift < 64; shift += 8)
         target.push_back(static_cast<uint8_t>(value >> shift));
+    }
+
+    template<typename T>
+    bool read_pod(const std::vector<uint8_t>& source, size_t& offset, T& value)
+    {
+      if (offset > source.size() || sizeof(value) > source.size() - offset)
+        return false;
+      std::memcpy(&value, source.data() + offset, sizeof(value));
+      offset += sizeof(value);
+      return true;
+    }
+
+    bool read_u16_le(const std::vector<uint8_t>& source, size_t& offset, uint16_t& value)
+    {
+      if (offset > source.size() || 2 > source.size() - offset)
+        return false;
+      value = static_cast<uint16_t>(source[offset])
+        | static_cast<uint16_t>(source[offset + 1]) << 8;
+      offset += 2;
+      return true;
+    }
+
+    bool read_u64_le(const std::vector<uint8_t>& source, size_t& offset, uint64_t& value)
+    {
+      if (offset > source.size() || 8 > source.size() - offset)
+        return false;
+      value = 0;
+      for (unsigned shift = 0; shift < 64; shift += 8)
+        value |= static_cast<uint64_t>(source[offset++]) << shift;
+      return true;
     }
   }
 
@@ -99,6 +131,63 @@ namespace assets
     append_pod(encoded, descriptor.collection_id);
     append_u16_le(encoded, static_cast<uint16_t>(descriptor.metadata_reference.size()));
     encoded.insert(encoded.end(), descriptor.metadata_reference.begin(), descriptor.metadata_reference.end());
+    return true;
+  }
+
+  bool decode_issuance_descriptor(const std::vector<uint8_t>& encoded, issuance_descriptor& descriptor, std::string* error)
+  {
+    constexpr size_t domain_size = sizeof(DOMAIN) - 1;
+    constexpr size_t fixed_size = domain_size + 1 + 16 + 1 + 32 + 32 + 8 + 1 + 32 + 32 + 2;
+    if (encoded.size() < fixed_size)
+      return fail(error, "truncated issuance descriptor");
+    if (!std::equal(DOMAIN, DOMAIN + domain_size, encoded.begin()))
+      return fail(error, "invalid issuance descriptor domain");
+
+    issuance_descriptor parsed;
+    size_t offset = domain_size;
+    parsed.version = encoded[offset++];
+
+    boost::uuids::uuid network_id{};
+    if (!read_pod(encoded, offset, network_id))
+      return fail(error, "truncated issuance descriptor network");
+    parsed.network = UNDEFINED;
+    for (const network_type candidate : {MAINNET, TESTNET, STAGENET})
+    {
+      if (network_id == get_config(candidate).NETWORK_ID)
+      {
+        parsed.network = candidate;
+        break;
+      }
+    }
+
+    parsed.type = static_cast<asset_class>(encoded[offset++]);
+    if (!read_pod(encoded, offset, parsed.issuer_key)
+        || !read_pod(encoded, offset, parsed.issuance_nonce)
+        || !read_u64_le(encoded, offset, parsed.atomic_supply))
+      return fail(error, "truncated issuance descriptor identity");
+    parsed.display_decimals = encoded[offset++];
+    if (!read_pod(encoded, offset, parsed.metadata_hash)
+        || !read_pod(encoded, offset, parsed.collection_id))
+      return fail(error, "truncated issuance descriptor metadata");
+
+    uint16_t reference_size = 0;
+    if (!read_u16_le(encoded, offset, reference_size))
+      return fail(error, "truncated issuance descriptor metadata length");
+    if (reference_size > MAX_METADATA_REFERENCE_BYTES)
+      return fail(error, "metadata reference is too long");
+    if (offset > encoded.size() || reference_size != encoded.size() - offset)
+      return fail(error, "issuance descriptor length is not canonical");
+    parsed.metadata_reference.assign(
+      reinterpret_cast<const char*>(encoded.data() + offset), reference_size);
+
+    if (!validate_issuance_descriptor(parsed, error))
+      return false;
+
+    std::vector<uint8_t> canonical;
+    if (!encode_issuance_descriptor(parsed, canonical, error) || canonical != encoded)
+      return fail(error, "issuance descriptor encoding is not canonical");
+
+    descriptor = std::move(parsed);
     return true;
   }
 

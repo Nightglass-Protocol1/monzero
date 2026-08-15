@@ -48,6 +48,7 @@ namespace assets
 
   bool validate_issuance_descriptor(const issuance_descriptor& descriptor, std::string* error = nullptr);
   bool encode_issuance_descriptor(const issuance_descriptor& descriptor, std::vector<uint8_t>& encoded, std::string* error = nullptr);
+  bool decode_issuance_descriptor(const std::vector<uint8_t>& encoded, issuance_descriptor& descriptor, std::string* error = nullptr);
   bool derive_asset_id(const issuance_descriptor& descriptor, crypto::hash& asset_id, std::string* error = nullptr);
   bool derive_issuance_authorization_hash(const issuance_descriptor& descriptor, crypto::hash& message, std::string* error = nullptr);
   bool verify_issuance_authorization(const issuance_descriptor& descriptor, const crypto::signature& signature, std::string* error = nullptr);
