@@ -128,6 +128,14 @@ struct output_data_t
   uint64_t           height;       //!< the height of the block which created the output
   rct::key           commitment;   //!< the output's amount commitment (for spend verification)
 };
+
+struct asset_output_data_t
+{
+  crypto::hash asset_id;
+  rct::key destination;
+  rct::key commitment;
+  uint64_t height;
+};
 #pragma pack(pop)
 
 #pragma pack(push, 1)
@@ -1791,6 +1799,12 @@ public:
   virtual bool get_asset_record(const crypto::hash &asset_id, uint64_t &height, cryptonote::blobdata &payload) const = 0;
   virtual void remove_asset_records_from_height(uint64_t height) = 0;
   virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const = 0;
+  virtual void add_asset_output(const crypto::hash &output_id, const asset_output_data_t &output) = 0;
+  virtual bool get_asset_output(const crypto::hash &output_id, asset_output_data_t &output) const = 0;
+  virtual void add_asset_key_image(const crypto::key_image &key_image, uint64_t height) = 0;
+  virtual bool has_asset_key_image(const crypto::key_image &key_image) const = 0;
+  virtual void remove_asset_outputs_from_height(uint64_t height) = 0;
+  virtual void remove_asset_key_images_from_height(uint64_t height) = 0;
 
 
   //

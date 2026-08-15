@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 
+#include "ringct/rctOps.h"
+
 namespace cryptonote
 {
 namespace assets
@@ -91,6 +93,29 @@ bool apply_block_extensions_to_db(BlockchainDB& db,
   }
   asset_ids = std::move(candidate_ids);
   return true;
+}
+
+bool verify_asset_ownership_against_db(const BlockchainDB& db,
+  const asset_ownership_proof& proof, network_type expected_network,
+  const crypto::hash& carrier_prefix_hash, std::string* error)
+{
+  if (db.has_asset_key_image(proof.key_image))
+    return fail(error, "asset key image is already spent");
+
+  for (const asset_ring_member& member : proof.ring)
+  {
+    asset_output_data_t stored{};
+    if (!db.get_asset_output(member.output_id, stored))
+      return fail(error, "asset ownership ring references an unknown output");
+    if (stored.asset_id != member.asset_id || member.asset_id != proof.asset_id)
+      return fail(error, "asset ownership ring member has the wrong asset id");
+    if (!rct::equalKeys(stored.destination, member.public_output.dest))
+      return fail(error, "asset ownership ring destination does not match consensus state");
+    if (!rct::equalKeys(stored.commitment, member.public_output.mask))
+      return fail(error, "asset ownership ring commitment does not match consensus state");
+  }
+  return verify_asset_ownership_proof(
+    proof, expected_network, carrier_prefix_hash, error);
 }
 }
 }

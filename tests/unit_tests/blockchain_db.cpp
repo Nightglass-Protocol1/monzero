@@ -39,7 +39,10 @@
 #include "blockchain_db/blockchain_db.h"
 #include "blockchain_db/asset_db.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
+#include "cryptonote_basic/asset_confidential.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
+#include "device/device.hpp"
+#include "ringct/rctSigs.h"
 
 using namespace cryptonote;
 using epee::string_tools::pod_to_hex;
@@ -67,6 +70,45 @@ assets::transaction_extension make_asset_extension(const crypto::hash& carrier)
     throw std::runtime_error("failed to derive issuance authorization");
   crypto::generate_signature(message, public_key, secret_key, extension.issuance.issuer_signature);
   return extension;
+}
+
+assets::asset_ownership_proof make_db_ownership_proof(
+  const crypto::hash& id, const crypto::hash& carrier)
+{
+  constexpr size_t real = 5;
+  assets::asset_ownership_proof proof;
+  proof.asset_id = id;
+  rct::ctkeyV public_ring;
+  rct::key spend_secret{}, input_mask{};
+  const rct::key amount = rct::d2h(10);
+  for (size_t index = 0; index < assets::CONFIDENTIAL_ASSET_RING_SIZE; ++index)
+  {
+    assets::asset_ring_member member;
+    member.asset_id = id;
+    member.output_id.data[0] = static_cast<unsigned char>(index + 1);
+    rct::key ignored;
+    rct::skpkGen(ignored, member.public_output.dest);
+    rct::skpkGen(ignored, member.public_output.mask);
+    proof.ring.push_back(member);
+  }
+  rct::skpkGen(spend_secret, proof.ring[real].public_output.dest);
+  input_mask = rct::skGen();
+  rct::addKeys2(proof.ring[real].public_output.mask, input_mask, amount, rct::H);
+  for (const auto& member : proof.ring)
+    public_ring.push_back(member.public_output);
+  const rct::key pseudo_mask = rct::skGen();
+  rct::addKeys2(proof.pseudo_input, pseudo_mask, amount, rct::H);
+  rct::key message;
+  std::string error;
+  if (!assets::derive_asset_ownership_message(proof, TESTNET, carrier, message, &error))
+    throw std::runtime_error(error);
+  rct::ctkey input_secret;
+  input_secret.dest = spend_secret;
+  input_secret.mask = input_mask;
+  proof.signature = rct::proveRctCLSAGSimple(message, public_ring, input_secret,
+    pseudo_mask, proof.pseudo_input, real, hw::get_device("default"));
+  std::memcpy(&proof.key_image, &proof.signature.I, sizeof(proof.key_image));
+  return proof;
 }
 
 const std::vector<std::string> t_blocks =
@@ -317,6 +359,99 @@ TYPED_TEST(BlockchainDBTest, AssetRecordsPersistAndRollbackAtomically)
   ASSERT_FALSE(this->m_db->get_asset_record(later, height, payload));
 }
 
+TYPED_TEST(BlockchainDBTest, AssetOutputsAndKeyImagesPersistAndRollbackAtomically)
+{
+  const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+  const std::string dir_path = temp_path.string();
+  this->set_prefix(dir_path);
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+  this->get_filenames();
+
+  crypto::hash first_id{}, later_id{}, aborted_id{}, asset_id{};
+  first_id.data[0] = 1;
+  later_id.data[0] = 2;
+  aborted_id.data[0] = 3;
+  asset_id.data[0] = 0xa7;
+  rct::key first_secret{}, first_key{}, later_key{}, aborted_key{};
+  rct::skpkGen(first_secret, first_key);
+  rct::skpkGen(first_secret, later_key);
+  rct::skpkGen(first_secret, aborted_key);
+
+  asset_output_data_t first{asset_id, first_key, rct::commit(11, rct::zero()), 30};
+  asset_output_data_t later{asset_id, later_key, rct::commit(12, rct::zero()), 31};
+  asset_output_data_t aborted{asset_id, aborted_key, rct::commit(13, rct::zero()), 32};
+  crypto::key_image spent{}, aborted_spent{};
+  reinterpret_cast<unsigned char*>(&spent)[0] = 0x41;
+  reinterpret_cast<unsigned char*>(&aborted_spent)[0] = 0x42;
+
+  ASSERT_NO_THROW(this->m_db->add_asset_output(first_id, first));
+  ASSERT_THROW(this->m_db->add_asset_output(first_id, first), DB_ERROR);
+  ASSERT_NO_THROW(this->m_db->add_asset_output(later_id, later));
+  ASSERT_NO_THROW(this->m_db->add_asset_key_image(spent, 31));
+  ASSERT_THROW(this->m_db->add_asset_key_image(spent, 31), KEY_IMAGE_EXISTS);
+
+  this->m_db->block_wtxn_start();
+  ASSERT_NO_THROW(this->m_db->add_asset_output(aborted_id, aborted));
+  ASSERT_NO_THROW(this->m_db->add_asset_key_image(aborted_spent, 32));
+  this->m_db->block_wtxn_abort();
+
+  asset_output_data_t restored{};
+  ASSERT_FALSE(this->m_db->get_asset_output(aborted_id, restored));
+  ASSERT_FALSE(this->m_db->has_asset_key_image(aborted_spent));
+  ASSERT_NO_THROW(this->m_db->close());
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+
+  ASSERT_TRUE(this->m_db->get_asset_output(first_id, restored));
+  ASSERT_EQ(first.asset_id, restored.asset_id);
+  ASSERT_EQ(first.destination, restored.destination);
+  ASSERT_EQ(first.commitment, restored.commitment);
+  ASSERT_EQ(first.height, restored.height);
+  ASSERT_TRUE(this->m_db->has_asset_key_image(spent));
+
+  ASSERT_NO_THROW(this->m_db->remove_asset_outputs_from_height(31));
+  ASSERT_NO_THROW(this->m_db->remove_asset_key_images_from_height(31));
+  ASSERT_TRUE(this->m_db->get_asset_output(first_id, restored));
+  ASSERT_FALSE(this->m_db->get_asset_output(later_id, restored));
+  ASSERT_FALSE(this->m_db->has_asset_key_image(spent));
+}
+
+TYPED_TEST(BlockchainDBTest, AssetOwnershipResolvesAuthoritativeRingAndSpentState)
+{
+  const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+  const std::string dir_path = temp_path.string();
+  this->set_prefix(dir_path);
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+  this->get_filenames();
+
+  crypto::hash id{}, carrier{};
+  id.data[0] = 0x91;
+  carrier.data[0] = 0x92;
+  const auto proof = make_db_ownership_proof(id, carrier);
+  std::string error;
+  EXPECT_FALSE(assets::verify_asset_ownership_against_db(
+    *this->m_db, proof, TESTNET, carrier, &error));
+
+  for (const auto& member : proof.ring)
+  {
+    asset_output_data_t output{member.asset_id, member.public_output.dest,
+      member.public_output.mask, 40};
+    ASSERT_NO_THROW(this->m_db->add_asset_output(member.output_id, output));
+  }
+  ASSERT_TRUE(assets::verify_asset_ownership_against_db(
+    *this->m_db, proof, TESTNET, carrier, &error)) << error;
+
+  ASSERT_NO_THROW(this->m_db->add_asset_key_image(proof.key_image, 41));
+  EXPECT_FALSE(assets::verify_asset_ownership_against_db(
+    *this->m_db, proof, TESTNET, carrier, &error));
+  ASSERT_NO_THROW(this->m_db->remove_asset_key_images_from_height(41));
+  ASSERT_TRUE(assets::verify_asset_ownership_against_db(
+    *this->m_db, proof, TESTNET, carrier, &error)) << error;
+
+  ASSERT_NO_THROW(this->m_db->remove_asset_outputs_from_height(40));
+  EXPECT_FALSE(assets::verify_asset_ownership_against_db(
+    *this->m_db, proof, TESTNET, carrier, &error));
+}
+
 TYPED_TEST(BlockchainDBTest, AssetBlockExtensionsRebuildFromPersistentState)
 {
   const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
@@ -370,8 +505,15 @@ TYPED_TEST(BlockchainDBTest, PopBlockRemovesAssetStateAtDetachedHeight)
   this->init_hard_fork();
 
   crypto::hash id{};
+  crypto::hash output_id{};
+  crypto::key_image spent{};
   id.data[0] = 0xa5;
+  output_id.data[0] = 0xa6;
+  reinterpret_cast<unsigned char*>(&spent)[0] = 0xa7;
   const blobdata payload("detached asset");
+  rct::key output_key{}, output_secret{};
+  rct::skpkGen(output_secret, output_key);
+  const asset_output_data_t asset_output{id, output_key, rct::commit(50, rct::zero()), 1};
   block popped;
   std::vector<transaction> transactions;
   {
@@ -379,11 +521,16 @@ TYPED_TEST(BlockchainDBTest, PopBlockRemovesAssetStateAtDetachedHeight)
     ASSERT_NO_THROW(this->m_db->add_block(this->m_blocks[0], t_sizes[0], t_sizes[0], t_diffs[0], t_coins[0], this->m_txs[0]));
     ASSERT_NO_THROW(this->m_db->add_block(this->m_blocks[1], t_sizes[1], t_sizes[1], t_diffs[1], t_coins[1], this->m_txs[1]));
     ASSERT_NO_THROW(this->m_db->add_asset_record(id, 1, blobdata_ref(payload)));
+    ASSERT_NO_THROW(this->m_db->add_asset_output(output_id, asset_output));
+    ASSERT_NO_THROW(this->m_db->add_asset_key_image(spent, 1));
   }
   ASSERT_NO_THROW(this->m_db->pop_block(popped, transactions));
   uint64_t height = 0;
   blobdata restored;
+  asset_output_data_t restored_output{};
   ASSERT_FALSE(this->m_db->get_asset_record(id, height, restored));
+  ASSERT_FALSE(this->m_db->get_asset_output(output_id, restored_output));
+  ASSERT_FALSE(this->m_db->has_asset_key_image(spent));
   ASSERT_EQ(1u, this->m_db->height());
 }
 

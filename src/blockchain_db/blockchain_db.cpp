@@ -318,7 +318,10 @@ void BlockchainDB::pop_block(block& blk, std::vector<transaction>& txs)
 
   // Asset records created by the detached block are consensus state and must
   // disappear in the same write transaction as the native block and tx data.
-  remove_asset_records_from_height(height() - 1);
+  const uint64_t detached_height = height() - 1;
+  remove_asset_records_from_height(detached_height);
+  remove_asset_outputs_from_height(detached_height);
+  remove_asset_key_images_from_height(detached_height);
 
   remove_block();
 

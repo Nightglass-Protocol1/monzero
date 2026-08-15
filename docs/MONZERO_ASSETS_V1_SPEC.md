@@ -276,12 +276,18 @@ members, duplicate or zero output IDs, malformed points, key-image tampering,
 and any pseudo input without exactly one matching proof. Key images must also
 be unique inside one transaction.
 
-This still does **not** provide global double-spend prevention: production
-integration must resolve every claimed ring member against the authoritative
-asset-output database and reject key images already spent by earlier blocks or
-the mempool. Canonical wire serialization and reorg-safe output/key-image
-indexes are also outstanding. Until those layers exist and are reviewed, these
-proofs cannot make an asset transaction valid on any Monzero network.
+The inactive database prototype now persists authoritative asset outputs and
+spent asset key images in separate LMDB indexes. Ring claims can be resolved
+against those records before CLSAG verification, and block detach removes
+outputs and key images at or above the detached height. Restart, transaction
+abort, duplicate-key-image, and chain-pop tests cover this storage layer.
+
+This still does **not** provide end-to-end global double-spend prevention. The
+active transaction and mempool paths do not yet call the verifier or reserve
+key images, and accepted transactions do not yet derive and write canonical
+asset output records. Canonical wire serialization is also outstanding. Until
+those layers exist and are reviewed, these proofs cannot make an asset
+transaction valid on any Monzero network.
 
 ## 7. Metadata
 
