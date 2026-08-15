@@ -117,5 +117,72 @@ bool verify_asset_ownership_against_db(const BlockchainDB& db,
   return verify_asset_ownership_proof(
     proof, expected_network, carrier_prefix_hash, error);
 }
+
+bool apply_asset_transaction_to_db(BlockchainDB& db,
+  const asset_transaction_payload& payload, network_type expected_network,
+  const crypto::hash& expected_carrier_prefix_hash, uint64_t height,
+  std::vector<crypto::hash>& output_ids, std::string* error)
+{
+  asset_registry registry;
+  if (!load_registry_from_db(db, expected_network, registry, error)
+      || !verify_asset_transaction_payload(payload, registry.known_assets(),
+           expected_network, expected_carrier_prefix_hash, error))
+    return false;
+  for (const asset_ownership_proof& proof : payload.ownership_proofs)
+    if (!verify_asset_ownership_against_db(db, proof, expected_network,
+          expected_carrier_prefix_hash, error))
+      return false;
+
+  crypto::hash issued_id{};
+  std::vector<uint8_t> encoded_issuance;
+  if (payload.issuance)
+  {
+    if (!registry.apply_issuance(*payload.issuance, height, issued_id, error)
+        || !encode_issuance_payload(*payload.issuance, encoded_issuance, error))
+      return false;
+  }
+
+  std::vector<crypto::hash> candidate_ids;
+  uint32_t global_output_index = 0;
+  for (size_t group = 0; group < payload.balances.size(); ++group)
+  {
+    const confidential_asset_balance& balance = payload.balances[group];
+    for (size_t index = 0; index < balance.outputs.size(); ++index)
+    {
+      confidential_asset_output output{
+        payload.output_destinations[group][index], balance.outputs[index]};
+      crypto::hash output_id{};
+      if (!derive_asset_output_id(expected_network, expected_carrier_prefix_hash,
+            balance.asset_id, global_output_index++, output, output_id, error))
+        return false;
+      asset_output_data_t existing{};
+      if (db.get_asset_output(output_id, existing))
+        return fail(error, "asset output identity already exists");
+      candidate_ids.push_back(output_id);
+    }
+  }
+
+  if (payload.issuance)
+  {
+    const blobdata_ref bytes{reinterpret_cast<const char*>(encoded_issuance.data()),
+      encoded_issuance.size()};
+    db.add_asset_record(issued_id, height, bytes);
+  }
+  for (const asset_ownership_proof& proof : payload.ownership_proofs)
+    db.add_asset_key_image(proof.key_image, height);
+  size_t candidate_index = 0;
+  for (size_t group = 0; group < payload.balances.size(); ++group)
+  {
+    const confidential_asset_balance& balance = payload.balances[group];
+    for (size_t index = 0; index < balance.outputs.size(); ++index)
+    {
+      const asset_output_data_t output{balance.asset_id,
+        payload.output_destinations[group][index], balance.outputs[index], height};
+      db.add_asset_output(candidate_ids[candidate_index++], output);
+    }
+  }
+  output_ids = std::move(candidate_ids);
+  return true;
+}
 }
 }

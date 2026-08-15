@@ -6,6 +6,7 @@
 #include "blockchain_db.h"
 #include "cryptonote_basic/asset_confidential.h"
 #include "cryptonote_basic/asset_types.h"
+#include "cryptonote_basic/asset_wire.h"
 
 namespace cryptonote
 {
@@ -37,6 +38,19 @@ namespace assets
     const asset_ownership_proof& proof,
     network_type expected_network,
     const crypto::hash& carrier_prefix_hash,
+    std::string* error = nullptr);
+
+  // The caller owns the outer blockchain write transaction. Every semantic,
+  // ownership, collision, and collection-authority check completes before the
+  // first write so an accepted payload changes registry, output, and spent-key
+  // state atomically.
+  bool apply_asset_transaction_to_db(
+    BlockchainDB& db,
+    const asset_transaction_payload& payload,
+    network_type expected_network,
+    const crypto::hash& expected_carrier_prefix_hash,
+    uint64_t height,
+    std::vector<crypto::hash>& output_ids,
     std::string* error = nullptr);
 }
 }

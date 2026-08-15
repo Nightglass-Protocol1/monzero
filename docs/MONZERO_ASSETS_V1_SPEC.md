@@ -284,10 +284,45 @@ abort, duplicate-key-image, and chain-pop tests cover this storage layer.
 
 This still does **not** provide end-to-end global double-spend prevention. The
 active transaction and mempool paths do not yet call the verifier or reserve
-key images, and accepted transactions do not yet derive and write canonical
-asset output records. Canonical wire serialization is also outstanding. Until
-those layers exist and are reviewed, these proofs cannot make an asset
-transaction valid on any Monzero network.
+key images. The canonical wire and atomic state-application prototypes below
+are not yet embedded in native transactions or invoked by active block and
+mempool validation. Until those layers are integrated and reviewed, these
+proofs cannot make an asset transaction valid on any Monzero network.
+
+### 6.3 Inactive canonical transaction payload
+
+The source tree contains a version-1 canonical binary payload prototype. It is
+still detached from active transaction parsing. Its byte order and field order
+are fixed as follows:
+
+1. one-byte payload version and one-byte network type;
+2. 32-byte carrier-prefix hash;
+3. one-byte issuance-present flag, followed when set by a two-byte
+   little-endian issuance length and the canonical authenticated issuance;
+4. one-byte balance-group count, then for each group: asset ID, counted pseudo
+   inputs, counted destination-key/commitment pairs, counted burn commitments,
+   and counted Bulletproof+ objects;
+5. one-byte ownership-proof count, then each asset ID, pseudo commitment, key
+   image, exactly 16 ring members, and the canonical CLSAG fields (`c1`, `D`,
+   and exactly 16 responses). The redundant CLSAG `I` field is reconstructed
+   from the separately encoded key image and is not serialized.
+
+All integer lengths and output indexes use explicit little-endian encoding;
+all point, hash, UUID, and signature values use their fixed byte arrays. The
+decoder rejects truncation, trailing bytes, unsupported versions, invalid
+flags, noncanonical ring sizes, and counts over the per-group and aggregate
+limits. The payload is capped at 256 KiB, eight asset groups, 64 total inputs,
+64 total destinations, and 64 ownership proofs. A fixed 492-byte test vector
+has canonical fast-hash
+`7ad38e0c9b90d1d458f69df1ca5c4c27689ba0c86e0fbcb08a2149166b3d999b`.
+
+Output identities are derived from a domain label, network UUID, carrier hash,
+asset ID, global output index, destination key, and commitment. State
+application validates the entire payload, resolves every ring member, checks
+collection authority and collisions, then atomically writes issuance records,
+spent key images, and outputs. The carrier is defined as the native transaction
+prefix hash with this envelope omitted; the active transaction representation
+and exact stripping procedure remain an activation prerequisite.
 
 ## 7. Metadata
 

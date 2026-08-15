@@ -42,6 +42,7 @@
 #include "cryptonote_basic/asset_confidential.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "device/device.hpp"
+#include "ringct/bulletproofs_plus.h"
 #include "ringct/rctSigs.h"
 
 using namespace cryptonote;
@@ -109,6 +110,30 @@ assets::asset_ownership_proof make_db_ownership_proof(
     pseudo_mask, proof.pseudo_input, real, hw::get_device("default"));
   std::memcpy(&proof.key_image, &proof.signature.I, sizeof(proof.key_image));
   return proof;
+}
+
+assets::asset_transaction_payload make_db_asset_issuance(
+  const crypto::hash& carrier)
+{
+  const assets::transaction_extension extension = make_asset_extension(carrier);
+  assets::asset_transaction_payload payload;
+  payload.network = TESTNET;
+  payload.carrier_prefix_hash = carrier;
+  payload.issuance = extension.issuance;
+  crypto::hash id{};
+  if (!assets::derive_asset_id(extension.issuance.descriptor, id))
+    throw std::runtime_error("failed to derive test asset id");
+  const uint64_t supply = extension.issuance.descriptor.atomic_supply;
+  assets::confidential_asset_balance balance;
+  balance.asset_id = id;
+  balance.pseudo_inputs.push_back({id, rct::commit(supply, rct::zero())});
+  balance.outputs.push_back(rct::commit(supply, rct::zero()));
+  balance.range_proofs.push_back(rct::bulletproof_plus_PROVE(supply, rct::zero()));
+  payload.balances.push_back(balance);
+  rct::key secret{}, destination{};
+  rct::skpkGen(secret, destination);
+  payload.output_destinations.push_back({destination});
+  return payload;
 }
 
 const std::vector<std::string> t_blocks =
@@ -450,6 +475,58 @@ TYPED_TEST(BlockchainDBTest, AssetOwnershipResolvesAuthoritativeRingAndSpentStat
   ASSERT_NO_THROW(this->m_db->remove_asset_outputs_from_height(40));
   EXPECT_FALSE(assets::verify_asset_ownership_against_db(
     *this->m_db, proof, TESTNET, carrier, &error));
+}
+
+TYPED_TEST(BlockchainDBTest, AssetTransactionStateAppliesAtomicallyAndRejectsReplay)
+{
+  const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+  const std::string dir_path = temp_path.string();
+  this->set_prefix(dir_path);
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+  this->get_filenames();
+
+  crypto::hash carrier{};
+  carrier.data[0] = 0xd1;
+  const auto payload = make_db_asset_issuance(carrier);
+  std::vector<crypto::hash> output_ids;
+  std::string error;
+  this->m_db->block_wtxn_start();
+  ASSERT_TRUE(assets::apply_asset_transaction_to_db(*this->m_db, payload,
+    TESTNET, carrier, 50, output_ids, &error)) << error;
+  this->m_db->block_wtxn_stop();
+  ASSERT_EQ(1u, output_ids.size());
+
+  crypto::hash asset_id{};
+  ASSERT_TRUE(assets::derive_asset_id(payload.issuance->descriptor, asset_id));
+  uint64_t issuance_height = 0;
+  blobdata issuance_bytes;
+  ASSERT_TRUE(this->m_db->get_asset_record(asset_id, issuance_height, issuance_bytes));
+  ASSERT_EQ(50u, issuance_height);
+  asset_output_data_t stored{};
+  ASSERT_TRUE(this->m_db->get_asset_output(output_ids.front(), stored));
+  ASSERT_EQ(asset_id, stored.asset_id);
+  ASSERT_EQ(50u, stored.height);
+
+  std::vector<crypto::hash> replay_outputs;
+  this->m_db->block_wtxn_start();
+  EXPECT_FALSE(assets::apply_asset_transaction_to_db(*this->m_db, payload,
+    TESTNET, carrier, 51, replay_outputs, &error));
+  this->m_db->block_wtxn_abort();
+  ASSERT_TRUE(replay_outputs.empty());
+
+  auto invalid = make_db_asset_issuance(crypto::hash{});
+  crypto::hash invalid_carrier{};
+  invalid_carrier.data[0] = 0xd2;
+  invalid.carrier_prefix_hash = invalid_carrier;
+  invalid.balances.front().outputs.front() = rct::commit(
+    invalid.issuance->descriptor.atomic_supply + 1, rct::zero());
+  this->m_db->block_wtxn_start();
+  EXPECT_FALSE(assets::apply_asset_transaction_to_db(*this->m_db, invalid,
+    TESTNET, invalid_carrier, 52, replay_outputs, &error));
+  this->m_db->block_wtxn_abort();
+  crypto::hash invalid_id{};
+  ASSERT_TRUE(assets::derive_asset_id(invalid.issuance->descriptor, invalid_id));
+  ASSERT_FALSE(this->m_db->get_asset_record(invalid_id, issuance_height, issuance_bytes));
 }
 
 TYPED_TEST(BlockchainDBTest, AssetBlockExtensionsRebuildFromPersistentState)
