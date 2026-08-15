@@ -30,6 +30,7 @@ set(unit_tests_sources
   account.cpp
   apply_permutation.cpp
   address_from_url.cpp
+  asset_confidential.cpp
   asset_types.cpp
   base58.cpp
   blockchain_db.cpp

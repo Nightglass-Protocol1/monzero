@@ -133,6 +133,8 @@ isolated disposable development network may be used after cryptographic review.
 - [x] Atomic ordered block-issuance adapter, detach behavior, and deterministic state commitments.
 - [x] Detached versioned transaction extension bound to a native prefix commitment.
 - [x] Atomic block-extension validation against independently supplied native carrier commitments.
+- [x] Persistent LMDB issuance registry with restart reconstruction and native reorg rollback.
+- [x] Inactive per-asset Pedersen/Bulletproof+ conservation and burn verifier.
 - [x] External cryptographic-review brief and mandatory threat cases.
 - [ ] Reviewed confidential per-asset commitment and range-proof construction.
 - [ ] Versioned asset transaction serialization with strict parser limits.

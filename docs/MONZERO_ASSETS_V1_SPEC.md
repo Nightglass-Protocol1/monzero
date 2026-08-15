@@ -252,6 +252,29 @@ properties remain prerequisites for an isolated prototype network. The
 transparent statement must never be mistaken for a production transaction
 design.
 
+### 6.2 Inactive confidential conservation prototype
+
+The source tree now contains an inactive per-asset Pedersen-commitment and
+Bulletproof+ verifier. It reuses the inherited RingCT curve and range-proof
+implementation, requires exact proof coverage of every output and explicit
+burn commitment, and checks that pseudo inputs equal outputs plus burns inside
+each public asset-ID domain. Fixed-supply issuance uses a zero-mask commitment
+to the descriptor's public lifetime supply. Limits currently cap each balance
+group at 16 pseudo inputs and 16 destinations.
+
+Adversarial tests reject inflation, substituted commitments, malformed range
+proofs, duplicate asset groups, unknown assets, cross-asset pseudo inputs, and
+issuance commitments that disagree with the declared supply. Malformed curve
+proofs are converted to deterministic validation failure rather than escaping
+as exceptions.
+
+This layer still does **not** authorize ownership or prevent double spends.
+Production integration requires ring-member references resolved against stored
+asset outputs, asset key images, a domain-separated CLSAG transcript, canonical
+wire serialization, and database indexes for unspent output lookup. Until that
+layer exists and is reviewed, these proofs cannot make an asset transaction
+valid on any Monzero network.
+
 ## 7. Metadata
 
 Consensus stores only bounded identity and commitment fields. Descriptions,
