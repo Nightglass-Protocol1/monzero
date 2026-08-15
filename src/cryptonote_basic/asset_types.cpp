@@ -19,6 +19,9 @@ namespace assets
     constexpr char ISSUANCE_AUTHORIZATION_DOMAIN[] = "MonzeroAssetIssuanceAuthorizationV1";
     constexpr char COLLECTION_MEMBERSHIP_DOMAIN[] = "MonzeroCollectionMembershipV1";
     constexpr char ISSUANCE_PAYLOAD_DOMAIN[] = "MonzeroAssetIssuancePayloadV1";
+    constexpr char REGISTRY_SNAPSHOT_DOMAIN[] = "MonzeroAssetRegistrySnapshotV1";
+    constexpr uint8_t REGISTRY_SNAPSHOT_VERSION = 1;
+    constexpr uint32_t MAX_REGISTRY_SNAPSHOT_RECORDS = 100000;
 
     bool fail(std::string* error, const char* message)
     {
@@ -43,6 +46,12 @@ namespace assets
     void append_u64_le(std::vector<uint8_t>& target, uint64_t value)
     {
       for (unsigned shift = 0; shift < 64; shift += 8)
+        target.push_back(static_cast<uint8_t>(value >> shift));
+    }
+
+    void append_u32_le(std::vector<uint8_t>& target, uint32_t value)
+    {
+      for (unsigned shift = 0; shift < 32; shift += 8)
         target.push_back(static_cast<uint8_t>(value >> shift));
     }
 
@@ -74,6 +83,21 @@ namespace assets
       for (unsigned shift = 0; shift < 64; shift += 8)
         value |= static_cast<uint64_t>(source[offset++]) << shift;
       return true;
+    }
+
+    bool read_u32_le(const std::vector<uint8_t>& source, size_t& offset, uint32_t& value)
+    {
+      if (offset > source.size() || 4 > source.size() - offset)
+        return false;
+      value = 0;
+      for (unsigned shift = 0; shift < 32; shift += 8)
+        value |= static_cast<uint32_t>(source[offset++]) << shift;
+      return true;
+    }
+
+    unsigned snapshot_class_priority(asset_class type)
+    {
+      return type == asset_class::collection ? 0 : 1;
     }
   }
 
@@ -379,7 +403,7 @@ namespace assets
     else if (collection_signature)
       return fail(error, "unexpected collection signature for an uncollected asset");
 
-    records_.emplace(asset_id, asset_record{descriptor, height});
+    records_.emplace(asset_id, asset_record{descriptor, height, issuer_signature, collection_signature});
     return true;
   }
 
@@ -426,6 +450,123 @@ namespace assets
     for (const auto& record : records_)
       result.insert(record.first);
     return result;
+  }
+
+  bool asset_registry::encode_snapshot(network_type network, std::vector<uint8_t>& encoded, std::string* error) const
+  {
+    if (network != MAINNET && network != TESTNET && network != STAGENET)
+      return fail(error, "asset registry snapshot requires an explicit public network");
+    if (records_.size() > MAX_REGISTRY_SNAPSHOT_RECORDS)
+      return fail(error, "asset registry snapshot has too many records");
+
+    using ordered_record = std::pair<crypto::hash, const asset_record*>;
+    std::vector<ordered_record> ordered;
+    ordered.reserve(records_.size());
+    for (const auto& entry : records_)
+    {
+      if (entry.second.descriptor.network != network)
+        return fail(error, "asset registry contains a record from another network");
+      ordered.emplace_back(entry.first, &entry.second);
+    }
+    std::sort(ordered.begin(), ordered.end(), [](const ordered_record& left, const ordered_record& right) {
+      if (left.second->issuance_height != right.second->issuance_height)
+        return left.second->issuance_height < right.second->issuance_height;
+      const unsigned left_priority = snapshot_class_priority(left.second->descriptor.type);
+      const unsigned right_priority = snapshot_class_priority(right.second->descriptor.type);
+      if (left_priority != right_priority)
+        return left_priority < right_priority;
+      return left.first < right.first;
+    });
+
+    encoded.clear();
+    encoded.insert(encoded.end(), REGISTRY_SNAPSHOT_DOMAIN,
+      REGISTRY_SNAPSHOT_DOMAIN + sizeof(REGISTRY_SNAPSHOT_DOMAIN) - 1);
+    encoded.push_back(REGISTRY_SNAPSHOT_VERSION);
+    append_pod(encoded, get_config(network).NETWORK_ID);
+    append_u32_le(encoded, static_cast<uint32_t>(ordered.size()));
+    for (const ordered_record& entry : ordered)
+    {
+      issuance_payload payload;
+      payload.descriptor = entry.second->descriptor;
+      payload.issuer_signature = entry.second->issuer_signature;
+      payload.collection_signature = entry.second->collection_signature;
+      std::vector<uint8_t> payload_bytes;
+      if (!encode_issuance_payload(payload, payload_bytes, error))
+        return false;
+      if (payload_bytes.size() > std::numeric_limits<uint16_t>::max())
+        return fail(error, "issuance payload is too large for a registry snapshot");
+      append_u64_le(encoded, entry.second->issuance_height);
+      append_u16_le(encoded, static_cast<uint16_t>(payload_bytes.size()));
+      encoded.insert(encoded.end(), payload_bytes.begin(), payload_bytes.end());
+    }
+    return true;
+  }
+
+  bool asset_registry::decode_snapshot(const std::vector<uint8_t>& encoded, network_type expected_network, std::string* error)
+  {
+    constexpr size_t domain_size = sizeof(REGISTRY_SNAPSHOT_DOMAIN) - 1;
+    constexpr size_t header_size = domain_size + 1 + 16 + 4;
+    if (expected_network != MAINNET && expected_network != TESTNET && expected_network != STAGENET)
+      return fail(error, "asset registry snapshot requires an explicit expected network");
+    if (encoded.size() < header_size)
+      return fail(error, "truncated asset registry snapshot");
+    if (!std::equal(REGISTRY_SNAPSHOT_DOMAIN,
+          REGISTRY_SNAPSHOT_DOMAIN + domain_size, encoded.begin()))
+      return fail(error, "invalid asset registry snapshot domain");
+
+    size_t offset = domain_size;
+    if (encoded[offset++] != REGISTRY_SNAPSHOT_VERSION)
+      return fail(error, "unsupported asset registry snapshot version");
+    boost::uuids::uuid network_id{};
+    if (!read_pod(encoded, offset, network_id)
+        || network_id != get_config(expected_network).NETWORK_ID)
+      return fail(error, "asset registry snapshot network mismatch");
+    uint32_t count = 0;
+    if (!read_u32_le(encoded, offset, count) || count > MAX_REGISTRY_SNAPSHOT_RECORDS)
+      return fail(error, "invalid asset registry snapshot record count");
+
+    asset_registry restored;
+    bool have_previous = false;
+    uint64_t previous_height = 0;
+    unsigned previous_priority = 0;
+    crypto::hash previous_id{};
+    for (uint32_t index = 0; index < count; ++index)
+    {
+      uint64_t height = 0;
+      uint16_t payload_size = 0;
+      if (!read_u64_le(encoded, offset, height)
+          || !read_u16_le(encoded, offset, payload_size)
+          || offset > encoded.size() || payload_size > encoded.size() - offset)
+        return fail(error, "truncated asset registry snapshot record");
+      const std::vector<uint8_t> payload_bytes(
+        encoded.begin() + offset, encoded.begin() + offset + payload_size);
+      offset += payload_size;
+
+      issuance_payload payload;
+      if (!decode_issuance_payload(payload_bytes, payload, error))
+        return false;
+      if (payload.descriptor.network != expected_network)
+        return fail(error, "asset registry record network mismatch");
+      crypto::hash asset_id{};
+      if (!derive_asset_id(payload.descriptor, asset_id, error))
+        return false;
+      const unsigned priority = snapshot_class_priority(payload.descriptor.type);
+      if (have_previous && (height < previous_height
+          || (height == previous_height && (priority < previous_priority
+            || (priority == previous_priority && !(previous_id < asset_id))))))
+        return fail(error, "asset registry snapshot records are not in canonical order");
+      if (!restored.apply_issuance(payload, height, asset_id, error))
+        return false;
+      have_previous = true;
+      previous_height = height;
+      previous_priority = priority;
+      previous_id = asset_id;
+    }
+    if (offset != encoded.size())
+      return fail(error, "asset registry snapshot has trailing bytes");
+
+    records_ = std::move(restored.records_);
+    return true;
   }
 
   bool validate_transparent_balance_statement(

@@ -129,6 +129,7 @@ isolated disposable development network may be used after cryptographic review.
 - [x] Inactive authenticated issuance registry with deterministic reorg rollback.
 - [x] Strict canonical issuance-descriptor decoder with byte-boundary truncation tests.
 - [x] Bounded authenticated issuance-payload envelope with strict signature shape rules.
+- [x] Deterministic authenticated registry snapshots with atomic restore failure behavior.
 - [x] External cryptographic-review brief and mandatory threat cases.
 - [ ] Reviewed confidential per-asset commitment and range-proof construction.
 - [ ] Versioned asset transaction serialization with strict parser limits.

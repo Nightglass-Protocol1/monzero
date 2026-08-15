@@ -79,6 +79,8 @@ namespace assets
   {
     issuance_descriptor descriptor;
     uint64_t issuance_height = 0;
+    crypto::signature issuer_signature{};
+    boost::optional<crypto::signature> collection_signature;
   };
 
   // Inactive in-memory reference model for authenticated issuance state and
@@ -100,6 +102,8 @@ namespace assets
     const asset_record* find(const crypto::hash& asset_id) const;
     size_t size() const { return records_.size(); }
     std::set<crypto::hash> known_assets() const;
+    bool encode_snapshot(network_type network, std::vector<uint8_t>& encoded, std::string* error = nullptr) const;
+    bool decode_snapshot(const std::vector<uint8_t>& encoded, network_type expected_network, std::string* error = nullptr);
 
   private:
     std::map<crypto::hash, asset_record> records_;

@@ -158,6 +158,15 @@ issued at or above a detached height. Tests demonstrate removal and subsequent
 valid reissuance after a simulated reorganisation. This is an executable state
 model, not the final database schema or consensus integration.
 
+The inactive registry also has a deterministic, network-separated snapshot
+format. Records retain issuer and optional collection signatures, are ordered
+by height with collections before same-height members, and are fully
+revalidated into temporary state before replacing the active registry.
+Corruption, cross-network input, noncanonical order, duplicate issuance,
+trailing data, and invalid signatures fail without modifying existing state.
+This provides a recovery and migration model; it is not yet an LMDB table or a
+substitute for replaying authenticated transactions from the chain.
+
 This encoding is a stable prototype vector for review, not an activation
 decision. A cryptographic review may replace the hash construction or fields;
 doing so must deliberately update the golden vector before any testnet fork.

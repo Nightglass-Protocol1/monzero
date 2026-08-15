@@ -393,6 +393,85 @@ TEST(asset_types, registry_authenticates_collection_membership_and_reorgs)
   EXPECT_EQ(0u, registry.size());
 }
 
+TEST(asset_types, registry_snapshot_round_trip_preserves_authenticated_state)
+{
+  crypto::public_key collection_public{};
+  crypto::secret_key collection_secret{};
+  crypto::generate_keys(collection_public, collection_secret);
+  crypto::public_key member_public{};
+  crypto::secret_key member_secret{};
+  crypto::generate_keys(member_public, member_secret);
+
+  cryptonote::assets::asset_registry original;
+  auto collection = make_descriptor(cryptonote::TESTNET);
+  collection.type = cryptonote::assets::asset_class::collection;
+  collection.atomic_supply = 1;
+  collection.display_decimals = 0;
+  collection.issuer_key = collection_public;
+  crypto::hash collection_id{};
+  ASSERT_TRUE(original.apply_issuance(
+    collection, authorize(collection, collection_public, collection_secret), boost::none, 7, collection_id));
+
+  auto member = make_descriptor(cryptonote::TESTNET);
+  member.type = cryptonote::assets::asset_class::non_fungible;
+  member.atomic_supply = 1;
+  member.display_decimals = 0;
+  member.issuer_key = member_public;
+  member.collection_id = collection_id;
+  crypto::hash member_id{};
+  ASSERT_TRUE(cryptonote::assets::derive_asset_id(member, member_id));
+  crypto::hash membership_message{};
+  ASSERT_TRUE(cryptonote::assets::derive_collection_membership_hash(
+    collection_id, member_id, membership_message));
+  crypto::signature membership_signature{};
+  crypto::generate_signature(membership_message, collection_public, collection_secret, membership_signature);
+  ASSERT_TRUE(original.apply_issuance(
+    member, authorize(member, member_public, member_secret), membership_signature, 7, member_id));
+
+  std::vector<uint8_t> snapshot;
+  ASSERT_TRUE(original.encode_snapshot(cryptonote::TESTNET, snapshot));
+  cryptonote::assets::asset_registry restored;
+  ASSERT_TRUE(restored.decode_snapshot(snapshot, cryptonote::TESTNET));
+  EXPECT_EQ(original.known_assets(), restored.known_assets());
+  ASSERT_NE(nullptr, restored.find(collection_id));
+  ASSERT_NE(nullptr, restored.find(member_id));
+  EXPECT_EQ(7u, restored.find(member_id)->issuance_height);
+  EXPECT_TRUE(restored.find(member_id)->collection_signature);
+
+  std::vector<uint8_t> second;
+  ASSERT_TRUE(restored.encode_snapshot(cryptonote::TESTNET, second));
+  EXPECT_EQ(snapshot, second);
+}
+
+TEST(asset_types, registry_snapshot_rejects_corruption_and_preserves_existing_state)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+  auto descriptor = make_descriptor(cryptonote::STAGENET);
+  descriptor.issuer_key = issuer_public;
+
+  cryptonote::assets::asset_registry registry;
+  crypto::hash asset_id{};
+  ASSERT_TRUE(registry.apply_issuance(
+    descriptor, authorize(descriptor, issuer_public, issuer_secret), boost::none, 3, asset_id));
+  std::vector<uint8_t> snapshot;
+  ASSERT_TRUE(registry.encode_snapshot(cryptonote::STAGENET, snapshot));
+
+  auto corrupted = snapshot;
+  corrupted.back() ^= 1;
+  EXPECT_FALSE(registry.decode_snapshot(corrupted, cryptonote::STAGENET));
+  EXPECT_TRUE(registry.contains(asset_id));
+  EXPECT_EQ(1u, registry.size());
+  EXPECT_FALSE(registry.decode_snapshot(snapshot, cryptonote::TESTNET));
+  EXPECT_TRUE(registry.contains(asset_id));
+
+  auto trailing = snapshot;
+  trailing.push_back(0);
+  EXPECT_FALSE(registry.decode_snapshot(trailing, cryptonote::STAGENET));
+  EXPECT_TRUE(registry.contains(asset_id));
+}
+
 TEST(asset_types, registry_rejects_fake_or_missing_collection_authority)
 {
   crypto::public_key issuer_public{};
