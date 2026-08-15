@@ -4,6 +4,7 @@
 
 #include "ringct/bulletproofs_plus.h"
 #include "ringct/rctOps.h"
+#include "ringct/rctSigs.h"
 
 namespace cryptonote
 {
@@ -11,6 +12,8 @@ namespace assets
 {
 namespace
 {
+  constexpr char OWNERSHIP_DOMAIN[] = "MonzeroAssetOwnershipCLSAGV1";
+
   bool fail(std::string* error, const std::string& message)
   {
     if (error)
@@ -25,6 +28,76 @@ namespace
         return false;
     return true;
   }
+
+
+  template<typename T>
+  void append_pod(std::vector<uint8_t>& bytes, const T& value)
+  {
+    const auto* begin = reinterpret_cast<const uint8_t*>(&value);
+    bytes.insert(bytes.end(), begin, begin + sizeof(value));
+  }
+}
+
+bool derive_asset_ownership_message(const asset_ownership_proof& proof,
+  network_type network, const crypto::hash& carrier_prefix_hash,
+  rct::key& message, std::string* error)
+{
+  if (network != MAINNET && network != TESTNET && network != STAGENET)
+    return fail(error, "ownership proof requires a public network");
+  if (proof.asset_id == crypto::null_hash || carrier_prefix_hash == crypto::null_hash)
+    return fail(error, "ownership proof has a zero asset or carrier id");
+  if (proof.ring.size() != CONFIDENTIAL_ASSET_RING_SIZE)
+    return fail(error, "ownership proof has the wrong ring size");
+  std::set<crypto::hash> output_ids;
+  std::vector<uint8_t> bytes(OWNERSHIP_DOMAIN, OWNERSHIP_DOMAIN + sizeof(OWNERSHIP_DOMAIN) - 1);
+  const config_t& config = get_config(network);
+  append_pod(bytes, config.NETWORK_ID);
+  append_pod(bytes, carrier_prefix_hash);
+  append_pod(bytes, proof.asset_id);
+  append_pod(bytes, proof.pseudo_input);
+  for (const asset_ring_member& member : proof.ring)
+  {
+    if (member.asset_id != proof.asset_id)
+      return fail(error, "ownership ring crosses asset domains");
+    if (member.output_id == crypto::null_hash || !output_ids.insert(member.output_id).second)
+      return fail(error, "ownership ring has a zero or duplicate output id");
+    if (!rct::isInMainSubgroup(member.public_output.dest)
+        || !rct::isInMainSubgroup(member.public_output.mask))
+      return fail(error, "ownership ring contains an invalid curve point");
+    append_pod(bytes, member.output_id);
+    append_pod(bytes, member.public_output.dest);
+    append_pod(bytes, member.public_output.mask);
+  }
+  const crypto::hash digest = crypto::cn_fast_hash(bytes.data(), bytes.size());
+  std::memcpy(&message, &digest, sizeof(message));
+  return true;
+}
+
+bool verify_asset_ownership_proof(const asset_ownership_proof& proof,
+  network_type network, const crypto::hash& carrier_prefix_hash,
+  std::string* error)
+{
+  rct::key message;
+  if (!derive_asset_ownership_message(proof, network, carrier_prefix_hash, message, error))
+    return false;
+  if (proof.signature.s.size() != proof.ring.size())
+    return fail(error, "ownership CLSAG response count does not match its ring");
+  rct::clsag signature = proof.signature;
+  std::memcpy(&signature.I, &proof.key_image, sizeof(signature.I));
+  rct::ctkeyV ring;
+  ring.reserve(proof.ring.size());
+  for (const asset_ring_member& member : proof.ring)
+    ring.push_back(member.public_output);
+  try
+  {
+    if (!rct::verRctCLSAGSimple(message, signature, ring, proof.pseudo_input))
+      return fail(error, "invalid asset ownership CLSAG");
+  }
+  catch (const std::exception&)
+  {
+    return fail(error, "malformed asset ownership CLSAG");
+  }
+  return true;
 }
 
 bool verify_confidential_asset_balance(const confidential_asset_balance& balance, std::string* error)
@@ -125,6 +198,59 @@ bool verify_confidential_asset_transaction(
   }
   if (issuance && !found_issuance)
     return fail(error, "issuance has no matching confidential balance group");
+  return true;
+}
+
+bool verify_confidential_asset_transaction_with_ownership(
+  const std::vector<confidential_asset_balance>& balances,
+  const std::vector<asset_ownership_proof>& ownership_proofs,
+  const std::set<crypto::hash>& known_assets,
+  const boost::optional<issuance_descriptor>& issuance,
+  network_type network, const crypto::hash& carrier_prefix_hash,
+  std::string* error)
+{
+  if (!verify_confidential_asset_transaction(balances, known_assets, issuance, error))
+    return false;
+  crypto::hash issued_id{};
+  if (issuance && !derive_asset_id(*issuance, issued_id, error))
+    return false;
+  std::vector<bool> matched(ownership_proofs.size(), false);
+  std::vector<crypto::key_image> key_images;
+  for (const confidential_asset_balance& balance : balances)
+  {
+    const bool is_issuance = issuance && balance.asset_id == issued_id;
+    for (size_t input_index = 0; input_index < balance.pseudo_inputs.size(); ++input_index)
+    {
+      if (is_issuance && input_index == 0)
+        continue;
+      const confidential_pseudo_input& input = balance.pseudo_inputs[input_index];
+      size_t match = ownership_proofs.size();
+      for (size_t proof_index = 0; proof_index < ownership_proofs.size(); ++proof_index)
+      {
+        if (!matched[proof_index]
+            && ownership_proofs[proof_index].asset_id == input.source_asset_id
+            && rct::equalKeys(ownership_proofs[proof_index].pseudo_input, input.commitment))
+        {
+          if (match != ownership_proofs.size())
+            return fail(error, "multiple ownership proofs match one pseudo input");
+          match = proof_index;
+        }
+      }
+      if (match == ownership_proofs.size())
+        return fail(error, "pseudo input has no ownership proof");
+      for (const crypto::key_image& image : key_images)
+        if (image == ownership_proofs[match].key_image)
+          return fail(error, "duplicate asset key image in transaction");
+      key_images.push_back(ownership_proofs[match].key_image);
+      if (!verify_asset_ownership_proof(
+            ownership_proofs[match], network, carrier_prefix_hash, error))
+        return false;
+      matched[match] = true;
+    }
+  }
+  for (const bool used : matched)
+    if (!used)
+      return fail(error, "ownership proof does not match a pseudo input");
   return true;
 }
 }

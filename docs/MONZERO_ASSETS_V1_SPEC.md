@@ -268,12 +268,20 @@ issuance commitments that disagree with the declared supply. Malformed curve
 proofs are converted to deterministic validation failure rather than escaping
 as exceptions.
 
-This layer still does **not** authorize ownership or prevent double spends.
-Production integration requires ring-member references resolved against stored
-asset outputs, asset key images, a domain-separated CLSAG transcript, canonical
-wire serialization, and database indexes for unspent output lookup. Until that
-layer exists and is reviewed, these proofs cannot make an asset transaction
-valid on any Monzero network.
+The next inactive layer adds domain-separated CLSAG ownership proofs. A proof
+commits to the network UUID, carrier transaction, asset ID, pseudo input, and
+all ring output IDs, destination keys, and amount commitments. Rings contain
+exactly 16 members. Verification rejects network/carrier replay, cross-asset
+members, duplicate or zero output IDs, malformed points, key-image tampering,
+and any pseudo input without exactly one matching proof. Key images must also
+be unique inside one transaction.
+
+This still does **not** provide global double-spend prevention: production
+integration must resolve every claimed ring member against the authoritative
+asset-output database and reject key images already spent by earlier blocks or
+the mempool. Canonical wire serialization and reorg-safe output/key-image
+indexes are also outstanding. Until those layers exist and are reviewed, these
+proofs cannot make an asset transaction valid on any Monzero network.
 
 ## 7. Metadata
 
