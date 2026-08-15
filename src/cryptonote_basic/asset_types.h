@@ -60,6 +60,21 @@ namespace assets
     const crypto::signature& signature,
     std::string* error = nullptr);
 
+  constexpr uint8_t ISSUANCE_PAYLOAD_VERSION = 1;
+
+  // Inactive, bounded wire prototype for an authenticated fixed-supply
+  // issuance. It is not yet a transaction field or consensus type.
+  struct issuance_payload
+  {
+    uint8_t version = ISSUANCE_PAYLOAD_VERSION;
+    issuance_descriptor descriptor;
+    crypto::signature issuer_signature{};
+    boost::optional<crypto::signature> collection_signature;
+  };
+
+  bool encode_issuance_payload(const issuance_payload& payload, std::vector<uint8_t>& encoded, std::string* error = nullptr);
+  bool decode_issuance_payload(const std::vector<uint8_t>& encoded, issuance_payload& payload, std::string* error = nullptr);
+
   struct asset_record
   {
     issuance_descriptor descriptor;
@@ -79,6 +94,7 @@ namespace assets
       uint64_t height,
       crypto::hash& asset_id,
       std::string* error = nullptr);
+    bool apply_issuance(const issuance_payload& payload, uint64_t height, crypto::hash& asset_id, std::string* error = nullptr);
     void detach(uint64_t height);
     bool contains(const crypto::hash& asset_id) const;
     const asset_record* find(const crypto::hash& asset_id) const;

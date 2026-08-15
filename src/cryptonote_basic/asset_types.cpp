@@ -18,6 +18,7 @@ namespace assets
     constexpr char DOMAIN[] = "MonzeroAssetIssuanceV2";
     constexpr char ISSUANCE_AUTHORIZATION_DOMAIN[] = "MonzeroAssetIssuanceAuthorizationV1";
     constexpr char COLLECTION_MEMBERSHIP_DOMAIN[] = "MonzeroCollectionMembershipV1";
+    constexpr char ISSUANCE_PAYLOAD_DOMAIN[] = "MonzeroAssetIssuancePayloadV1";
 
     bool fail(std::string* error, const char* message)
     {
@@ -255,6 +256,91 @@ namespace assets
     return true;
   }
 
+  bool encode_issuance_payload(const issuance_payload& payload, std::vector<uint8_t>& encoded, std::string* error)
+  {
+    if (payload.version != ISSUANCE_PAYLOAD_VERSION)
+      return fail(error, "unsupported issuance payload version");
+
+    std::vector<uint8_t> descriptor;
+    if (!encode_issuance_descriptor(payload.descriptor, descriptor, error))
+      return false;
+    if (descriptor.size() > std::numeric_limits<uint16_t>::max())
+      return fail(error, "issuance descriptor does not fit its bounded payload");
+    if (!verify_issuance_authorization(payload.descriptor, payload.issuer_signature, error))
+      return false;
+
+    const bool claims_collection = payload.descriptor.collection_id != crypto::null_hash;
+    if (claims_collection != static_cast<bool>(payload.collection_signature))
+      return fail(error, claims_collection
+        ? "collection membership signature is missing"
+        : "unexpected collection signature for an uncollected asset");
+
+    encoded.clear();
+    encoded.reserve(sizeof(ISSUANCE_PAYLOAD_DOMAIN) - 1 + 1 + 2 + descriptor.size()
+      + sizeof(payload.issuer_signature) + 1
+      + (payload.collection_signature ? sizeof(*payload.collection_signature) : 0));
+    encoded.insert(encoded.end(), ISSUANCE_PAYLOAD_DOMAIN,
+      ISSUANCE_PAYLOAD_DOMAIN + sizeof(ISSUANCE_PAYLOAD_DOMAIN) - 1);
+    encoded.push_back(payload.version);
+    append_u16_le(encoded, static_cast<uint16_t>(descriptor.size()));
+    encoded.insert(encoded.end(), descriptor.begin(), descriptor.end());
+    append_pod(encoded, payload.issuer_signature);
+    encoded.push_back(payload.collection_signature ? 1 : 0);
+    if (payload.collection_signature)
+      append_pod(encoded, *payload.collection_signature);
+    return true;
+  }
+
+  bool decode_issuance_payload(const std::vector<uint8_t>& encoded, issuance_payload& payload, std::string* error)
+  {
+    constexpr size_t domain_size = sizeof(ISSUANCE_PAYLOAD_DOMAIN) - 1;
+    constexpr size_t minimum_size = domain_size + 1 + 2 + sizeof(crypto::signature) + 1;
+    if (encoded.size() < minimum_size)
+      return fail(error, "truncated issuance payload");
+    if (!std::equal(ISSUANCE_PAYLOAD_DOMAIN,
+          ISSUANCE_PAYLOAD_DOMAIN + domain_size, encoded.begin()))
+      return fail(error, "invalid issuance payload domain");
+
+    issuance_payload parsed;
+    size_t offset = domain_size;
+    parsed.version = encoded[offset++];
+    if (parsed.version != ISSUANCE_PAYLOAD_VERSION)
+      return fail(error, "unsupported issuance payload version");
+
+    uint16_t descriptor_size = 0;
+    if (!read_u16_le(encoded, offset, descriptor_size)
+        || offset > encoded.size() || descriptor_size > encoded.size() - offset)
+      return fail(error, "invalid issuance payload descriptor length");
+    const std::vector<uint8_t> descriptor_bytes(
+      encoded.begin() + offset, encoded.begin() + offset + descriptor_size);
+    offset += descriptor_size;
+    if (!decode_issuance_descriptor(descriptor_bytes, parsed.descriptor, error))
+      return false;
+    if (!read_pod(encoded, offset, parsed.issuer_signature))
+      return fail(error, "truncated issuer authorization signature");
+    if (offset >= encoded.size())
+      return fail(error, "truncated collection signature flag");
+
+    const uint8_t has_collection_signature = encoded[offset++];
+    if (has_collection_signature > 1)
+      return fail(error, "invalid collection signature flag");
+    if (has_collection_signature)
+    {
+      crypto::signature signature{};
+      if (!read_pod(encoded, offset, signature))
+        return fail(error, "truncated collection authorization signature");
+      parsed.collection_signature = signature;
+    }
+    if (offset != encoded.size())
+      return fail(error, "issuance payload has trailing bytes");
+
+    std::vector<uint8_t> canonical;
+    if (!encode_issuance_payload(parsed, canonical, error) || canonical != encoded)
+      return fail(error, "issuance payload encoding is not canonical");
+    payload = std::move(parsed);
+    return true;
+  }
+
   bool asset_registry::apply_issuance(
     const issuance_descriptor& descriptor,
     const crypto::signature& issuer_signature,
@@ -295,6 +381,21 @@ namespace assets
 
     records_.emplace(asset_id, asset_record{descriptor, height});
     return true;
+  }
+
+  bool asset_registry::apply_issuance(
+    const issuance_payload& payload,
+    uint64_t height,
+    crypto::hash& asset_id,
+    std::string* error)
+  {
+    return apply_issuance(
+      payload.descriptor,
+      payload.issuer_signature,
+      payload.collection_signature,
+      height,
+      asset_id,
+      error);
   }
 
   void asset_registry::detach(uint64_t height)

@@ -135,6 +135,15 @@ trailing bytes, mismatched lengths, and any encoding that does not reproduce
 the canonical byte sequence exactly. This parser is still not connected to
 transaction or block deserialization.
 
+An additional inactive issuance-payload envelope binds the descriptor to its
+issuer authorization and, when collection membership is claimed, requires an
+explicit collection authorization slot. Its decoder is length-bounded,
+canonical, verifies the issuer signature, rejects every truncated prefix,
+rejects invalid signature flags and trailing bytes, and prevents collection
+signatures from being silently omitted or attached to unrelated issuance.
+Collection-controller verification still requires the future persistent
+registry lookup and therefore remains part of consensus integration work.
+
 ### 4.2 Inactive registry and reorganisation model
 
 The prototype includes an in-memory reference registry, disconnected from the

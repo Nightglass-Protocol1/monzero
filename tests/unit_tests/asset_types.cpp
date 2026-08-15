@@ -117,6 +117,73 @@ TEST(asset_types, descriptor_decoder_rejects_truncation_and_noncanonical_lengths
   EXPECT_FALSE(cryptonote::assets::decode_issuance_descriptor(oversized, decoded, &error));
 }
 
+TEST(asset_types, authenticated_issuance_payload_round_trip)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+
+  cryptonote::assets::issuance_payload original;
+  original.descriptor = make_descriptor(cryptonote::TESTNET);
+  original.descriptor.issuer_key = issuer_public;
+  original.issuer_signature = authorize(original.descriptor, issuer_public, issuer_secret);
+
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_issuance_payload(original, encoded));
+  cryptonote::assets::issuance_payload decoded;
+  ASSERT_TRUE(cryptonote::assets::decode_issuance_payload(encoded, decoded));
+  EXPECT_EQ(original.descriptor.issuer_key, decoded.descriptor.issuer_key);
+  EXPECT_EQ(original.issuer_signature, decoded.issuer_signature);
+  EXPECT_FALSE(decoded.collection_signature);
+
+  cryptonote::assets::asset_registry registry;
+  crypto::hash asset_id{};
+  EXPECT_TRUE(registry.apply_issuance(decoded, 1, asset_id));
+  EXPECT_TRUE(registry.contains(asset_id));
+}
+
+TEST(asset_types, issuance_payload_rejects_tampering_and_signature_shape_errors)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+
+  cryptonote::assets::issuance_payload payload;
+  payload.descriptor = make_descriptor(cryptonote::STAGENET);
+  payload.descriptor.issuer_key = issuer_public;
+  payload.issuer_signature = authorize(payload.descriptor, issuer_public, issuer_secret);
+
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_issuance_payload(payload, encoded));
+  cryptonote::assets::issuance_payload decoded;
+  std::string error;
+
+  for (size_t size = 0; size < encoded.size(); ++size)
+  {
+    const std::vector<uint8_t> truncated(encoded.begin(), encoded.begin() + size);
+    EXPECT_FALSE(cryptonote::assets::decode_issuance_payload(truncated, decoded, &error))
+      << "accepted truncated payload size " << size;
+  }
+
+  auto tampered = encoded;
+  tampered[tampered.size() - 2] ^= 1;
+  EXPECT_FALSE(cryptonote::assets::decode_issuance_payload(tampered, decoded, &error));
+
+  payload.collection_signature = crypto::signature{};
+  EXPECT_FALSE(cryptonote::assets::encode_issuance_payload(payload, encoded, &error));
+
+  auto member = make_descriptor(cryptonote::STAGENET);
+  member.type = cryptonote::assets::asset_class::non_fungible;
+  member.atomic_supply = 1;
+  member.display_decimals = 0;
+  member.issuer_key = issuer_public;
+  member.collection_id.data[0] = 1;
+  payload.descriptor = member;
+  payload.issuer_signature = authorize(member, issuer_public, issuer_secret);
+  payload.collection_signature = boost::none;
+  EXPECT_FALSE(cryptonote::assets::encode_issuance_payload(payload, encoded, &error));
+}
+
 TEST(asset_types, network_domain_separation)
 {
   auto mainnet = make_descriptor(cryptonote::MAINNET);
