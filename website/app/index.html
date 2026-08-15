@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Monzero beta asset, NFT and non-custodial swap workspace.">
+  <meta name="theme-color" content="#07110f">
+  <title>Monzero Studio — Assets, NFTs and swaps</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="https://monzero.org"><span>MZ</span> MONZERO</a>
+    <nav aria-label="Product navigation">
+      <a href="https://monzero.org/explorer/">Explorer</a>
+      <a href="https://code.monzero.org/">Source</a>
+      <a href="https://monzero.org">Network</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow">Protocol laboratory · Testnet first</p>
+        <h1>Create without pretending.</h1>
+        <p>Monzero Studio is the future non-custodial workspace for fixed-supply tokens, NFTs, collections and atomic swaps. Transaction submission stays locked until the corresponding consensus and wallet code is available.</p>
+      </div>
+      <aside class="network-card">
+        <span class="label">Current public node</span>
+        <strong id="node-state">Checking…</strong>
+        <dl>
+          <div><dt>Height</dt><dd id="height">—</dd></div>
+          <div><dt>Peers</dt><dd id="peers">—</dd></div>
+          <div><dt>Asset protocol</dt><dd class="amber">Inactive</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="workspace">
+      <div class="tabs" role="tablist" aria-label="Studio tools">
+        <button role="tab" aria-selected="true" data-panel="token">Token creator</button>
+        <button role="tab" aria-selected="false" data-panel="nft">NFT studio</button>
+        <button role="tab" aria-selected="false" data-panel="collections">Collections</button>
+        <button role="tab" aria-selected="false" data-panel="swap">Atomic swap</button>
+      </div>
+
+      <article class="panel active" id="token" role="tabpanel">
+        <div class="panel-copy"><p class="eyebrow">Fixed supply</p><h2>Issue a token</h2><p>Supply is created once. No administrator mint, freeze, blacklist or clawback authority exists in V1.</p></div>
+        <form>
+          <label>Name <input type="text" maxlength="64" placeholder="Example Token" disabled></label>
+          <label>Symbol <input type="text" maxlength="12" placeholder="EXM" disabled></label>
+          <div class="split"><label>Atomic supply <input type="number" placeholder="1000000" disabled></label><label>Decimals <input type="number" min="0" max="11" placeholder="8" disabled></label></div>
+          <label>Metadata content hash <input type="text" placeholder="32-byte hash" disabled></label>
+          <button type="button" disabled>Awaiting testnet RPC</button>
+        </form>
+      </article>
+
+      <article class="panel" id="nft" role="tabpanel" hidden>
+        <div class="panel-copy"><p class="eyebrow">One indivisible unit</p><h2>Mint an NFT</h2><p>Only a bounded metadata hash is committed to consensus. Images and descriptions remain off-chain and untrusted.</p></div>
+        <form>
+          <label>Title <input type="text" maxlength="96" placeholder="Artifact 001" disabled></label>
+          <label>Collection ID <input type="text" placeholder="Optional collection asset ID" disabled></label>
+          <label>Metadata URI <input type="url" placeholder="ipfs://…" disabled></label>
+          <label>Metadata content hash <input type="text" placeholder="32-byte hash" disabled></label>
+          <button type="button" disabled>Awaiting testnet RPC</button>
+        </form>
+      </article>
+
+      <article class="panel" id="collections" role="tabpanel" hidden>
+        <div class="panel-copy"><p class="eyebrow">Authenticated membership</p><h2>Create a collection</h2><p>Members require a signature from the collection controller over the exact member asset ID.</p></div>
+        <form>
+          <label>Collection name <input type="text" maxlength="96" placeholder="Monzero Originals" disabled></label>
+          <label>Metadata URI <input type="url" placeholder="ipfs://…" disabled></label>
+          <label>Metadata content hash <input type="text" placeholder="32-byte hash" disabled></label>
+          <button type="button" disabled>Awaiting testnet RPC</button>
+        </form>
+      </article>
+
+      <article class="panel" id="swap" role="tabpanel" hidden>
+        <div class="panel-copy"><p class="eyebrow">Non-custodial only</p><h2>Atomic swap</h2><p>No deposits and no operator custody. Swap activation requires an audited protocol ensuring either both sides settle or neither side does.</p></div>
+        <form>
+          <div class="split"><label>You offer <input type="text" placeholder="Amount and asset ID" disabled></label><label>You request <input type="text" placeholder="Amount and asset ID" disabled></label></div>
+          <label>Counterparty or signed offer <input type="text" placeholder="Public offer payload" disabled></label>
+          <label>Expiry height <input type="number" placeholder="Block height" disabled></label>
+          <button type="button" disabled>Swap protocol not active</button>
+        </form>
+      </article>
+    </section>
+
+    <section class="gate">
+      <p class="eyebrow">Activation gates</p>
+      <h2>What remains before funds are accepted.</h2>
+      <ol>
+        <li><span>01</span>Persistent, reorg-safe asset state</li>
+        <li><span>02</span>Confidential ownership and conservation proofs</li>
+        <li><span>03</span>Wallet scanning, restoration and signing</li>
+        <li><span>04</span>Adversarial testnet and independent review</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer><span>Monzero Studio beta</span><span>No deposits · No custody · No active issuance</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
