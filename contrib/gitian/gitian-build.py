@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 
-gsigs = 'https://github.com/monero-project/gitian.sigs.git'
+gsigs = os.environ.get('MONZERO_GITIAN_SIGS_URL')
 gbrepo = 'https://github.com/devrandom/gitian-builder.git'
 
 platforms = {'l': ['Linux', 'linux', 'tar.bz2'],
@@ -23,8 +23,10 @@ def setup():
         programs += ['lxc', 'debootstrap']
     if not args.no_apt:
         subprocess.check_call(['sudo', 'apt-get', 'install', '-qq'] + programs)
-    if not os.path.isdir('sigs'):
+    if not os.path.isdir('sigs') and gsigs:
         subprocess.check_call(['git', 'clone', gsigs, 'sigs'])
+    if not os.path.isdir('sigs'):
+        raise RuntimeError('A sigs checkout or MONZERO_GITIAN_SIGS_URL is required')
     if not os.path.isdir('builder'):
         subprocess.check_call(['git', 'clone', gbrepo, 'builder'])
     os.chdir('builder')
@@ -69,7 +71,7 @@ def rebuild():
         infile = 'inputs/monero/contrib/gitian/gitian-' + tag_name + '.yml'
         subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'monero='+args.commit, '--url', 'monero='+args.url, infile])
         subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-'+tag_name, '--destination', '../sigs/', infile])
-        subprocess.check_call('mv build/out/monero-*.' + suffix + ' ../out/'+args.version, shell=True)
+        subprocess.check_call('mv build/out/monzero-*.' + suffix + ' ../out/'+args.version, shell=True)
         print('Moving var/install.log to var/install-' + tag_name + '.log')
         subprocess.check_call('mv var/install.log var/install-' + tag_name + '.log', shell=True)
         print('Moving var/build.log to var/build-' + tag_name + '.log')
@@ -80,7 +82,8 @@ def rebuild():
     if args.commit_files:
         print('\nCommitting '+args.version+' Unsigned Sigs\n')
         os.chdir('sigs')
-        for i, v in platforms:
+        for i in args.os:
+            v = platforms[i]
             subprocess.check_call(['git', 'add', args.version+'-'+v[1]+'/'+args.signer])
         subprocess.check_call(['git', 'commit', '-m', 'Add '+args.version+' unsigned sigs for '+args.signer])
         os.chdir(workdir)
@@ -102,7 +105,8 @@ def verify():
     global args, workdir
     os.chdir('builder')
 
-    for i, v in platforms:
+    for i in args.os:
+        v = platforms[i]
         print('\nVerifying v'+args.version+' '+v[0]+'\n')
         subprocess.check_call(['bin/gverify', '-v', '-d', '../sigs/', '-r', args.version+'-'+v[1], 'inputs/monero/contrib/gitian/gitian-'+v[1]+'.yml'])
     os.chdir(workdir)
@@ -113,7 +117,7 @@ def main():
     parser = argparse.ArgumentParser(description='Script for running full Gitian builds.', usage='%(prog)s [options] signer version')
     parser.add_argument('-c', '--commit', action='store_true', dest='commit', help='Indicate that the version argument is for a commit or branch')
     parser.add_argument('-p', '--pull', action='store_true', dest='pull', help='Indicate that the version argument is the number of a github repository pull request')
-    parser.add_argument('-u', '--url', dest='url', default='https://github.com/monero-project/monero', help='Specify the URL of the repository. Default is %(default)s')
+    parser.add_argument('-u', '--url', dest='url', help='Specify the Monzero source repository URL (required)')
     parser.add_argument('-v', '--verify', action='store_true', dest='verify', help='Verify the Gitian build')
     parser.add_argument('-b', '--build', action='store_true', dest='build', help='Do a Gitian build')
     parser.add_argument('-B', '--buildsign', action='store_true', dest='buildsign', help='Build both signed and unsigned binaries')
@@ -133,6 +137,9 @@ def main():
 
     args = parser.parse_args()
     workdir = os.getcwd()
+
+    if not args.url:
+        parser.error('--url is required; refusing to build from an implicit upstream repository')
 
     args.is_bionic = b'bionic' in subprocess.check_output(['lsb_release', '-cs'])
 

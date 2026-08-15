@@ -1,5 +1,5 @@
 ---
-name: "monero-win-0.18"
+name: "monzero-win-0.18"
 enable_cache: true
 suites:
 - "bionic"
@@ -35,7 +35,7 @@ alternatives:
   package: "x86_64-w64-mingw32-gcc"
   path: "/usr/bin/x86_64-w64-mingw32-gcc-posix"
 remotes:
-- "url": "https://github.com/monero-project/monero.git"
+- "url": "https://example.invalid/monzero.git"
   "dir": "monero"
 files: []
 script: |
@@ -128,9 +128,8 @@ script: |
     cmake .. -DCMAKE_TOOLCHAIN_FILE=${BASEPREFIX}/${i}/share/toolchain.cmake
     make ${MAKEOPTS}
     cp ../LICENSE ../README.md ../docs/ANONYMITY_NETWORKS.md bin
-    DISTNAME=monero-${i}-${version}
+    DISTNAME=monzero-${i}-${version}
     mv bin ${DISTNAME}
     find ${DISTNAME}/ | sort | zip -X@ ${OUTDIR}/${DISTNAME}.zip
     cd .. && rm -rf build
   done
-

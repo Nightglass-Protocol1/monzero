@@ -77,6 +77,14 @@ reproducible. `RELEASE_STRICT=1` additionally rejects dirty manifests,
 unverified build reproducibility, dynamically linked binaries, debug
 information, and unstripped executables.
 
+Gitian builds must be given the explicit Monzero source URL with `--url`.
+There is deliberately no implicit upstream fallback. During initial setup,
+provide the independent Monzero signatures repository through
+`MONZERO_GITIAN_SIGS_URL`, or place an existing verified checkout at `sigs/`.
+The descriptor's `example.invalid` source is a fail-closed placeholder that is
+overridden by Gitian's `--url monero=<explicit-url>` input. Do not replace it
+with an upstream project or publish unsigned Gitian results.
+
 ## Deployment
 
 - [ ] Public node binaries backed up before replacement
