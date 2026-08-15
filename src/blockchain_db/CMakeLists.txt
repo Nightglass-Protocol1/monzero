@@ -27,6 +27,7 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set(blockchain_db_sources
+  asset_db.cpp
   blockchain_db.cpp
   lmdb/db_lmdb.cpp
   )

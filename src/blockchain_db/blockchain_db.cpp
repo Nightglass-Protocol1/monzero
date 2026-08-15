@@ -316,6 +316,10 @@ void BlockchainDB::pop_block(block& blk, std::vector<transaction>& txs)
 {
   blk = get_top_block();
 
+  // Asset records created by the detached block are consensus state and must
+  // disappear in the same write transaction as the native block and tx data.
+  remove_asset_records_from_height(height() - 1);
+
   remove_block();
 
   for (const auto& h : boost::adaptors::reverse(blk.tx_hashes))

@@ -37,6 +37,7 @@
 
 #include "string_tools.h"
 #include "blockchain_db/blockchain_db.h"
+#include "blockchain_db/asset_db.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 
@@ -46,6 +47,27 @@ using epee::string_tools::pod_to_hex;
 #define ASSERT_HASH_EQ(a,b) ASSERT_EQ(pod_to_hex(a), pod_to_hex(b))
 
 namespace {  // anonymous namespace
+
+assets::transaction_extension make_asset_extension(const crypto::hash& carrier)
+{
+  crypto::public_key public_key{};
+  crypto::secret_key secret_key{};
+  crypto::generate_keys(public_key, secret_key);
+  assets::transaction_extension extension;
+  extension.network = TESTNET;
+  extension.carrier_prefix_hash = carrier;
+  extension.issuance.descriptor.network = TESTNET;
+  extension.issuance.descriptor.issuer_key = public_key;
+  extension.issuance.descriptor.atomic_supply = 1000000;
+  extension.issuance.descriptor.display_decimals = 2;
+  extension.issuance.descriptor.metadata_reference = "ipfs://monzero-db-test";
+  extension.issuance.descriptor.issuance_nonce.data[0] = carrier.data[0];
+  crypto::hash message{};
+  if (!assets::derive_issuance_authorization_hash(extension.issuance.descriptor, message))
+    throw std::runtime_error("failed to derive issuance authorization");
+  crypto::generate_signature(message, public_key, secret_key, extension.issuance.issuer_signature);
+  return extension;
+}
 
 const std::vector<std::string> t_blocks =
   {
@@ -293,6 +315,76 @@ TYPED_TEST(BlockchainDBTest, AssetRecordsPersistAndRollbackAtomically)
   ASSERT_TRUE(this->m_db->get_asset_record(first, height, payload));
   ASSERT_FALSE(this->m_db->get_asset_record(aborted, height, payload));
   ASSERT_FALSE(this->m_db->get_asset_record(later, height, payload));
+}
+
+TYPED_TEST(BlockchainDBTest, AssetBlockExtensionsRebuildFromPersistentState)
+{
+  const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+  const std::string dir_path = temp_path.string();
+  this->set_prefix(dir_path);
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+  this->get_filenames();
+
+  crypto::hash first_carrier{}, second_carrier{};
+  first_carrier.data[0] = 0x31;
+  second_carrier.data[0] = 0x32;
+  const auto first = make_asset_extension(first_carrier);
+  const auto second = make_asset_extension(second_carrier);
+  std::vector<crypto::hash> ids;
+  std::string error;
+
+  this->m_db->block_wtxn_start();
+  ASSERT_TRUE(assets::apply_block_extensions_to_db(*this->m_db, {first}, {first_carrier}, TESTNET, 20, ids, &error)) << error;
+  this->m_db->block_wtxn_stop();
+  ASSERT_EQ(1u, ids.size());
+
+  this->m_db->block_wtxn_start();
+  ASSERT_TRUE(assets::apply_block_extensions_to_db(*this->m_db, {second}, {second_carrier}, TESTNET, 21, ids, &error)) << error;
+  this->m_db->block_wtxn_stop();
+
+  assets::asset_registry registry;
+  ASSERT_TRUE(assets::load_registry_from_db(*this->m_db, TESTNET, registry, &error)) << error;
+  ASSERT_EQ(2u, registry.size());
+  ASSERT_FALSE(assets::load_registry_from_db(*this->m_db, MAINNET, registry, &error));
+
+  ASSERT_NO_THROW(this->m_db->remove_asset_records_from_height(21));
+  ASSERT_TRUE(assets::load_registry_from_db(*this->m_db, TESTNET, registry, &error)) << error;
+  ASSERT_EQ(1u, registry.size());
+
+  auto invalid = second;
+  invalid.carrier_prefix_hash.data[1] ^= 1;
+  this->m_db->block_wtxn_start();
+  ASSERT_FALSE(assets::apply_block_extensions_to_db(*this->m_db, {invalid}, {second_carrier}, TESTNET, 22, ids, &error));
+  this->m_db->block_wtxn_abort();
+  ASSERT_TRUE(assets::load_registry_from_db(*this->m_db, TESTNET, registry, &error));
+  ASSERT_EQ(1u, registry.size());
+}
+
+TYPED_TEST(BlockchainDBTest, PopBlockRemovesAssetStateAtDetachedHeight)
+{
+  const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+  const std::string dir_path = temp_path.string();
+  this->set_prefix(dir_path);
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+  this->get_filenames();
+  this->init_hard_fork();
+
+  crypto::hash id{};
+  id.data[0] = 0xa5;
+  const blobdata payload("detached asset");
+  block popped;
+  std::vector<transaction> transactions;
+  {
+    db_wtxn_guard guard(this->m_db);
+    ASSERT_NO_THROW(this->m_db->add_block(this->m_blocks[0], t_sizes[0], t_sizes[0], t_diffs[0], t_coins[0], this->m_txs[0]));
+    ASSERT_NO_THROW(this->m_db->add_block(this->m_blocks[1], t_sizes[1], t_sizes[1], t_diffs[1], t_coins[1], this->m_txs[1]));
+    ASSERT_NO_THROW(this->m_db->add_asset_record(id, 1, blobdata_ref(payload)));
+  }
+  ASSERT_NO_THROW(this->m_db->pop_block(popped, transactions));
+  uint64_t height = 0;
+  blobdata restored;
+  ASSERT_FALSE(this->m_db->get_asset_record(id, height, restored));
+  ASSERT_EQ(1u, this->m_db->height());
 }
 
 TYPED_TEST(BlockchainDBTest, AddBlock)
