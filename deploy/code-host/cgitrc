@@ -1,0 +1,21 @@
+css=/assets/cgit.css
+logo=/assets/cgit.png
+favicon=/assets/favicon.ico
+root-title=Monzero Source
+root-desc=Public source code and reproducible-build assertions for Monzero
+virtual-root=/
+clone-prefix=https://code.monzero.org
+enable-http-clone=1
+enable-index-owner=0
+enable-index-links=1
+enable-log-filecount=1
+enable-log-linecount=1
+enable-commit-graph=1
+max-repo-count=20
+snapshots=tar.gz tar.xz zip
+readme=:README.md
+readme=:README
+remove-suffix=0
+section-from-path=0
+scan-path=/srv/git
+

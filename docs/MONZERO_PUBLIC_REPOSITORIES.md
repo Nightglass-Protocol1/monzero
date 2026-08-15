@@ -1,12 +1,24 @@
 # Monzero public repository setup
 
-Three Monzero-owned repositories are required before public reproducible builds:
+Three Monzero-owned, read-only public repositories are deployed at
+`https://code.monzero.org`:
 
 | Repository | Purpose | Initial local source |
 | --- | --- | --- |
 | `monzero-core` | Node, wallet CLI, consensus code and release tooling | `/home/pinhead/Projects/Monero-Fork-backups/git-remotes/monzero-core.git` |
 | `monzero-gui` | Desktop GUI | `/home/pinhead/Projects/Monzero-Fork-backups/git-remotes/monzero-gui.git` |
 | `monzero-gitian-sigs` | Independent reproducible-build assertions and builder public keys | `/home/pinhead/Projects/Monzero-Fork-backups/git-remotes/monzero-gitian-sigs.git` |
+
+Public clone URLs:
+
+- `https://code.monzero.org/monzero-core.git`
+- `https://code.monzero.org/monzero-gui.git`
+- `https://code.monzero.org/monzero-gitian-sigs.git`
+
+The VPS publishes source browsing through Cgit and cloning through Git smart
+HTTP. HTTP redirects to HTTPS, certificate renewal is enabled and tested, and
+HTTP write routes are deliberately absent. The repositories retain local
+backup `origin` remotes and use `public` for this read-only deployment.
 
 Do not publish these under an individual contributor's account if a Monzero
 organization is intended. Create the organization first, enable multifactor
@@ -26,9 +38,14 @@ Protect `main` in all three repositories:
 Core release tags should be annotated and signed. Do not allow an automated
 workflow to possess a human builder's private Gitian signing key.
 
-## Publishing the prepared repositories
+## Publishing updates
 
-After creating empty public repositories, replace the example URLs and push:
+The public service is intentionally read-only. Commit and push to each local
+backup `origin`, then deploy its bare mirror to `/srv/git` over the restricted
+administrator SSH connection. Do not expose `git-receive-pack` through Nginx.
+
+The following is retained as the future migration pattern if the projects move
+to a hosted forge with protected write access:
 
 ```bash
 git remote set-url origin https://HOST/MONZERO_ORG/monzero-core.git
@@ -63,12 +80,11 @@ artifacts before those artifacts are marked verified.
 The Gitian command requires an explicit source repository:
 
 ```bash
-MONZERO_GITIAN_SIGS_URL=https://HOST/MONZERO_ORG/monzero-gitian-sigs.git \
+MONZERO_GITIAN_SIGS_URL=https://code.monzero.org/monzero-gitian-sigs.git \
   contrib/gitian/gitian-build.py --setup --docker \
-  --url https://HOST/MONZERO_ORG/monzero-core.git BUILDER RELEASE
+  --url https://code.monzero.org/monzero-core.git BUILDER RELEASE
 ```
 
 Asset/NFT consensus functionality remains inactive throughout repository and
 release setup. Its activation requires the separate review and public-testnet
 gates in `MONZERO_PHASE0_STABILIZATION.md`.
-
