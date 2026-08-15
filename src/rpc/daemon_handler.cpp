@@ -562,9 +562,11 @@ namespace rpc
 
     res.info.alt_blocks_count = m_restricted ? 0 : chain.get_alternative_blocks_count();
 
-    uint64_t total_conn = m_restricted ? 0 : m_p2p.get_public_connections_count();
-    res.info.outgoing_connections_count = m_restricted ? 0 : m_p2p.get_public_outgoing_connections_count();
-    res.info.incoming_connections_count = m_restricted ? 0 : total_conn - res.info.outgoing_connections_count;
+    // Publish aggregate counts while keeping peer identities unavailable from
+    // restricted RPC.
+    uint64_t total_conn = m_p2p.get_public_connections_count();
+    res.info.outgoing_connections_count = m_p2p.get_public_outgoing_connections_count();
+    res.info.incoming_connections_count = total_conn - res.info.outgoing_connections_count;
 
     res.info.white_peerlist_size = m_restricted ? 0 : m_p2p.get_public_white_peers_count();
 

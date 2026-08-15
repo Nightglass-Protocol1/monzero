@@ -295,12 +295,11 @@ namespace nodetool
     virtual void clear_used_stripe_peers();
 
   private:
-    const std::vector<std::string> m_seed_nodes_list =
-    { "seeds.moneroseeds.se"
-    , "seeds.moneroseeds.ae.org"
-    , "seeds.moneroseeds.ch"
-    , "seeds.moneroseeds.li"
-    };
+    // Monzero-controlled DNS bootstrap nodes. The network's default P2P port
+    // is appended after each hostname is resolved.
+    // Monzero launchers configure node.monzero.org as a persistent priority
+    // peer. Do not also create an upstream-style, short-lived seed connection.
+    const std::vector<std::string> m_seed_nodes_list = {};
 
     bool islimitup=false;
     bool islimitdown=false;
@@ -546,4 +545,3 @@ namespace nodetool
 }
 
 POP_WARNINGS
-

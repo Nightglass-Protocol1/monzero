@@ -703,34 +703,8 @@ namespace nodetool
   std::set<std::string> node_server<t_payload_net_handler>::get_ip_seed_nodes() const
   {
     std::set<std::string> full_addrs;
-    if (m_nettype == cryptonote::TESTNET)
-    {
-      full_addrs.insert("176.9.0.187:28080");
-      full_addrs.insert("192.99.8.110:28080");
-      full_addrs.insert("37.187.74.171:28080");
-      full_addrs.insert("88.99.195.15:28080");
-      full_addrs.insert("5.104.84.64:28080");
-    }
-    else if (m_nettype == cryptonote::STAGENET)
-    {
-      full_addrs.insert("176.9.0.187:38080");
-      full_addrs.insert("192.99.8.110:38080");
-      full_addrs.insert("37.187.74.171:38080");
-      full_addrs.insert("88.99.195.15:38080");
-      full_addrs.insert("5.104.84.64:38080");
-    }
-    else if (m_nettype == cryptonote::FAKECHAIN)
-    {
-    }
-    else
-    {
-      full_addrs.insert("176.9.0.187:18080");
-      full_addrs.insert("88.198.163.90:18080");
-      full_addrs.insert("192.99.8.110:18080");
-      full_addrs.insert("37.187.74.171:18080");
-      full_addrs.insert("88.99.195.15:18080");
-      full_addrs.insert("5.104.84.64:18080");
-    }
+    // Monzero launchers configure the bootstrap node as a persistent priority
+    // peer. Keeping the public node here would make that node connect to itself.
     return full_addrs;
   }
   //-----------------------------------------------------------------------------------
@@ -858,27 +832,8 @@ namespace nodetool
     case epee::net_utils::zone::public_:
       return get_dns_seed_nodes();
     case epee::net_utils::zone::tor:
-      if (m_nettype == cryptonote::MAINNET)
-      {
-        return {
-          "zbjkbsxc5munw3qusl7j2hpcmikhqocdf4pqhnhtpzw5nt5jrmofptid.onion:18083",
-          "plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:18083",
-          "plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:18083",
-          "plowsofe6cleftfmk2raiw5h2x66atrik3nja4bfd3zrfa2hdlgworad.onion:18083",
-          "aclc4e2jhhtr44guufbnwk5bzwhaecinax4yip4wr4tjn27sjsfg6zqd.onion:18083",
-          "lykcas4tus7mkm4bhsgqe4drtd4awi7gja24goscc47xfgzj54yofyqd.onion:18083",
-        };
-      }
       return {};
     case epee::net_utils::zone::i2p:
-      if (m_nettype == cryptonote::MAINNET)
-      {
-        return {
-          "uqj3aphckqtjsitz7kxx5flqpwjlq5ppr3chazfued7xucv3nheq.b32.i2p",
-          "vdmnehdjkpkg57nthgnjfuaqgku673r5bpbqg56ix6fyqoywgqrq.b32.i2p",
-          "ugnlcdciyhghh2zert7c3kl4biwkirc43ke33jiy5slnd3mv2trq.b32.i2p",
-        };
-      }
       return {};
     default:
       break;
@@ -1855,7 +1810,11 @@ namespace nodetool
         pe_seed.adr = server.m_seed_nodes[current_index];
         if (is_peer_used(pe_seed))
           is_connected_to_at_least_one_seed_node = true;
-        else if (try_to_connect_and_handshake_with_new_peer(server.m_seed_nodes[current_index], true))
+        // Monzero currently has a small bootstrap network, so retain a seed
+        // connection as a normal peer instead of using it only to fetch a
+        // peer list. This allows a fresh node to synchronize when the seed is
+        // the only publicly reachable peer.
+        else if (try_to_connect_and_handshake_with_new_peer(server.m_seed_nodes[current_index], false))
           break;
         if(++try_count > server.m_seed_nodes.size())
         {
@@ -2121,6 +2080,10 @@ namespace nodetool
   template<class t_payload_net_handler>
   bool node_server<t_payload_net_handler>::update_dns_blocklist()
   {
+    // MoneroPulse blocklists belong to the upstream Monero network. Leave DNS
+    // blocklisting disabled until Monzero publishes its own signed records.
+    return true;
+#if 0
     if (!m_enable_dns_blocklist)
       return true;
     if (m_nettype != cryptonote::MAINNET)
@@ -2170,6 +2133,7 @@ namespace nodetool
     if (good > 0)
       MINFO(good << " addresses added to the blocklist");
     return true;
+#endif
   }
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>

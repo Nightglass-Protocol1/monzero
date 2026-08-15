@@ -67,6 +67,10 @@ monero_add_library(common
   ${common_headers}
   ${common_private_headers}
   DEPENDS generate_translations_header)
+if(STATIC AND NOT MINGW)
+  find_package(ZLIB REQUIRED)
+  find_library(ZSTD_LIBRARY NAMES zstd REQUIRED)
+endif()
 target_link_libraries(common
   PUBLIC
     cncrypto
@@ -80,7 +84,9 @@ target_link_libraries(common
     ${Boost_CHRONO_LIBRARY}
   PRIVATE
     ${OPENSSL_LIBRARIES}
-    ${EXTRA_LIBRARIES})
+    ${EXTRA_LIBRARIES}
+    $<$<AND:$<BOOL:${STATIC}>,$<NOT:$<BOOL:${MINGW}>>>:ZLIB::ZLIB>
+    $<$<AND:$<BOOL:${STATIC}>,$<NOT:$<BOOL:${MINGW}>>>:${ZSTD_LIBRARY}>)
 
 #monero_install_headers(common
 #  ${common_headers})

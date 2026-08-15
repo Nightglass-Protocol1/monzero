@@ -125,9 +125,12 @@ TEST(http_server, response_soft_limit)
   {
     dummy::response payload{};
     boost::beast::flat_buffer buffer;
-    http::response<http::basic_string_body<char>> res;
-    http::read(stream, buffer, res, error);
-    EXPECT_FALSE(bool(error));
+    http::response_parser<http::basic_string_body<char>> parser;
+    parser.body_limit(payload_size + 1024);
+    http::read(stream, buffer, parser, error);
+    EXPECT_FALSE(bool(error)) << error.message();
+    ASSERT_TRUE(parser.is_done());
+    const auto res = parser.release();
     EXPECT_EQ(200u, res.result_int());
     EXPECT_TRUE(epee::serialization::load_t_from_binary(payload, res.body()));
     EXPECT_EQ(payload_size, std::count(payload.payload.begin(), payload.payload.end(), 'f'));
@@ -167,7 +170,7 @@ TEST(http_server, private_ip_limit)
       error
     );
     http::write(streams.back(), req, error);
-    EXPECT_FALSE(bool(error));
+    EXPECT_FALSE(bool(error)) << error.message();
 
     dummy::response payload{};
     boost::beast::flat_buffer buffer;

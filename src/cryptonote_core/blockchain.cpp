@@ -5583,6 +5583,13 @@ void Blockchain::cancel()
 static const char expected_block_hashes_hash[] = "2aea941d43024422a63f223c84b9d88d1f58d31e1f508c2d6d43cd637ba32d16";
 void Blockchain::load_compiled_in_block_hashes(const GetCheckpointsCallback& get_checkpoints)
 {
+  // Monzero has an independent genesis block and chain history. The compiled
+  // per-block data bundled by the upstream Monero source belongs to Monero and
+  // must never be used to validate or accelerate Monzero synchronization. If
+  // loaded, valid Monzero blocks inside that inherited height range are
+  // rejected and peers split into isolated chains.
+  return;
+
   if (get_checkpoints == nullptr || !m_fast_sync)
   {
     return;

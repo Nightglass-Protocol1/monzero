@@ -2387,7 +2387,11 @@ skip:
   {
     bool val_expected = false;
     uint64_t current_blockchain_height = m_core.get_current_blockchain_height();
-    if(!m_core.is_within_compiled_block_hash_area(current_blockchain_height) && m_synchronized.compare_exchange_strong(val_expected, true))
+    // Monzero starts a new chain at height 0. The inherited Monero compiled
+    // checkpoint range is therefore not meaningful for deciding whether this
+    // network has synchronized, and keeping this guard leaves early Monzero
+    // nodes permanently "busy" even after reaching their peer's tip.
+    if(m_synchronized.compare_exchange_strong(val_expected, true))
     {
       if ((current_blockchain_height > m_sync_start_height) && (m_sync_spans_downloaded > 0))
       {
@@ -2407,7 +2411,7 @@ skip:
         }
       }
       MGINFO_YELLOW(ENDL << "**********************************************************************" << ENDL
-        << "You are now synchronized with the network. You may now start monero-wallet-cli." << ENDL
+        << "You are now synchronized with the network. You may now start monzero-wallet-cli." << ENDL
         << ENDL
         << "Use the \"help\" command to see the list of available commands." << ENDL
         << "**********************************************************************");
@@ -2873,4 +2877,3 @@ skip:
     m_core.stop();
   }
 } // namespace
-

@@ -45,6 +45,9 @@ monero_add_executable(daemon
   ${daemon_sources}
   ${daemon_headers}
   ${daemon_private_headers})
+if(STATIC AND NOT MINGW)
+  find_package(ZLIB REQUIRED)
+endif()
 target_link_libraries(daemon
   PRIVATE
     rpc
@@ -68,8 +71,9 @@ target_link_libraries(daemon
     ${ZMQ_LIB}
     ${GNU_READLINE_LIBRARY}
     ${EXTRA_LIBRARIES}
+    $<$<AND:$<BOOL:${STATIC}>,$<NOT:$<BOOL:${MINGW}>>>:ZLIB::ZLIB>
     ${Blocks})
 set_property(TARGET daemon
   PROPERTY
-    OUTPUT_NAME "monerod")
+    OUTPUT_NAME "monzerod")
 install(TARGETS daemon DESTINATION bin)

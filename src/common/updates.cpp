@@ -39,6 +39,15 @@ namespace tools
 {
   bool check_updates(const std::string &software, const std::string &buildtag, std::string &version, std::string &hash)
   {
+    // Do not trust or advertise Monero release records for Monzero binaries.
+    // Re-enable only after project-controlled, signed update infrastructure
+    // has been reviewed and deployed.
+    (void)software;
+    (void)buildtag;
+    (void)version;
+    (void)hash;
+    return false;
+#if 0
     std::vector<std::string> records;
     bool found = false;
 
@@ -98,6 +107,7 @@ namespace tools
       found = true;
     }
     return found;
+#endif
   }
 
   std::string get_update_url(const std::string &software, const std::string &subdir, const std::string &buildtag, const std::string &version, bool user)

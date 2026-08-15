@@ -39,6 +39,10 @@ monero_add_executable(simplewallet
   ${simplewallet_sources}
   ${simplewallet_headers}
   ${simplewallet_private_headers})
+if(STATIC AND NOT MINGW)
+  find_package(ZLIB REQUIRED)
+  find_library(ZSTD_LIBRARY NAMES zstd REQUIRED)
+endif()
 target_link_libraries(simplewallet
   PRIVATE
     wallet
@@ -58,8 +62,19 @@ target_link_libraries(simplewallet
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${GNU_READLINE_LIBRARY}
-    ${EXTRA_LIBRARIES})
+    ${EXTRA_LIBRARIES}
+    $<$<AND:$<BOOL:${STATIC}>,$<NOT:$<BOOL:${MINGW}>>>:ZLIB::ZLIB>)
+if(STATIC AND NOT MINGW)
+  # OpenSSL's static archive references optional compression backends. Force
+  # their objects into the final CLI wallet even though CMake emits OpenSSL
+  # later through transitive target dependencies.
+  target_link_options(simplewallet PRIVATE
+    -Wl,--whole-archive
+    ${ZLIB_LIBRARIES}
+    ${ZSTD_LIBRARY}
+    -Wl,--no-whole-archive)
+endif()
 set_property(TARGET simplewallet
   PROPERTY
-    OUTPUT_NAME "monero-wallet-cli")
+    OUTPUT_NAME "monzero-wallet-cli")
 install(TARGETS simplewallet DESTINATION bin)

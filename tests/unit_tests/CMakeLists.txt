@@ -30,6 +30,7 @@ set(unit_tests_sources
   account.cpp
   apply_permutation.cpp
   address_from_url.cpp
+  asset_types.cpp
   base58.cpp
   blockchain_db.cpp
   block_queue.cpp
@@ -67,6 +68,7 @@ set(unit_tests_sources
   memwipe.cpp
   mlocker.cpp
   mnemonics.cpp
+  monzero_consensus.cpp
   mul_div.cpp
   multiexp.cpp
   multisig.cpp
@@ -154,3 +156,4 @@ add_test(
 monero_add_minimal_executable(test_notifier test_notifier.cpp)
 target_link_libraries(test_notifier ${EXTRA_LIBRARIES})
 set_property(TARGET test_notifier PROPERTY FOLDER "tests")
+add_dependencies(unit_tests test_notifier)

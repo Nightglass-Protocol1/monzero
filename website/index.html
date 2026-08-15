@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Monzero (XMZ) is an experimental, community-run privacy coin network powered by RandomX.">
+  <meta name="theme-color" content="#07110f">
+  <title>Monzero — Private by design. Open by nature.</title>
+  <link rel="icon" href="assets/monzero-xmz-coin.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Monzero home">
+      <span class="brand-mark">MZ</span>
+      <span>MONZERO</span>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Primary navigation">
+      <a href="#network">Network</a>
+      <a href="#miners">Miners</a>
+      <a href="explorer/">Explorer</a>
+      <a href="#about">About</a>
+      <a href="#mine">Mine</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-download" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse"></span> Genesis network · Public node online</p>
+        <h1>Privacy should be <em>ordinary.</em></h1>
+        <p class="hero-lead">Monzero is an independent, community-run digital currency built for private transactions, open participation, and CPU-friendly mining.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#download">Get Monzero</a>
+          <a class="button secondary" href="explorer/">Explore the chain <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-proof" aria-label="Core network properties">
+          <span>RandomX PoW</span>
+          <span>2-minute blocks</span>
+          <span>No premine</span>
+        </div>
+      </div>
+      <div class="coin-stage" aria-label="Monzero XMZ coin artwork">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="coin-glow"></div>
+        <img src="assets/monzero-xmz-coin.png" alt="Monzero XMZ coin" width="627" height="627">
+        <span class="coordinate coordinate-a">86 / 87 / 88</span>
+        <span class="coordinate coordinate-b">XMZ · MAINNET</span>
+      </div>
+    </section>
+
+    <section class="ticker" aria-label="Monzero network summary">
+      <div><span>Asset</span><strong>XMZ</strong></div>
+      <div><span>Target supply</span><strong>100M</strong></div>
+      <div><span>Block target</span><strong>120 SEC</strong></div>
+      <div><span>Precision</span><strong>11 DECIMALS</strong></div>
+    </section>
+
+    <section class="network section" id="network">
+      <div class="section-heading">
+        <p class="eyebrow">Live network</p>
+        <h2>A chain you can verify.</h2>
+        <p>The official public node gives every wallet and miner a stable entry point into the Monzero network.</p>
+      </div>
+      <div class="status-panel">
+        <div class="status-topline">
+          <div><span id="node-dot" class="status-dot"></span><strong id="node-state">Checking node</strong></div>
+          <code>node.monzero.org</code>
+        </div>
+        <div class="metrics">
+          <article><span>Block height</span><strong id="metric-height">—</strong></article>
+          <article><span>Network difficulty</span><strong id="metric-difficulty">—</strong></article>
+          <article><span>Peer nodes</span><strong id="metric-connections">—</strong></article>
+          <article><span>RPC status</span><strong id="metric-rpc">—</strong></article>
+        </div>
+        <div class="node-addresses">
+          <p><span>P2P</span><code>node.monzero.org:6174</code><button class="copy" data-copy="node.monzero.org:6174">Copy</button></p>
+          <p><span>Restricted RPC</span><code>node.monzero.org:6175</code><button class="copy" data-copy="node.monzero.org:6175">Copy</button></p>
+        </div>
+        <p><a class="button secondary" href="explorer/">Open block explorer <span aria-hidden="true">↗</span></a></p>
+      </div>
+    </section>
+
+    <section class="miners section" id="miners">
+      <div class="section-heading">
+        <p class="eyebrow">Mining network</p>
+        <h2>Anonymous miner ranking.</h2>
+        <p>Live, opt-in statistics from participating miners. No wallet address, IP address, hostname, or hardware identifier is displayed.</p>
+      </div>
+      <div class="miner-panel">
+        <div class="miner-summary">
+          <article><span>Active miners</span><strong id="miner-active">—</strong></article>
+          <article><span>Reported hash rate</span><strong id="miner-hashrate">—</strong></article>
+          <article><span>Blocks found</span><strong id="miner-blocks">—</strong></article>
+          <article><span>Last update</span><strong id="miner-updated">—</strong></article>
+        </div>
+        <div class="table-scroll">
+          <table class="miner-table">
+            <thead><tr><th>Rank</th><th>Anonymous miner</th><th>Speed</th><th>Blocks found</th><th>Status</th></tr></thead>
+            <tbody id="miner-rows"><tr><td colspan="5" class="table-message">Loading miner statistics…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="chart-grid" aria-label="Live mining charts">
+          <article class="chart-card">
+            <div><span>Reported hash rate</span><strong id="chart-hashrate-value">—</strong></div>
+            <svg id="chart-hashrate" viewBox="0 0 600 180" role="img" aria-label="Reported hash rate over time"><path class="chart-gridline" d="M0 45H600M0 90H600M0 135H600"></path><polyline class="chart-line" points=""></polyline></svg>
+            <small>Rolling browser history · H/s</small>
+          </article>
+          <article class="chart-card">
+            <div><span>Network difficulty</span><strong id="chart-difficulty-value">—</strong></div>
+            <svg id="chart-difficulty" viewBox="0 0 600 180" role="img" aria-label="Network difficulty over time"><path class="chart-gridline" d="M0 45H600M0 90H600M0 135H600"></path><polyline class="chart-line difficulty" points=""></polyline></svg>
+            <small>Rolling browser history · network difficulty</small>
+          </article>
+        </div>
+        <p class="telemetry-note">Statistics are self-reported and miners disappear after three minutes without a heartbeat. A random installation ID is pseudonymized by the server.</p>
+      </div>
+    </section>
+
+    <section class="principles section" id="about">
+      <div class="section-heading compact">
+        <p class="eyebrow">Why Monzero</p>
+        <h2>Built around participation.</h2>
+      </div>
+      <div class="principle-grid">
+        <article>
+          <span class="card-number">01</span>
+          <h3>Private transactions</h3>
+          <p>Monzero inherits established privacy-focused transaction technology, including ring signatures, stealth addresses, and confidential amounts.</p>
+        </article>
+        <article>
+          <span class="card-number">02</span>
+          <h3>Consumer hardware</h3>
+          <p>RandomX proof of work is designed for general-purpose CPUs, keeping participation open to ordinary computers.</p>
+        </article>
+        <article>
+          <span class="card-number">03</span>
+          <h3>Independent chain</h3>
+          <p>XMZ has its own genesis block, network identity, address prefixes, ports, and monetary policy. It is not Monero.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="mine section" id="mine">
+      <div class="mine-copy">
+        <p class="eyebrow">Join the network</p>
+        <h2>Turn spare CPU time into network security.</h2>
+        <p>Run your own daemon, create a fresh Monzero wallet, and mine directly to an address you control. Solo mining rewards the machine that finds a block; rewards unlock after 60 blocks.</p>
+        <div class="warning"><strong>Keep it separate.</strong> Never reuse a Monero seed, keys, or wallet file with Monzero.</div>
+      </div>
+      <ol class="steps">
+        <li><span>1</span><div><strong>Start the node</strong><code>./start-node.sh</code></div></li>
+        <li><span>2</span><div><strong>Start the separate miner</strong><code>./start-mining.sh YOUR_ADDRESS 1</code></div></li>
+        <li><span>3</span><div><strong>Open the wallet when needed</strong><code>./open-wallet.sh /path/to/wallet</code></div></li>
+      </ol>
+    </section>
+
+    <section class="download section" id="download">
+      <div class="download-card">
+        <div>
+          <p class="eyebrow">Genesis pre2</p>
+          <h2>Download Monzero</h2>
+          <p>Private pre-release builds for Windows and Linux x86-64. Both include the node, command-line wallet, separate mining controls, checksums, and setup guidance. The Windows package also includes the graphical wallet.</p>
+          <p class="release-note">Experimental and unaudited software for the private pre-release Monzero network.</p>
+        </div>
+        <div class="download-action">
+          <div class="release-download">
+            <a class="button primary wide" href="downloads/monzero-genesis-pre2-windows-x64.zip" download>Windows x64 <span>57 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre2-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
+            <code class="hash">784902a16ceb85722327dc800fb181d56feb180609b4df575b1f777ee475f3f2</code>
+          </div>
+          <div class="release-download">
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre2-linux-x86_64.tar.gz" download>Linux x86-64 <span>13 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre2-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
+            <code class="hash">baf75989bea783ec0488978ee3e2218b1bc87f9d44827019cf7e96b370dddef8</code>
+          </div>
+          <p class="unsigned-note">Windows binaries are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; verify the checksum before running them.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq section" id="faq">
+      <div class="section-heading compact">
+        <p class="eyebrow">Questions</p>
+        <h2>Before you begin.</h2>
+      </div>
+      <div class="faq-list">
+        <details><summary>Why is my mining balance still zero?</summary><p>Monzero currently uses solo mining. You receive a coinbase reward only when your machine finds a block; simply hashing does not create a gradual balance. A found reward remains locked for 60 blocks.</p></details>
+        <details><summary>Is Monzero the same network as Monero?</summary><p>No. Monzero is an independent experimental chain with a different genesis block, network ID, ports, address prefixes, ticker, and monetary policy.</p></details>
+        <details><summary>Can I reuse my existing seed?</summary><p>No. Create a new wallet and seed exclusively for Monzero. Reusing keys across forks can seriously damage privacy.</p></details>
+        <details><summary>Is this a production release?</summary><p>Not yet. Genesis pre2 is private pre-release software. Consensus and cryptographic changes have not received an independent audit.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand" href="#top"><span class="brand-mark">MZ</span><span>MONZERO</span></a>
+    <p>Experimental software. Verify everything.</p>
+    <p>© <span id="year"></span> Monzero contributors · <a href="https://monzero.org">monzero.org</a></p>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite">Copied to clipboard</div>
+  <script src="app.js?v=20260815-2"></script>
+</body>
+</html>

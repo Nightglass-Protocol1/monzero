@@ -1,0 +1,22 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+</IfModule>
+
+<FilesMatch "\.(?:css|js|png|ico|svg|sha256)$">
+  <IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 7 days"
+  </IfModule>
+</FilesMatch>
+
+<FilesMatch "\.tar\.gz$">
+  ForceType application/gzip
+</FilesMatch>
+
+<FilesMatch "\.zip$">
+  ForceType application/zip
+</FilesMatch>

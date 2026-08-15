@@ -37,7 +37,7 @@ using namespace boost::filesystem;
 using namespace epee::file_io_utils;
 
 static constexpr const char WALLET_00fd416a_PRIMARY_ADDRESS[] =
-    "45p2SngJAPSJbqSiUvYfS3BfhEdxZmv8pDt25oW1LzxrZv9Uq6ARagiFViMGUE3gJk5VPWingCXVf1p2tyAy6SUeSHPhbve";
+    "FTVmPgMqWacJbqSiUvYfS3BfhEdxZmv8pDt25oW1LzxrZv9Uq6ARagiFViMGUE3gJk5VPWingCXVf1p2tyAy6SUeSJWdykM";
 
 TEST(wallet_storage, store_to_file2file)
 {
@@ -48,10 +48,13 @@ TEST(wallet_storage, store_to_file2file)
     ASSERT_TRUE(is_file_exist(source_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(source_wallet_file.string() + ".keys"));
 
-    tools::copy_file(source_wallet_file.string(), interm_wallet_file.string());
+    // Rebuild the cache from the portable keys. The bundled upstream cache
+    // correctly fails Monzero's genesis-hash check.
+    if (is_file_exist(interm_wallet_file.string()))
+        remove(interm_wallet_file);
     tools::copy_file(source_wallet_file.string() + ".keys", interm_wallet_file.string() + ".keys");
 
-    ASSERT_TRUE(is_file_exist(interm_wallet_file.string()));
+    ASSERT_FALSE(is_file_exist(interm_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(interm_wallet_file.string() + ".keys"));
 
     if (is_file_exist(target_wallet_file.string()))
@@ -74,6 +77,7 @@ TEST(wallet_storage, store_to_file2file)
     {
         tools::wallet2 w;
         w.load(interm_wallet_file.string(), password);
+        w.store();
         const std::string primary_address = w.get_address_as_str();
         EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
         w.store_to(target_wallet_file.string(), password);
@@ -139,10 +143,13 @@ TEST(wallet_storage, change_password_same_file)
     ASSERT_TRUE(is_file_exist(source_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(source_wallet_file.string() + ".keys"));
 
-    tools::copy_file(source_wallet_file.string(), interm_wallet_file.string());
+    // Rebuild the cache from the portable keys. The bundled upstream cache
+    // correctly fails Monzero's genesis-hash check.
+    if (is_file_exist(interm_wallet_file.string()))
+        remove(interm_wallet_file);
     tools::copy_file(source_wallet_file.string() + ".keys", interm_wallet_file.string() + ".keys");
 
-    ASSERT_TRUE(is_file_exist(interm_wallet_file.string()));
+    ASSERT_FALSE(is_file_exist(interm_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(interm_wallet_file.string() + ".keys"));
 
     epee::wipeable_string old_password("beepbeep");
@@ -151,6 +158,7 @@ TEST(wallet_storage, change_password_same_file)
     {
         tools::wallet2 w;
         w.load(interm_wallet_file.string(), old_password);
+        w.store();
         const std::string primary_address = w.get_address_as_str();
         EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
         w.change_password(w.get_wallet_file(), old_password, new_password);
@@ -178,10 +186,13 @@ TEST(wallet_storage, change_password_different_file)
     ASSERT_TRUE(is_file_exist(source_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(source_wallet_file.string() + ".keys"));
 
-    tools::copy_file(source_wallet_file.string(), interm_wallet_file.string());
+    // Rebuild the cache from the portable keys. The bundled upstream cache
+    // correctly fails Monzero's genesis-hash check.
+    if (is_file_exist(interm_wallet_file.string()))
+        remove(interm_wallet_file);
     tools::copy_file(source_wallet_file.string() + ".keys", interm_wallet_file.string() + ".keys");
 
-    ASSERT_TRUE(is_file_exist(interm_wallet_file.string()));
+    ASSERT_FALSE(is_file_exist(interm_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(interm_wallet_file.string() + ".keys"));
 
     if (is_file_exist(target_wallet_file.string()))
@@ -197,6 +208,7 @@ TEST(wallet_storage, change_password_different_file)
     {
         tools::wallet2 w;
         w.load(interm_wallet_file.string(), old_password);
+        w.store();
         const std::string primary_address = w.get_address_as_str();
         EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
         w.change_password(target_wallet_file.string(), old_password, new_password);

@@ -118,3 +118,17 @@ nbproject
 __pycache__/
 *.pyc
 *.log
+
+# Monzero local release outputs and uploaded copies
+/dist/
+/website/downloads/
+
+# GUI is maintained and versioned as a separate Git repository.
+/monzero-gui/
+
+# Files produced by wallet_storage unit tests beside their immutable fixtures
+/tests/data/wallet_*_copy_change_password_same*
+/tests/data/wallet_*_new_change_password_diff*
+/tests/data/wallet_*_new_file2file*
+/tests/data/wallet_change_password_mem2file*
+/tests/data/wallet_mem2file*

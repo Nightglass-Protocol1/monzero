@@ -585,7 +585,16 @@ TEST(cryptonote_protocol_handler, race_condition)
       reward,
       hardfork
     );
-    block.miner_tx.vout.push_back(cryptonote::tx_out{reward, cryptonote::txout_to_key{}});
+    // Match the active hard-fork output rules. Always constructing the legacy
+    // txout_to_key form makes the synthetic alternate chain invalid after the
+    // view-tag grace period and leaves this concurrency test waiting forever
+    // for synchronization that cannot complete.
+    if (hardfork > HF_VERSION_VIEW_TAGS)
+      block.miner_tx.vout.push_back(cryptonote::tx_out{
+        reward, cryptonote::txout_to_tagged_key{crypto::public_key{}, crypto::view_tag{}}});
+    else
+      block.miner_tx.vout.push_back(cryptonote::tx_out{
+        reward, cryptonote::txout_to_key{crypto::public_key{}}});
     diff = storage.get_difficulty_for_next_block();
   };
   struct stat {

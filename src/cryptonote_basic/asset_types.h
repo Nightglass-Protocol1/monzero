@@ -1,0 +1,116 @@
+#pragma once
+
+#include <cstdint>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
+
+#include <boost/optional.hpp>
+
+#include "crypto/crypto.h"
+#include "cryptonote_config.h"
+
+namespace cryptonote
+{
+namespace assets
+{
+  constexpr uint8_t ISSUANCE_DESCRIPTOR_VERSION = 2;
+  constexpr uint8_t MAX_DISPLAY_DECIMALS = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
+  constexpr size_t MAX_METADATA_REFERENCE_BYTES = 256;
+
+  enum class asset_class : uint8_t
+  {
+    fungible = 1,
+    non_fungible = 2,
+    collection = 3,
+    edition = 4
+  };
+
+  // Research-only fixed-supply issuance identity. This type is deliberately
+  // not part of transaction serialization and is not accepted by consensus.
+  struct issuance_descriptor
+  {
+    uint8_t version = ISSUANCE_DESCRIPTOR_VERSION;
+    network_type network = UNDEFINED;
+    asset_class type = asset_class::fungible;
+    crypto::public_key issuer_key{};
+    crypto::hash issuance_nonce{};
+    uint64_t atomic_supply = 0;
+    uint8_t display_decimals = 0;
+    crypto::hash metadata_hash{};
+    // Required for NFTs/editions that claim collection membership. The zero
+    // hash means no collection; fungible and collection descriptors must use
+    // zero so the field cannot acquire ambiguous meaning.
+    crypto::hash collection_id{};
+    std::string metadata_reference;
+  };
+
+  bool validate_issuance_descriptor(const issuance_descriptor& descriptor, std::string* error = nullptr);
+  bool encode_issuance_descriptor(const issuance_descriptor& descriptor, std::vector<uint8_t>& encoded, std::string* error = nullptr);
+  bool derive_asset_id(const issuance_descriptor& descriptor, crypto::hash& asset_id, std::string* error = nullptr);
+  bool derive_issuance_authorization_hash(const issuance_descriptor& descriptor, crypto::hash& message, std::string* error = nullptr);
+  bool verify_issuance_authorization(const issuance_descriptor& descriptor, const crypto::signature& signature, std::string* error = nullptr);
+  bool derive_collection_membership_hash(const crypto::hash& collection_id, const crypto::hash& member_asset_id, crypto::hash& message, std::string* error = nullptr);
+  bool verify_collection_membership(
+    const crypto::hash& collection_id,
+    const crypto::hash& member_asset_id,
+    const crypto::public_key& collection_controller,
+    const crypto::signature& signature,
+    std::string* error = nullptr);
+
+  struct asset_record
+  {
+    issuance_descriptor descriptor;
+    uint64_t issuance_height = 0;
+  };
+
+  // Inactive in-memory reference model for authenticated issuance state and
+  // deterministic reorg rollback. Production consensus/database code must not
+  // use this class without a separately reviewed activation change.
+  class asset_registry
+  {
+  public:
+    bool apply_issuance(
+      const issuance_descriptor& descriptor,
+      const crypto::signature& issuer_signature,
+      const boost::optional<crypto::signature>& collection_signature,
+      uint64_t height,
+      crypto::hash& asset_id,
+      std::string* error = nullptr);
+    void detach(uint64_t height);
+    bool contains(const crypto::hash& asset_id) const;
+    const asset_record* find(const crypto::hash& asset_id) const;
+    size_t size() const { return records_.size(); }
+    std::set<crypto::hash> known_assets() const;
+
+  private:
+    std::map<crypto::hash, asset_record> records_;
+  };
+
+  struct transparent_amount
+  {
+    crypto::hash asset_id{};
+    uint64_t amount = 0;
+  };
+
+  // Test-only semantic statement used to validate conservation rules before a
+  // confidential commitment/proof construction is selected. It is not a wire
+  // transaction and must never be serialized into the public protocol.
+  struct transparent_balance_statement
+  {
+    uint64_t xmz_inputs = 0;
+    uint64_t xmz_outputs = 0;
+    uint64_t xmz_fee = 0;
+    boost::optional<issuance_descriptor> issuance;
+    std::vector<transparent_amount> asset_inputs;
+    std::vector<transparent_amount> asset_outputs;
+    std::vector<transparent_amount> asset_burns;
+  };
+
+  bool validate_transparent_balance_statement(
+    const transparent_balance_statement& statement,
+    const std::set<crypto::hash>& known_assets,
+    std::string* error = nullptr);
+}
+}

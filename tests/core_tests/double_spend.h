@@ -32,7 +32,11 @@
 #include "chaingen.h"
 
 const size_t invalid_index_value = std::numeric_limits<size_t>::max();
-const uint64_t FIRST_BLOCK_REWARD = 17592186044415;
+// Monzero's verified height-zero subsidy (190.73486328125 XMZ). Keeping the
+// inherited Monero value creates a miner change output in tx_0, so the
+// in-transaction double-spend fixture selects that change as though it
+// belonged to Bob and fails before consensus validation is exercised.
+const uint64_t FIRST_BLOCK_REWARD = 19073486328125;
 
 
 template<class concrete_test>

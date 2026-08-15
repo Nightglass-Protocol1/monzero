@@ -29,8 +29,8 @@
 #include "gtest/gtest.h"
 #include "wallet/wallet2.h"
 
-#define TEST_ADDRESS "9tTLtauaEKSj7xoVXytVH32R1pLZBk4VV4mZFGEh4wkXhDWqw1soPyf3fGixf1kni31VznEZkWNEza9d5TvjWwq5PaohYHC"
-#define TEST_INTEGRATED_ADDRESS "A4A1uPj4qaxj7xoVXytVH32R1pLZBk4VV4mZFGEh4wkXhDWqw1soPyf3fGixf1kni31VznEZkWNEza9d5TvjWwq5acaPMJfMbn3ReTsBpp"
+#define TEST_ADDRESS "KaHhUrBYYVZQFoFXvLWnZUGXqg6snz82fhW1HGGATzMGTeXVLUnVej6hUYJ2nGU5zGLp3zcsR24tDVV9DXGpM8oD5HwjdoD"
+#define TEST_INTEGRATED_ADDRESS "KjzNVf139m5QFoFXvLWnZUGXqg6snz82fhW1HGGATzMGTeXVLUnVej6hUYJ2nGU5zGLp3zcsR24tDVV9DXGpM8oD7WyR6Y1T6SFRfKY1rf"
 // included payment id: <f612cac0b6cb1cda>
 
 #define PARSE_URI(uri, expected) \
@@ -212,4 +212,3 @@ TEST(uri, url_encoded_once)
   PARSE_URI("monero:" TEST_ADDRESS"?tx_description=foo%2020", true);
   ASSERT_EQ(description, "foo 20");
 }
-

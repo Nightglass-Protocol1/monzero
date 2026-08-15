@@ -182,6 +182,11 @@ namespace cryptonote
 
   bool checkpoints::init_default_checkpoints(network_type nettype)
   {
+    // Monero checkpoints are invalid on the independent Monzero chain. New
+    // checkpoints will be published from audited Monzero release heights.
+    (void)nettype;
+    return true;
+#if 0
     if (nettype == TESTNET)
     {
       ADD_CHECKPOINT2(0,     "48ca7cd3c8de5b6a4d53d2861fbdaedca141553559f9be9520068053cda8430b", "0x1");
@@ -261,6 +266,7 @@ namespace cryptonote
     ADD_CHECKPOINT2(3661900, "ac392757a92123f68d63cd72f0d1410f63df1102a53b5d39fc4d53d0998b20a3", "0x8a38f2195826a97");
     ADD_CHECKPOINT2(3707000, "9c508fe29120b5cd204f9d150e68fd2e4015d8d859bc0431f7016c7aabc711c9", "0x91129586d4979a6");
     return true;
+#endif
   }
 
   bool checkpoints::load_checkpoints_from_json(const std::string &json_hashfile_fullpath)
@@ -301,6 +307,11 @@ namespace cryptonote
 
   bool checkpoints::load_checkpoints_from_dns(network_type nettype)
   {
+    // MoneroPulse records belong to the Monero chain. Monzero DNS
+    // checkpoints remain disabled until project-controlled records exist.
+    (void)nettype;
+    return true;
+#if 0
     std::vector<std::string> records;
 
     // All four MoneroPulse domains have DNSSEC on and valid
@@ -353,6 +364,7 @@ namespace cryptonote
       }
     }
     return true;
+#endif
   }
 
   bool checkpoints::load_new_checkpoints(const std::string &json_hashfile_fullpath, network_type nettype, bool dns)
