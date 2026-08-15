@@ -20,6 +20,7 @@ namespace assets
     constexpr char COLLECTION_MEMBERSHIP_DOMAIN[] = "MonzeroCollectionMembershipV1";
     constexpr char ISSUANCE_PAYLOAD_DOMAIN[] = "MonzeroAssetIssuancePayloadV1";
     constexpr char REGISTRY_SNAPSHOT_DOMAIN[] = "MonzeroAssetRegistrySnapshotV1";
+    constexpr char TRANSACTION_EXTENSION_DOMAIN[] = "MonzeroAssetTransactionExtensionV1";
     constexpr uint8_t REGISTRY_SNAPSHOT_VERSION = 1;
     constexpr uint32_t MAX_REGISTRY_SNAPSHOT_RECORDS = 100000;
 
@@ -362,6 +363,96 @@ namespace assets
     if (!encode_issuance_payload(parsed, canonical, error) || canonical != encoded)
       return fail(error, "issuance payload encoding is not canonical");
     payload = std::move(parsed);
+    return true;
+  }
+
+  bool encode_transaction_extension(const transaction_extension& extension, std::vector<uint8_t>& encoded, std::string* error)
+  {
+    if (extension.version != TRANSACTION_EXTENSION_VERSION)
+      return fail(error, "unsupported asset transaction extension version");
+    if (extension.network != MAINNET && extension.network != TESTNET && extension.network != STAGENET)
+      return fail(error, "asset transaction extension requires an explicit public network");
+    if (extension.operation != transaction_operation::issuance)
+      return fail(error, "unsupported asset transaction operation");
+    if (extension.carrier_prefix_hash == crypto::null_hash)
+      return fail(error, "asset transaction extension requires a carrier prefix commitment");
+    if (extension.issuance.descriptor.network != extension.network)
+      return fail(error, "asset transaction extension network does not match its issuance");
+
+    std::vector<uint8_t> operation;
+    if (!encode_issuance_payload(extension.issuance, operation, error))
+      return false;
+    if (operation.size() > std::numeric_limits<uint16_t>::max())
+      return fail(error, "asset transaction operation is too large");
+
+    encoded.clear();
+    encoded.reserve(sizeof(TRANSACTION_EXTENSION_DOMAIN) - 1 + 1 + 16 + 1
+      + sizeof(extension.carrier_prefix_hash) + 2 + operation.size());
+    encoded.insert(encoded.end(), TRANSACTION_EXTENSION_DOMAIN,
+      TRANSACTION_EXTENSION_DOMAIN + sizeof(TRANSACTION_EXTENSION_DOMAIN) - 1);
+    encoded.push_back(extension.version);
+    append_pod(encoded, get_config(extension.network).NETWORK_ID);
+    encoded.push_back(static_cast<uint8_t>(extension.operation));
+    append_pod(encoded, extension.carrier_prefix_hash);
+    append_u16_le(encoded, static_cast<uint16_t>(operation.size()));
+    encoded.insert(encoded.end(), operation.begin(), operation.end());
+    return true;
+  }
+
+  bool decode_transaction_extension(const std::vector<uint8_t>& encoded, transaction_extension& extension, std::string* error)
+  {
+    constexpr size_t domain_size = sizeof(TRANSACTION_EXTENSION_DOMAIN) - 1;
+    constexpr size_t header_size = domain_size + 1 + 16 + 1 + sizeof(crypto::hash) + 2;
+    if (encoded.size() < header_size)
+      return fail(error, "truncated asset transaction extension");
+    if (!std::equal(TRANSACTION_EXTENSION_DOMAIN,
+          TRANSACTION_EXTENSION_DOMAIN + domain_size, encoded.begin()))
+      return fail(error, "invalid asset transaction extension domain");
+
+    transaction_extension parsed;
+    size_t offset = domain_size;
+    parsed.version = encoded[offset++];
+    if (parsed.version != TRANSACTION_EXTENSION_VERSION)
+      return fail(error, "unsupported asset transaction extension version");
+    boost::uuids::uuid network_id{};
+    if (!read_pod(encoded, offset, network_id))
+      return fail(error, "truncated asset transaction extension network");
+    parsed.network = UNDEFINED;
+    for (const network_type candidate : {MAINNET, TESTNET, STAGENET})
+    {
+      if (network_id == get_config(candidate).NETWORK_ID)
+      {
+        parsed.network = candidate;
+        break;
+      }
+    }
+    parsed.operation = static_cast<transaction_operation>(encoded[offset++]);
+    if (!read_pod(encoded, offset, parsed.carrier_prefix_hash))
+      return fail(error, "truncated asset transaction carrier commitment");
+    uint16_t operation_size = 0;
+    if (!read_u16_le(encoded, offset, operation_size)
+        || offset > encoded.size() || operation_size != encoded.size() - offset)
+      return fail(error, "asset transaction operation length is not canonical");
+    const std::vector<uint8_t> operation(
+      encoded.begin() + offset, encoded.begin() + offset + operation_size);
+    if (parsed.operation != transaction_operation::issuance)
+      return fail(error, "unsupported asset transaction operation");
+    if (!decode_issuance_payload(operation, parsed.issuance, error))
+      return false;
+
+    std::vector<uint8_t> canonical;
+    if (!encode_transaction_extension(parsed, canonical, error) || canonical != encoded)
+      return fail(error, "asset transaction extension encoding is not canonical");
+    extension = std::move(parsed);
+    return true;
+  }
+
+  bool derive_transaction_extension_id(const transaction_extension& extension, crypto::hash& extension_id, std::string* error)
+  {
+    std::vector<uint8_t> encoded;
+    if (!encode_transaction_extension(extension, encoded, error))
+      return false;
+    extension_id = crypto::cn_fast_hash(encoded.data(), encoded.size());
     return true;
   }
 

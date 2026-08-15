@@ -144,6 +144,17 @@ signatures from being silently omitted or attached to unrelated issuance.
 Collection-controller verification still requires the future persistent
 registry lookup and therefore remains part of consensus integration work.
 
+The next inactive layer is a detached, versioned transaction extension. It is
+bound to one public network and a non-zero commitment to the carrier native
+transaction prefix, then contains exactly one bounded operation payload.
+Version 1 recognizes issuance only. Its canonical parser rejects unknown
+operations, network disagreement, a missing carrier commitment, malformed
+lengths, truncated prefixes, invalid nested signatures, and trailing data.
+Changing the carrier commitment changes the extension ID. The extension is not
+registered as a `tx_extra` variant and therefore does not change what active
+mainnet nodes accept; a reviewed hard-fork integration must define the exact
+non-circular carrier-prefix hashing procedure first.
+
 ### 4.2 Inactive registry and reorganisation model
 
 The prototype includes an in-memory reference registry, disconnected from the

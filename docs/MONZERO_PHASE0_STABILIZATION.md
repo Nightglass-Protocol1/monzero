@@ -131,6 +131,7 @@ isolated disposable development network may be used after cryptographic review.
 - [x] Bounded authenticated issuance-payload envelope with strict signature shape rules.
 - [x] Deterministic authenticated registry snapshots with atomic restore failure behavior.
 - [x] Atomic ordered block-issuance adapter, detach behavior, and deterministic state commitments.
+- [x] Detached versioned transaction extension bound to a native prefix commitment.
 - [x] External cryptographic-review brief and mandatory threat cases.
 - [ ] Reviewed confidential per-asset commitment and range-proof construction.
 - [ ] Versioned asset transaction serialization with strict parser limits.

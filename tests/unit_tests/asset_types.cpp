@@ -184,6 +184,74 @@ TEST(asset_types, issuance_payload_rejects_tampering_and_signature_shape_errors)
   EXPECT_FALSE(cryptonote::assets::encode_issuance_payload(payload, encoded, &error));
 }
 
+TEST(asset_types, detached_transaction_extension_is_canonical_and_network_bound)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+
+  cryptonote::assets::transaction_extension original;
+  original.network = cryptonote::TESTNET;
+  original.carrier_prefix_hash.data[0] = 0x7a;
+  original.issuance.descriptor = make_descriptor(cryptonote::TESTNET);
+  original.issuance.descriptor.issuer_key = issuer_public;
+  original.issuance.issuer_signature = authorize(
+    original.issuance.descriptor, issuer_public, issuer_secret);
+
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_transaction_extension(original, encoded));
+  cryptonote::assets::transaction_extension decoded;
+  ASSERT_TRUE(cryptonote::assets::decode_transaction_extension(encoded, decoded));
+  EXPECT_EQ(original.network, decoded.network);
+  EXPECT_EQ(original.operation, decoded.operation);
+  EXPECT_EQ(original.carrier_prefix_hash, decoded.carrier_prefix_hash);
+
+  crypto::hash first{};
+  crypto::hash second{};
+  ASSERT_TRUE(cryptonote::assets::derive_transaction_extension_id(original, first));
+  ASSERT_TRUE(cryptonote::assets::derive_transaction_extension_id(decoded, second));
+  EXPECT_EQ(first, second);
+
+  decoded.carrier_prefix_hash.data[0] ^= 1;
+  ASSERT_TRUE(cryptonote::assets::derive_transaction_extension_id(decoded, second));
+  EXPECT_NE(first, second);
+}
+
+TEST(asset_types, detached_transaction_extension_rejects_malformed_or_unbound_data)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+
+  cryptonote::assets::transaction_extension extension;
+  extension.network = cryptonote::STAGENET;
+  extension.carrier_prefix_hash.data[0] = 1;
+  extension.issuance.descriptor = make_descriptor(cryptonote::STAGENET);
+  extension.issuance.descriptor.issuer_key = issuer_public;
+  extension.issuance.issuer_signature = authorize(
+    extension.issuance.descriptor, issuer_public, issuer_secret);
+
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_transaction_extension(extension, encoded));
+  cryptonote::assets::transaction_extension decoded;
+  std::string error;
+  for (size_t size = 0; size < encoded.size(); ++size)
+  {
+    const std::vector<uint8_t> truncated(encoded.begin(), encoded.begin() + size);
+    EXPECT_FALSE(cryptonote::assets::decode_transaction_extension(truncated, decoded, &error))
+      << "accepted truncated extension size " << size;
+  }
+
+  extension.carrier_prefix_hash = crypto::null_hash;
+  EXPECT_FALSE(cryptonote::assets::encode_transaction_extension(extension, encoded, &error));
+  extension.carrier_prefix_hash.data[0] = 1;
+  extension.network = cryptonote::TESTNET;
+  EXPECT_FALSE(cryptonote::assets::encode_transaction_extension(extension, encoded, &error));
+  extension.network = cryptonote::STAGENET;
+  extension.operation = static_cast<cryptonote::assets::transaction_operation>(2);
+  EXPECT_FALSE(cryptonote::assets::encode_transaction_extension(extension, encoded, &error));
+}
+
 TEST(asset_types, network_domain_separation)
 {
   auto mainnet = make_descriptor(cryptonote::MAINNET);

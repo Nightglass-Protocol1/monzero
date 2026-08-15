@@ -75,6 +75,28 @@ namespace assets
   bool encode_issuance_payload(const issuance_payload& payload, std::vector<uint8_t>& encoded, std::string* error = nullptr);
   bool decode_issuance_payload(const std::vector<uint8_t>& encoded, issuance_payload& payload, std::string* error = nullptr);
 
+  constexpr uint8_t TRANSACTION_EXTENSION_VERSION = 1;
+  enum class transaction_operation : uint8_t
+  {
+    issuance = 1
+  };
+
+  // Detached transaction-extension prototype. The carrier commitment binds
+  // the operation to a native transaction prefix without changing active
+  // transaction serialization or validity.
+  struct transaction_extension
+  {
+    uint8_t version = TRANSACTION_EXTENSION_VERSION;
+    network_type network = UNDEFINED;
+    transaction_operation operation = transaction_operation::issuance;
+    crypto::hash carrier_prefix_hash{};
+    issuance_payload issuance;
+  };
+
+  bool encode_transaction_extension(const transaction_extension& extension, std::vector<uint8_t>& encoded, std::string* error = nullptr);
+  bool decode_transaction_extension(const std::vector<uint8_t>& encoded, transaction_extension& extension, std::string* error = nullptr);
+  bool derive_transaction_extension_id(const transaction_extension& extension, crypto::hash& extension_id, std::string* error = nullptr);
+
   struct asset_record
   {
     issuance_descriptor descriptor;
