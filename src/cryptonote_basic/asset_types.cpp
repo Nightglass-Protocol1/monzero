@@ -456,6 +456,24 @@ namespace assets
     return true;
   }
 
+  bool validate_transaction_extension_carrier(
+    const transaction_extension& extension,
+    network_type expected_network,
+    const crypto::hash& expected_prefix_hash,
+    std::string* error)
+  {
+    if (expected_network != MAINNET && expected_network != TESTNET && expected_network != STAGENET)
+      return fail(error, "asset transaction carrier validation requires an explicit network");
+    if (expected_prefix_hash == crypto::null_hash)
+      return fail(error, "expected native transaction prefix commitment is zero");
+    if (extension.network != expected_network)
+      return fail(error, "asset transaction extension is for another network");
+    if (extension.carrier_prefix_hash != expected_prefix_hash)
+      return fail(error, "asset transaction extension carrier commitment mismatch");
+    std::vector<uint8_t> canonical;
+    return encode_transaction_extension(extension, canonical, error);
+  }
+
   bool asset_registry::apply_issuance(
     const issuance_descriptor& descriptor,
     const crypto::signature& issuer_signature,
@@ -532,6 +550,31 @@ namespace assets
     records_ = std::move(candidate.records_);
     asset_ids = std::move(candidate_ids);
     return true;
+  }
+
+  bool asset_registry::apply_block_extensions(
+    const std::vector<transaction_extension>& extensions,
+    const std::vector<crypto::hash>& carrier_prefix_hashes,
+    network_type expected_network,
+    uint64_t height,
+    std::vector<crypto::hash>& asset_ids,
+    std::string* error)
+  {
+    if (extensions.size() != carrier_prefix_hashes.size())
+      return fail(error, "asset extension and carrier commitment counts differ");
+    std::vector<issuance_payload> issuances;
+    issuances.reserve(extensions.size());
+    for (size_t index = 0; index < extensions.size(); ++index)
+    {
+      const transaction_extension& extension = extensions[index];
+      if (!validate_transaction_extension_carrier(
+            extension, expected_network, carrier_prefix_hashes[index], error))
+        return false;
+      if (extension.operation != transaction_operation::issuance)
+        return fail(error, "unsupported asset block operation");
+      issuances.push_back(extension.issuance);
+    }
+    return apply_block_issuances(issuances, height, asset_ids, error);
   }
 
   void asset_registry::detach(uint64_t height)

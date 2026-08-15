@@ -96,6 +96,11 @@ namespace assets
   bool encode_transaction_extension(const transaction_extension& extension, std::vector<uint8_t>& encoded, std::string* error = nullptr);
   bool decode_transaction_extension(const std::vector<uint8_t>& encoded, transaction_extension& extension, std::string* error = nullptr);
   bool derive_transaction_extension_id(const transaction_extension& extension, crypto::hash& extension_id, std::string* error = nullptr);
+  bool validate_transaction_extension_carrier(
+    const transaction_extension& extension,
+    network_type expected_network,
+    const crypto::hash& expected_prefix_hash,
+    std::string* error = nullptr);
 
   struct asset_record
   {
@@ -121,6 +126,13 @@ namespace assets
     bool apply_issuance(const issuance_payload& payload, uint64_t height, crypto::hash& asset_id, std::string* error = nullptr);
     bool apply_block_issuances(
       const std::vector<issuance_payload>& payloads,
+      uint64_t height,
+      std::vector<crypto::hash>& asset_ids,
+      std::string* error = nullptr);
+    bool apply_block_extensions(
+      const std::vector<transaction_extension>& extensions,
+      const std::vector<crypto::hash>& carrier_prefix_hashes,
+      network_type expected_network,
       uint64_t height,
       std::vector<crypto::hash>& asset_ids,
       std::string* error = nullptr);

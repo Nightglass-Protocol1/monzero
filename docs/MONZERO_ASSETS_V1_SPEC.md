@@ -155,6 +155,13 @@ registered as a `tx_extra` variant and therefore does not change what active
 mainnet nodes accept; a reviewed hard-fork integration must define the exact
 non-circular carrier-prefix hashing procedure first.
 
+The inactive block adapter additionally receives independently computed native
+prefix commitments and validates each extension against its corresponding
+carrier before applying any issuance. Count, network, or commitment mismatch
+rejects the complete batch without changing registry state. This separates the
+future native transaction parser from asset operation validation and gives
+tests an explicit boundary for carrier-binding failures.
+
 ### 4.2 Inactive registry and reorganisation model
 
 The prototype includes an in-memory reference registry, disconnected from the

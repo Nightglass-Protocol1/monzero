@@ -252,6 +252,41 @@ TEST(asset_types, detached_transaction_extension_rejects_malformed_or_unbound_da
   EXPECT_FALSE(cryptonote::assets::encode_transaction_extension(extension, encoded, &error));
 }
 
+TEST(asset_types, block_extension_application_verifies_native_carriers_atomically)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+
+  cryptonote::assets::transaction_extension extension;
+  extension.network = cryptonote::TESTNET;
+  extension.carrier_prefix_hash.data[0] = 0x31;
+  extension.issuance.descriptor = make_descriptor(cryptonote::TESTNET);
+  extension.issuance.descriptor.issuer_key = issuer_public;
+  extension.issuance.issuer_signature = authorize(
+    extension.issuance.descriptor, issuer_public, issuer_secret);
+
+  cryptonote::assets::asset_registry registry;
+  std::vector<crypto::hash> ids;
+  EXPECT_TRUE(registry.apply_block_extensions(
+    {extension}, {extension.carrier_prefix_hash}, cryptonote::TESTNET, 30, ids));
+  EXPECT_EQ(1u, registry.size());
+  EXPECT_EQ(1u, ids.size());
+
+  registry.detach(30);
+  crypto::hash wrong_carrier = extension.carrier_prefix_hash;
+  wrong_carrier.data[0] ^= 1;
+  EXPECT_FALSE(registry.apply_block_extensions(
+    {extension}, {wrong_carrier}, cryptonote::TESTNET, 31, ids));
+  EXPECT_EQ(0u, registry.size());
+  EXPECT_FALSE(registry.apply_block_extensions(
+    {extension}, {}, cryptonote::TESTNET, 31, ids));
+  EXPECT_EQ(0u, registry.size());
+  EXPECT_FALSE(registry.apply_block_extensions(
+    {extension}, {extension.carrier_prefix_hash}, cryptonote::STAGENET, 31, ids));
+  EXPECT_EQ(0u, registry.size());
+}
+
 TEST(asset_types, network_domain_separation)
 {
   auto mainnet = make_descriptor(cryptonote::MAINNET);
