@@ -166,6 +166,10 @@ public:
   virtual uint64_t get_alt_block_count() override { return 0; }
   virtual void drop_alt_blocks() override {}
   virtual bool for_all_alt_blocks(std::function<bool(const crypto::hash &blkid, const alt_block_data_t &data, const cryptonote::blobdata_ref *blob)> f, bool include_blob = false) const override { return true; }
+  virtual void add_asset_record(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&) override {}
+  virtual bool get_asset_record(const crypto::hash&, uint64_t&, cryptonote::blobdata&) const override { return false; }
+  virtual void remove_asset_records_from_height(uint64_t) override {}
+  virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const override { return true; }
 };
 
 }

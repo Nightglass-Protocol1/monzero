@@ -1784,6 +1784,14 @@ public:
    */
   virtual bool for_all_alt_blocks(std::function<bool(const crypto::hash &blkid, const alt_block_data_t &data, const cryptonote::blobdata_ref *blob)> f, bool include_blob = false) const = 0;
 
+  // Experimental Monzero asset registry storage. These records are kept in
+  // the blockchain database so block application and rollback can share the
+  // same database transaction as native chain state.
+  virtual void add_asset_record(const crypto::hash &asset_id, uint64_t height, const cryptonote::blobdata_ref &payload) = 0;
+  virtual bool get_asset_record(const crypto::hash &asset_id, uint64_t &height, cryptonote::blobdata &payload) const = 0;
+  virtual void remove_asset_records_from_height(uint64_t height) = 0;
+  virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const = 0;
+
 
   //
   // Hard fork related storage

@@ -311,6 +311,10 @@ public:
   virtual bool for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const;
   virtual bool for_all_outputs(uint64_t amount, const std::function<bool(uint64_t height)> &f) const;
   virtual bool for_all_alt_blocks(std::function<bool(const crypto::hash &blkid, const alt_block_data_t &data, const cryptonote::blobdata_ref *blob)> f, bool include_blob = false) const;
+  virtual void add_asset_record(const crypto::hash &asset_id, uint64_t height, const cryptonote::blobdata_ref &payload);
+  virtual bool get_asset_record(const crypto::hash &asset_id, uint64_t &height, cryptonote::blobdata &payload) const;
+  virtual void remove_asset_records_from_height(uint64_t height);
+  virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const;
 
   virtual uint64_t add_block( const std::pair<block, blobdata>& blk
                             , size_t block_weight
@@ -443,6 +447,9 @@ private:
   // migrate from DB version 4 to 5
   void migrate_4_5();
 
+  // migrate from DB version 5 to 6
+  void migrate_5_6();
+
   void cleanup_batch();
 
 private:
@@ -469,6 +476,9 @@ private:
   MDB_dbi m_txpool_blob;
 
   MDB_dbi m_alt_blocks;
+
+  MDB_dbi m_asset_records;
+  MDB_dbi m_asset_heights;
 
   MDB_dbi m_hf_starting_heights;
   MDB_dbi m_hf_versions;

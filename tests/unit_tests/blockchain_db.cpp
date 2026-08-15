@@ -251,6 +251,50 @@ TYPED_TEST(BlockchainDBTest, OpenAndClose)
   ASSERT_NO_THROW(this->m_db->close());
 }
 
+TYPED_TEST(BlockchainDBTest, AssetRecordsPersistAndRollbackAtomically)
+{
+  const boost::filesystem::path temp_path = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+  const std::string dir_path = temp_path.string();
+  this->set_prefix(dir_path);
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+  this->get_filenames();
+
+  crypto::hash first{}, aborted{}, later{};
+  reinterpret_cast<unsigned char*>(&first)[0] = 1;
+  reinterpret_cast<unsigned char*>(&aborted)[0] = 2;
+  reinterpret_cast<unsigned char*>(&later)[0] = 3;
+  const blobdata first_payload("signed issuance one");
+  const blobdata aborted_payload("must not survive abort");
+  const blobdata later_payload("signed issuance later");
+
+  ASSERT_NO_THROW(this->m_db->add_asset_record(first, 7, blobdata_ref(first_payload)));
+  ASSERT_THROW(this->m_db->add_asset_record(first, 8, blobdata_ref(first_payload)), DB_ERROR);
+
+  this->m_db->block_wtxn_start();
+  ASSERT_NO_THROW(this->m_db->add_asset_record(aborted, 8, blobdata_ref(aborted_payload)));
+  this->m_db->block_wtxn_abort();
+  uint64_t height = 0;
+  blobdata payload;
+  ASSERT_FALSE(this->m_db->get_asset_record(aborted, height, payload));
+
+  ASSERT_NO_THROW(this->m_db->add_asset_record(aborted, 10, blobdata_ref(aborted_payload)));
+  ASSERT_NO_THROW(this->m_db->add_asset_record(later, 11, blobdata_ref(later_payload)));
+  ASSERT_NO_THROW(this->m_db->close());
+  ASSERT_NO_THROW(this->m_db->open(dir_path));
+
+  ASSERT_TRUE(this->m_db->get_asset_record(first, height, payload));
+  ASSERT_EQ(7u, height);
+  ASSERT_EQ(first_payload, payload);
+  size_t count = 0;
+  ASSERT_TRUE(this->m_db->for_all_asset_records([&count](const crypto::hash&, uint64_t, const blobdata_ref&) { ++count; return true; }));
+  ASSERT_EQ(3u, count);
+
+  ASSERT_NO_THROW(this->m_db->remove_asset_records_from_height(10));
+  ASSERT_TRUE(this->m_db->get_asset_record(first, height, payload));
+  ASSERT_FALSE(this->m_db->get_asset_record(aborted, height, payload));
+  ASSERT_FALSE(this->m_db->get_asset_record(later, height, payload));
+}
+
 TYPED_TEST(BlockchainDBTest, AddBlock)
 {
 

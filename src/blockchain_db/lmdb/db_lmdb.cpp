@@ -58,7 +58,7 @@ using epee::string_tools::pod_to_hex;
 using namespace crypto;
 
 // Increase when the DB structure changes
-#define VERSION 5
+#define VERSION 6
 
 namespace
 {
@@ -236,6 +236,9 @@ const char* const LMDB_TXPOOL_META = "txpool_meta";
 const char* const LMDB_TXPOOL_BLOB = "txpool_blob";
 
 const char* const LMDB_ALT_BLOCKS = "alt_blocks";
+
+const char* const LMDB_ASSET_RECORDS = "asset_records";
+const char* const LMDB_ASSET_HEIGHTS = "asset_heights";
 
 const char* const LMDB_HF_STARTING_HEIGHTS = "hf_starting_heights";
 const char* const LMDB_HF_VERSIONS = "hf_versions";
@@ -1506,6 +1509,9 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
 
   lmdb_db_open(txn, LMDB_ALT_BLOCKS, MDB_CREATE, m_alt_blocks, "Failed to open db handle for m_alt_blocks");
 
+  lmdb_db_open(txn, LMDB_ASSET_RECORDS, MDB_CREATE, m_asset_records, "Failed to open db handle for m_asset_records");
+  lmdb_db_open(txn, LMDB_ASSET_HEIGHTS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_asset_heights, "Failed to open db handle for m_asset_heights");
+
   // this subdb is dropped on sight, so it may not be present when we open the DB.
   // Since we use MDB_CREATE, we'll get an exception if we open read-only and it does not exist.
   // So we don't open for read-only, and also not drop below. It is not used elsewhere.
@@ -1530,6 +1536,8 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
   mdb_set_compare(txn, m_txpool_meta, compare_hash32);
   mdb_set_compare(txn, m_txpool_blob, compare_hash32);
   mdb_set_compare(txn, m_alt_blocks, compare_hash32);
+  mdb_set_compare(txn, m_asset_records, compare_hash32);
+  mdb_set_dupsort(txn, m_asset_heights, compare_hash32);
   mdb_set_compare(txn, m_properties, compare_string);
 
   if (!(mdb_flags & MDB_RDONLY))
@@ -1702,6 +1710,10 @@ void BlockchainLMDB::reset()
     throw0(DB_ERROR(lmdb_error("Failed to drop m_hf_versions: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_properties, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_properties: ", result).c_str()));
+  if (auto result = mdb_drop(txn, m_asset_records, 0))
+    throw0(DB_ERROR(lmdb_error("Failed to drop m_asset_records: ", result).c_str()));
+  if (auto result = mdb_drop(txn, m_asset_heights, 0))
+    throw0(DB_ERROR(lmdb_error("Failed to drop m_asset_heights: ", result).c_str()));
 
   // init with current version
   MDB_val_str(k, "version");
@@ -2433,6 +2445,108 @@ bool BlockchainLMDB::for_all_alt_blocks(std::function<bool(const crypto::hash&, 
 
   TXN_POSTFIX_RDONLY();
 
+  return ret;
+}
+
+void BlockchainLMDB::add_asset_record(const crypto::hash &asset_id, uint64_t height, const cryptonote::blobdata_ref &payload)
+{
+  check_open();
+  TXN_BLOCK_PREFIX(0);
+  MDB_val key = {sizeof(asset_id), const_cast<crypto::hash*>(&asset_id)};
+  std::vector<char> record(sizeof(height) + payload.size());
+  std::memcpy(record.data(), &height, sizeof(height));
+  if (!payload.empty())
+    std::memcpy(record.data() + sizeof(height), payload.data(), payload.size());
+  MDB_val value = {record.size(), record.data()};
+  int result = mdb_put(*txn_ptr, m_asset_records, &key, &value, MDB_NOOVERWRITE);
+  if (result == MDB_KEYEXIST)
+    throw1(DB_ERROR("Attempting to add an asset record that already exists"));
+  if (result)
+    throw1(DB_ERROR(lmdb_error("Error adding asset record: ", result).c_str()));
+  MDB_val_copy<uint64_t> height_key(height);
+  MDB_val id_value = {sizeof(asset_id), const_cast<crypto::hash*>(&asset_id)};
+  if ((result = mdb_put(*txn_ptr, m_asset_heights, &height_key, &id_value, MDB_NODUPDATA)))
+    throw1(DB_ERROR(lmdb_error("Error indexing asset record height: ", result).c_str()));
+  TXN_BLOCK_POSTFIX_SUCCESS();
+}
+
+bool BlockchainLMDB::get_asset_record(const crypto::hash &asset_id, uint64_t &height, cryptonote::blobdata &payload) const
+{
+  check_open();
+  TXN_PREFIX_RDONLY();
+  MDB_val key = {sizeof(asset_id), const_cast<crypto::hash*>(&asset_id)}, value;
+  const int result = mdb_get(m_txn, m_asset_records, &key, &value);
+  if (result == MDB_NOTFOUND)
+    return false;
+  if (result)
+    throw0(DB_ERROR(lmdb_error("Error retrieving asset record: ", result).c_str()));
+  if (value.mv_size < sizeof(height))
+    throw0(DB_ERROR("Asset record is too small"));
+  std::memcpy(&height, value.mv_data, sizeof(height));
+  payload.assign(static_cast<const char*>(value.mv_data) + sizeof(height), value.mv_size - sizeof(height));
+  return true;
+}
+
+void BlockchainLMDB::remove_asset_records_from_height(uint64_t height)
+{
+  check_open();
+  TXN_BLOCK_PREFIX(0);
+  MDB_cursor *cursor = nullptr;
+  int result = mdb_cursor_open(*txn_ptr, m_asset_heights, &cursor);
+  if (result)
+    throw1(DB_ERROR(lmdb_error("Error opening asset height cursor: ", result).c_str()));
+  MDB_val_copy<uint64_t> key(height);
+  MDB_val value;
+  result = mdb_cursor_get(cursor, &key, &value, MDB_SET_RANGE);
+  while (result == MDB_SUCCESS)
+  {
+    MDB_val asset_key = {value.mv_size, value.mv_data};
+    const int deleted = mdb_del(*txn_ptr, m_asset_records, &asset_key, nullptr);
+    if (deleted != MDB_SUCCESS && deleted != MDB_NOTFOUND)
+    {
+      mdb_cursor_close(cursor);
+      throw1(DB_ERROR(lmdb_error("Error removing asset record: ", deleted).c_str()));
+    }
+    if ((result = mdb_cursor_del(cursor, 0)) != MDB_SUCCESS)
+    {
+      mdb_cursor_close(cursor);
+      throw1(DB_ERROR(lmdb_error("Error removing asset height index: ", result).c_str()));
+    }
+    result = mdb_cursor_get(cursor, &key, &value, MDB_NEXT);
+  }
+  mdb_cursor_close(cursor);
+  if (result != MDB_NOTFOUND)
+    throw1(DB_ERROR(lmdb_error("Error iterating asset height index: ", result).c_str()));
+  TXN_BLOCK_POSTFIX_SUCCESS();
+}
+
+bool BlockchainLMDB::for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)> f) const
+{
+  check_open();
+  TXN_PREFIX_RDONLY();
+  MDB_cursor *cursor = nullptr;
+  int result = mdb_cursor_open(m_txn, m_asset_records, &cursor);
+  if (result)
+    throw0(DB_ERROR(lmdb_error("Error opening asset record cursor: ", result).c_str()));
+  MDB_val key, value;
+  bool ret = true;
+  for (MDB_cursor_op op = MDB_FIRST; ; op = MDB_NEXT)
+  {
+    result = mdb_cursor_get(cursor, &key, &value, op);
+    if (result == MDB_NOTFOUND)
+      break;
+    if (result)
+      throw0(DB_ERROR(lmdb_error("Error enumerating asset records: ", result).c_str()));
+    if (key.mv_size != sizeof(crypto::hash) || value.mv_size < sizeof(uint64_t))
+      throw0(DB_ERROR("Asset record has an invalid size"));
+    crypto::hash id;
+    uint64_t record_height;
+    std::memcpy(&id, key.mv_data, sizeof(id));
+    std::memcpy(&record_height, value.mv_data, sizeof(record_height));
+    const cryptonote::blobdata_ref payload{static_cast<const char*>(value.mv_data) + sizeof(record_height), value.mv_size - sizeof(record_height)};
+    if (!f(id, record_height, payload)) { ret = false; break; }
+  }
+  mdb_cursor_close(cursor);
   return ret;
 }
 
@@ -5704,6 +5818,19 @@ void BlockchainLMDB::migrate_4_5()
   txn.commit();
 }
 
+void BlockchainLMDB::migrate_5_6()
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  mdb_txn_safe txn(false);
+  if (const int result = mdb_txn_begin(m_env, nullptr, 0, txn))
+    throw0(DB_ERROR(lmdb_error("Failed to create transaction for DB v6 migration: ", result).c_str()));
+  MDB_val_str(key, "version");
+  MDB_val_copy<uint32_t> value(6);
+  if (const int result = mdb_put(txn, m_properties, &key, &value, 0))
+    throw0(DB_ERROR(lmdb_error("Failed to update DB version to 6: ", result).c_str()));
+  txn.commit();
+}
+
 void BlockchainLMDB::migrate(const uint32_t oldversion)
 {
   if (oldversion < 1)
@@ -5716,6 +5843,8 @@ void BlockchainLMDB::migrate(const uint32_t oldversion)
     migrate_3_4();
   if (oldversion < 5)
     migrate_4_5();
+  if (oldversion < 6)
+    migrate_5_6();
 }
 
 }  // namespace cryptonote
