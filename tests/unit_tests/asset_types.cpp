@@ -472,6 +472,94 @@ TEST(asset_types, registry_snapshot_rejects_corruption_and_preserves_existing_st
   EXPECT_TRUE(registry.contains(asset_id));
 }
 
+TEST(asset_types, block_issuance_application_is_atomic_and_ordered)
+{
+  crypto::public_key collection_public{};
+  crypto::secret_key collection_secret{};
+  crypto::generate_keys(collection_public, collection_secret);
+  crypto::public_key member_public{};
+  crypto::secret_key member_secret{};
+  crypto::generate_keys(member_public, member_secret);
+
+  cryptonote::assets::issuance_payload collection_payload;
+  collection_payload.descriptor = make_descriptor(cryptonote::TESTNET);
+  collection_payload.descriptor.type = cryptonote::assets::asset_class::collection;
+  collection_payload.descriptor.atomic_supply = 1;
+  collection_payload.descriptor.display_decimals = 0;
+  collection_payload.descriptor.issuer_key = collection_public;
+  collection_payload.issuer_signature = authorize(
+    collection_payload.descriptor, collection_public, collection_secret);
+  crypto::hash collection_id{};
+  ASSERT_TRUE(cryptonote::assets::derive_asset_id(collection_payload.descriptor, collection_id));
+
+  cryptonote::assets::issuance_payload member_payload;
+  member_payload.descriptor = make_descriptor(cryptonote::TESTNET);
+  member_payload.descriptor.type = cryptonote::assets::asset_class::non_fungible;
+  member_payload.descriptor.atomic_supply = 1;
+  member_payload.descriptor.display_decimals = 0;
+  member_payload.descriptor.issuer_key = member_public;
+  member_payload.descriptor.collection_id = collection_id;
+  member_payload.issuer_signature = authorize(
+    member_payload.descriptor, member_public, member_secret);
+  crypto::hash member_id{};
+  ASSERT_TRUE(cryptonote::assets::derive_asset_id(member_payload.descriptor, member_id));
+  crypto::hash membership_message{};
+  ASSERT_TRUE(cryptonote::assets::derive_collection_membership_hash(
+    collection_id, member_id, membership_message));
+  crypto::signature membership_signature{};
+  crypto::generate_signature(
+    membership_message, collection_public, collection_secret, membership_signature);
+  member_payload.collection_signature = membership_signature;
+
+  cryptonote::assets::asset_registry registry;
+  std::vector<crypto::hash> ids;
+  ASSERT_TRUE(registry.apply_block_issuances(
+    {collection_payload, member_payload}, 20, ids));
+  ASSERT_EQ(2u, ids.size());
+  EXPECT_EQ(collection_id, ids[0]);
+  EXPECT_EQ(member_id, ids[1]);
+  EXPECT_EQ(2u, registry.size());
+
+  registry.detach(20);
+  EXPECT_EQ(0u, registry.size());
+  EXPECT_FALSE(registry.apply_block_issuances(
+    {member_payload, collection_payload}, 21, ids));
+  EXPECT_EQ(0u, registry.size());
+
+  auto invalid_member = member_payload;
+  invalid_member.issuer_signature.c.data[0] ^= 1;
+  EXPECT_FALSE(registry.apply_block_issuances(
+    {collection_payload, invalid_member}, 22, ids));
+  EXPECT_EQ(0u, registry.size());
+}
+
+TEST(asset_types, registry_snapshot_commitment_is_deterministic_and_state_sensitive)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+  auto descriptor = make_descriptor(cryptonote::STAGENET);
+  descriptor.issuer_key = issuer_public;
+
+  cryptonote::assets::asset_registry first;
+  cryptonote::assets::asset_registry second;
+  crypto::hash asset_id{};
+  const crypto::signature signature = authorize(descriptor, issuer_public, issuer_secret);
+  ASSERT_TRUE(first.apply_issuance(descriptor, signature, boost::none, 5, asset_id));
+  ASSERT_TRUE(second.apply_issuance(descriptor, signature, boost::none, 5, asset_id));
+
+  crypto::hash first_hash{};
+  crypto::hash second_hash{};
+  ASSERT_TRUE(first.derive_snapshot_hash(cryptonote::STAGENET, first_hash));
+  ASSERT_TRUE(second.derive_snapshot_hash(cryptonote::STAGENET, second_hash));
+  EXPECT_EQ(first_hash, second_hash);
+
+  second.detach(5);
+  ASSERT_TRUE(second.derive_snapshot_hash(cryptonote::STAGENET, second_hash));
+  EXPECT_NE(first_hash, second_hash);
+  EXPECT_FALSE(first.derive_snapshot_hash(cryptonote::TESTNET, second_hash));
+}
+
 TEST(asset_types, registry_rejects_fake_or_missing_collection_authority)
 {
   crypto::public_key issuer_public{};

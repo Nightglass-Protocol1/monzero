@@ -97,6 +97,11 @@ namespace assets
       crypto::hash& asset_id,
       std::string* error = nullptr);
     bool apply_issuance(const issuance_payload& payload, uint64_t height, crypto::hash& asset_id, std::string* error = nullptr);
+    bool apply_block_issuances(
+      const std::vector<issuance_payload>& payloads,
+      uint64_t height,
+      std::vector<crypto::hash>& asset_ids,
+      std::string* error = nullptr);
     void detach(uint64_t height);
     bool contains(const crypto::hash& asset_id) const;
     const asset_record* find(const crypto::hash& asset_id) const;
@@ -104,6 +109,7 @@ namespace assets
     std::set<crypto::hash> known_assets() const;
     bool encode_snapshot(network_type network, std::vector<uint8_t>& encoded, std::string* error = nullptr) const;
     bool decode_snapshot(const std::vector<uint8_t>& encoded, network_type expected_network, std::string* error = nullptr);
+    bool derive_snapshot_hash(network_type network, crypto::hash& snapshot_hash, std::string* error = nullptr) const;
 
   private:
     std::map<crypto::hash, asset_record> records_;

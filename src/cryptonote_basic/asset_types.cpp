@@ -422,6 +422,27 @@ namespace assets
       error);
   }
 
+  bool asset_registry::apply_block_issuances(
+    const std::vector<issuance_payload>& payloads,
+    uint64_t height,
+    std::vector<crypto::hash>& asset_ids,
+    std::string* error)
+  {
+    asset_registry candidate = *this;
+    std::vector<crypto::hash> candidate_ids;
+    candidate_ids.reserve(payloads.size());
+    for (const issuance_payload& payload : payloads)
+    {
+      crypto::hash asset_id{};
+      if (!candidate.apply_issuance(payload, height, asset_id, error))
+        return false;
+      candidate_ids.push_back(asset_id);
+    }
+    records_ = std::move(candidate.records_);
+    asset_ids = std::move(candidate_ids);
+    return true;
+  }
+
   void asset_registry::detach(uint64_t height)
   {
     for (auto it = records_.begin(); it != records_.end();)
@@ -566,6 +587,15 @@ namespace assets
       return fail(error, "asset registry snapshot has trailing bytes");
 
     records_ = std::move(restored.records_);
+    return true;
+  }
+
+  bool asset_registry::derive_snapshot_hash(network_type network, crypto::hash& snapshot_hash, std::string* error) const
+  {
+    std::vector<uint8_t> snapshot;
+    if (!encode_snapshot(network, snapshot, error))
+      return false;
+    snapshot_hash = crypto::cn_fast_hash(snapshot.data(), snapshot.size());
     return true;
   }
 

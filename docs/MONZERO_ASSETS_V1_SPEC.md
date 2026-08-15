@@ -167,6 +167,15 @@ trailing data, and invalid signatures fail without modifying existing state.
 This provides a recovery and migration model; it is not yet an LMDB table or a
 substitute for replaying authenticated transactions from the chain.
 
+The registry's inactive block adapter applies issuance payloads in transaction
+order against temporary state and commits only if every issuance succeeds.
+This makes same-block collection membership order explicit and prevents a
+partially valid block from leaving partial asset state. Detaching at the block
+height removes all of that block's issuances. A domain-separated hash of the
+canonical snapshot provides a deterministic integrity commitment for testing
+and future database migration checks; it is not currently committed in block
+headers.
+
 This encoding is a stable prototype vector for review, not an activation
 decision. A cryptographic review may replace the hash construction or fields;
 doing so must deliberately update the golden vector before any testnet fork.
