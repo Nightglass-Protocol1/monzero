@@ -129,8 +129,8 @@ bool validate_asset_transaction_payload_shape(const asset_transaction_payload& p
     return fail(error, "asset transaction has a zero carrier hash");
   if (payload.balances.empty() || payload.balances.size() > MAX_ASSET_BALANCE_GROUPS)
     return fail(error, "asset transaction has an invalid balance-group count");
-  if (payload.output_destinations.size() != payload.balances.size())
-    return fail(error, "asset transaction output destinations do not match balance groups");
+  if (payload.output_recipients.size() != payload.balances.size())
+    return fail(error, "asset transaction output recipients do not match balance groups");
   if (payload.ownership_proofs.size() > MAX_ASSET_OWNERSHIP_PROOFS)
     return fail(error, "asset transaction has too many ownership proofs");
   size_t total_inputs = 0, total_destinations = 0;
@@ -143,8 +143,13 @@ bool validate_asset_transaction_payload_shape(const asset_transaction_payload& p
         || balance.range_proofs.empty()
         || balance.range_proofs.size() > MAX_ASSET_RANGE_PROOFS)
       return fail(error, "asset balance group exceeds canonical limits");
-    if (payload.output_destinations[group].size() != balance.outputs.size())
-      return fail(error, "asset output destination count does not match commitments");
+    if (payload.output_recipients[group].size() != balance.outputs.size())
+      return fail(error, "asset output recipient count does not match commitments");
+    const rct::key zero = rct::zero();
+    for (const asset_recipient_data& recipient : payload.output_recipients[group])
+      if (std::memcmp(recipient.encrypted_amount.mask.bytes, zero.bytes,
+            sizeof(zero.bytes)) != 0)
+        return fail(error, "asset output uses a noncanonical encrypted mask");
     total_inputs += balance.pseudo_inputs.size();
     total_destinations += balance.outputs.size() + balance.burns.size();
     if (total_inputs > MAX_ASSET_TOTAL_INPUTS
@@ -192,8 +197,13 @@ bool encode_asset_transaction_payload(const asset_transaction_payload& payload,
     out.count(balance.outputs.size());
     for (size_t index = 0; index < balance.outputs.size(); ++index)
     {
-      out.pod(payload.output_destinations[group][index]);
+      const asset_recipient_data& recipient = payload.output_recipients[group][index];
+      out.pod(recipient.destination);
       out.pod(balance.outputs[index]);
+      out.pod(recipient.tx_public_key);
+      out.pod(recipient.encrypted_amount.mask);
+      out.pod(recipient.encrypted_amount.amount);
+      out.pod(recipient.view_tag);
     }
     write_keys(out, balance.burns);
     out.count(balance.range_proofs.size());
@@ -253,7 +263,7 @@ bool decode_asset_transaction_payload(const std::vector<uint8_t>& encoded,
   if (!in.count(MAX_ASSET_BALANCE_GROUPS, groups) || groups == 0)
     return fail(error, "invalid asset balance-group count");
   candidate.balances.resize(groups);
-  candidate.output_destinations.resize(groups);
+  candidate.output_recipients.resize(groups);
   for (size_t group = 0; group < groups; ++group)
   {
     confidential_asset_balance& balance = candidate.balances[group];
@@ -267,10 +277,17 @@ bool decode_asset_transaction_payload(const std::vector<uint8_t>& encoded,
     if (!in.count(MAX_CONFIDENTIAL_ASSET_OUTPUTS, outputs))
       return fail(error, "invalid asset output count");
     balance.outputs.resize(outputs);
-    candidate.output_destinations[group].resize(outputs);
+    candidate.output_recipients[group].resize(outputs);
     for (size_t index = 0; index < outputs; ++index)
-      if (!in.pod(candidate.output_destinations[group][index]) || !in.pod(balance.outputs[index]))
+    {
+      asset_recipient_data& recipient = candidate.output_recipients[group][index];
+      if (!in.pod(recipient.destination) || !in.pod(balance.outputs[index])
+          || !in.pod(recipient.tx_public_key)
+          || !in.pod(recipient.encrypted_amount.mask)
+          || !in.pod(recipient.encrypted_amount.amount)
+          || !in.pod(recipient.view_tag))
         return fail(error, "truncated asset output");
+    }
     if (!read_keys(in, MAX_CONFIDENTIAL_ASSET_OUTPUTS - outputs, balance.burns)
         || !in.count(MAX_ASSET_RANGE_PROOFS, proofs) || proofs == 0)
       return fail(error, "invalid asset burn or range-proof count");
@@ -324,10 +341,17 @@ bool verify_asset_transaction_payload(const asset_transaction_payload& payload,
       return false;
     descriptor = payload.issuance->descriptor;
   }
-  for (const std::vector<rct::key>& destinations : payload.output_destinations)
-    for (const rct::key& destination : destinations)
-      if (!rct::isInMainSubgroup(destination))
-        return fail(error, "asset transaction contains an invalid destination key");
+  for (const std::vector<asset_recipient_data>& recipients : payload.output_recipients)
+    for (const asset_recipient_data& recipient : recipients)
+    {
+      const rct::key identity = rct::identity();
+      if (!rct::isInMainSubgroup(recipient.destination)
+          || std::memcmp(recipient.destination.bytes, identity.bytes,
+               sizeof(identity.bytes)) == 0
+          || recipient.tx_public_key == crypto::null_pkey
+          || !crypto::check_key(recipient.tx_public_key))
+        return fail(error, "asset transaction contains invalid recipient data");
+    }
   return verify_confidential_asset_transaction_with_ownership(
     payload.balances, payload.ownership_proofs, known_assets, descriptor,
     expected_network, expected_carrier_prefix_hash, error);

@@ -6,6 +6,7 @@
 #include <boost/optional.hpp>
 
 #include "asset_confidential.h"
+#include "asset_recipient.h"
 #include "cryptonote_basic.h"
 
 namespace cryptonote
@@ -36,7 +37,7 @@ namespace assets
     crypto::hash carrier_prefix_hash{};
     boost::optional<issuance_payload> issuance;
     std::vector<confidential_asset_balance> balances;
-    std::vector<std::vector<rct::key>> output_destinations;
+    std::vector<std::vector<asset_recipient_data>> output_recipients;
     std::vector<asset_ownership_proof> ownership_proofs;
   };
 

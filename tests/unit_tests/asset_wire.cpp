@@ -44,7 +44,13 @@ namespace
     payload.balances.push_back(balance);
     rct::key secret{}, destination{};
     rct::skpkGen(secret, destination);
-    payload.output_destinations.push_back({destination});
+    crypto::public_key tx_public{};
+    crypto::secret_key tx_secret{};
+    crypto::generate_keys(tx_public, tx_secret);
+    cryptonote::assets::asset_recipient_data recipient{};
+    recipient.destination = destination;
+    recipient.tx_public_key = tx_public;
+    payload.output_recipients.push_back({recipient});
     return payload;
   }
 }
@@ -101,8 +107,8 @@ TEST(asset_wire, rejects_every_truncation_trailing_bytes_and_noncanonical_counts
   auto excessive = payload;
   excessive.balances.resize(cryptonote::assets::MAX_ASSET_BALANCE_GROUPS + 1,
     payload.balances.front());
-  excessive.output_destinations.resize(excessive.balances.size(),
-    payload.output_destinations.front());
+  excessive.output_recipients.resize(excessive.balances.size(),
+    payload.output_recipients.front());
   EXPECT_FALSE(cryptonote::assets::encode_asset_transaction_payload(
     excessive, trailing, &error));
 }
@@ -111,7 +117,7 @@ TEST(asset_wire, deterministic_output_identity_binds_every_field)
 {
   const auto payload = make_payload();
   cryptonote::assets::confidential_asset_output output{
-    payload.output_destinations.front().front(),
+    payload.output_recipients.front().front().destination,
     payload.balances.front().outputs.front()};
   crypto::hash first{}, repeated{}, changed{};
   std::string error;
@@ -158,15 +164,30 @@ TEST(asset_wire, fixed_wire_vector_has_stable_size_and_digest)
   proof.R.resize(1);
   balance.range_proofs.push_back(proof);
   payload.balances.push_back(balance);
-  payload.output_destinations.push_back({rct::key{}});
+  payload.output_recipients.push_back({cryptonote::assets::asset_recipient_data{}});
   std::vector<uint8_t> encoded;
   std::string error;
   ASSERT_TRUE(cryptonote::assets::encode_asset_transaction_payload(
     payload, encoded, &error)) << error;
-  ASSERT_EQ(492u, encoded.size());
+  ASSERT_EQ(589u, encoded.size());
   const crypto::hash digest = crypto::cn_fast_hash(encoded.data(), encoded.size());
-  ASSERT_EQ("7ad38e0c9b90d1d458f69df1ca5c4c27689ba0c86e0fbcb08a2149166b3d999b",
+  ASSERT_EQ("35006295aa9f7fe02efc24d0ba9dd10bc1c498b3f1466fad35fb677a4bea3994",
     epee::string_tools::pod_to_hex(digest));
+}
+
+TEST(asset_wire, rejects_noncanonical_recipient_encryption)
+{
+  auto payload = make_payload();
+  payload.output_recipients.front().front().encrypted_amount.mask.bytes[0] = 1;
+  std::vector<uint8_t> encoded;
+  std::string error;
+  EXPECT_FALSE(cryptonote::assets::encode_asset_transaction_payload(
+    payload, encoded, &error));
+
+  payload = make_payload();
+  payload.output_recipients.front().front().tx_public_key = crypto::public_key{};
+  EXPECT_FALSE(cryptonote::assets::verify_asset_transaction_payload(payload, {},
+    cryptonote::TESTNET, payload.carrier_prefix_hash, &error));
 }
 
 TEST(asset_wire, native_extra_envelope_has_non_circular_carrier_and_rejects_duplicates)

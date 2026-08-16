@@ -2871,12 +2871,22 @@ namespace cryptonote
       std::string asset_id;
       std::string destination;
       std::string commitment;
+      std::string tx_public_key;
+      std::string encrypted_mask;
+      std::string encrypted_amount;
+      std::string view_tag;
+      uint32_t output_index;
       uint64_t height;
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(output_id)
         KV_SERIALIZE(asset_id)
         KV_SERIALIZE(destination)
         KV_SERIALIZE(commitment)
+        KV_SERIALIZE(tx_public_key)
+        KV_SERIALIZE(encrypted_mask)
+        KV_SERIALIZE(encrypted_amount)
+        KV_SERIALIZE(view_tag)
+        KV_SERIALIZE(output_index)
         KV_SERIALIZE(height)
       END_KV_SERIALIZE_MAP()
     };

@@ -132,7 +132,13 @@ assets::asset_transaction_payload make_db_asset_issuance(
   payload.balances.push_back(balance);
   rct::key secret{}, destination{};
   rct::skpkGen(secret, destination);
-  payload.output_destinations.push_back({destination});
+  crypto::public_key tx_public{};
+  crypto::secret_key tx_secret{};
+  crypto::generate_keys(tx_public, tx_secret);
+  assets::asset_recipient_data recipient{};
+  recipient.destination = destination;
+  recipient.tx_public_key = tx_public;
+  payload.output_recipients.push_back({recipient});
   return payload;
 }
 
@@ -405,6 +411,11 @@ TYPED_TEST(BlockchainDBTest, AssetOutputsAndKeyImagesPersistAndRollbackAtomicall
   asset_output_data_t first{asset_id, first_key, rct::commit(11, rct::zero()), 30};
   asset_output_data_t later{asset_id, later_key, rct::commit(12, rct::zero()), 31};
   asset_output_data_t aborted{asset_id, aborted_key, rct::commit(13, rct::zero()), 32};
+  crypto::secret_key first_tx_secret{};
+  crypto::generate_keys(first.tx_public_key, first_tx_secret);
+  first.encrypted_amount.amount = rct::d2h(11);
+  first.view_tag.data = 0x5a;
+  first.output_index = 7;
   crypto::key_image spent{}, aborted_spent{};
   reinterpret_cast<unsigned char*>(&spent)[0] = 0x41;
   reinterpret_cast<unsigned char*>(&aborted_spent)[0] = 0x42;
@@ -431,6 +442,11 @@ TYPED_TEST(BlockchainDBTest, AssetOutputsAndKeyImagesPersistAndRollbackAtomicall
   ASSERT_EQ(first.destination, restored.destination);
   ASSERT_EQ(first.commitment, restored.commitment);
   ASSERT_EQ(first.height, restored.height);
+  ASSERT_EQ(first.tx_public_key, restored.tx_public_key);
+  ASSERT_EQ(first.encrypted_amount.mask, restored.encrypted_amount.mask);
+  ASSERT_EQ(first.encrypted_amount.amount, restored.encrypted_amount.amount);
+  ASSERT_EQ(first.view_tag, restored.view_tag);
+  ASSERT_EQ(first.output_index, restored.output_index);
   ASSERT_TRUE(this->m_db->has_asset_key_image(spent));
   std::vector<crypto::hash> enumerated_outputs;
   ASSERT_TRUE(this->m_db->for_all_asset_outputs(

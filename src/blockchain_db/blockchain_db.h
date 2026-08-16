@@ -135,6 +135,10 @@ struct asset_output_data_t
   rct::key destination;
   rct::key commitment;
   uint64_t height;
+  crypto::public_key tx_public_key;
+  rct::ecdhTuple encrypted_amount;
+  crypto::view_tag view_tag;
+  uint32_t output_index;
 };
 #pragma pack(pop)
 

@@ -46,6 +46,7 @@ target_link_libraries(cryptonote_format_utils_basic
 
 set(cryptonote_basic_sources
   asset_confidential.cpp
+  asset_recipient.cpp
   asset_wire.cpp
   account.cpp
   asset_types.cpp

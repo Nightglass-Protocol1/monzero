@@ -314,9 +314,9 @@ all point, hash, UUID, and signature values use their fixed byte arrays. The
 decoder rejects truncation, trailing bytes, unsupported versions, invalid
 flags, noncanonical ring sizes, and counts over the per-group and aggregate
 limits. The payload is capped at 256 KiB, eight asset groups, 64 total inputs,
-64 total destinations, and 64 ownership proofs. A fixed 492-byte test vector
+64 total destinations, and 64 ownership proofs. A fixed 589-byte test vector
 has canonical fast-hash
-`7ad38e0c9b90d1d458f69df1ca5c4c27689ba0c86e0fbcb08a2149166b3d999b`.
+`35006295aa9f7fe02efc24d0ba9dd10bc1c498b3f1466fad35fb677a4bea3994`.
 
 Output identities are derived from a domain label, network UUID, carrier hash,
 asset ID, global output index, destination key, and commitment. State
@@ -330,6 +330,16 @@ derivation. Public paginated RPC methods expose the authenticated registry and
 output set for wallet restoration and explorer indexing; wallet transaction
 construction and independent cryptographic review remain activation
 prerequisites.
+
+Each persistent asset output also carries the per-output transaction public
+key, one-time destination, view tag, encrypted amount opening, commitment, and
+global asset-output index. Standard addresses publish `rG`; subaddresses
+publish `rD`, matching the established one-time-address construction. A
+view-only wallet can reject unrelated outputs by view tag, derive the expected
+destination, decrypt the amount and deterministic commitment mask, and accept
+it only when the reconstructed commitment matches consensus state. These
+fields are included in the canonical transaction envelope and paginated output
+restoration RPC.
 
 ## 7. Metadata
 

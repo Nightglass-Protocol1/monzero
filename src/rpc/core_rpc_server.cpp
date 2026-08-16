@@ -3499,6 +3499,13 @@ namespace cryptonote
         entry.asset_id = epee::string_tools::pod_to_hex(record.output.asset_id);
         entry.destination = epee::string_tools::pod_to_hex(record.output.destination);
         entry.commitment = epee::string_tools::pod_to_hex(record.output.commitment);
+        entry.tx_public_key = epee::string_tools::pod_to_hex(record.output.tx_public_key);
+        entry.encrypted_mask = epee::string_tools::pod_to_hex(
+          record.output.encrypted_amount.mask);
+        entry.encrypted_amount = epee::string_tools::pod_to_hex(
+          record.output.encrypted_amount.amount);
+        entry.view_tag = epee::string_tools::pod_to_hex(record.output.view_tag);
+        entry.output_index = record.output.output_index;
         entry.height = record.output.height;
         res.outputs.push_back(std::move(entry));
       }

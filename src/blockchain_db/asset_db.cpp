@@ -146,7 +146,7 @@ bool verify_asset_transaction_against_db(const BlockchainDB& db,
     for (size_t index = 0; index < balance.outputs.size(); ++index)
     {
       const confidential_asset_output output{
-        payload.output_destinations[group][index], balance.outputs[index]};
+        payload.output_recipients[group][index].destination, balance.outputs[index]};
       crypto::hash output_id{};
       if (!derive_asset_output_id(expected_network, expected_carrier_prefix_hash,
             balance.asset_id, global_output_index++, output, output_id, error))
@@ -191,7 +191,7 @@ bool apply_asset_transaction_to_db(BlockchainDB& db,
     for (size_t index = 0; index < balance.outputs.size(); ++index)
     {
       confidential_asset_output output{
-        payload.output_destinations[group][index], balance.outputs[index]};
+        payload.output_recipients[group][index].destination, balance.outputs[index]};
       crypto::hash output_id{};
       if (!derive_asset_output_id(expected_network, expected_carrier_prefix_hash,
             balance.asset_id, global_output_index++, output, output_id, error))
@@ -217,8 +217,11 @@ bool apply_asset_transaction_to_db(BlockchainDB& db,
     const confidential_asset_balance& balance = payload.balances[group];
     for (size_t index = 0; index < balance.outputs.size(); ++index)
     {
-      const asset_output_data_t output{balance.asset_id,
-        payload.output_destinations[group][index], balance.outputs[index], height};
+      const asset_recipient_data& recipient = payload.output_recipients[group][index];
+      const asset_output_data_t output{balance.asset_id, recipient.destination,
+        balance.outputs[index], height, recipient.tx_public_key,
+        recipient.encrypted_amount, recipient.view_tag,
+        static_cast<uint32_t>(candidate_index)};
       db.add_asset_output(candidate_ids[candidate_index++], output);
     }
   }
