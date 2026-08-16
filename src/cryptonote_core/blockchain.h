@@ -900,6 +900,7 @@ namespace cryptonote
      * @return the version
      */
     uint8_t get_current_hard_fork_version() const { return m_hardfork->get_current_version(); }
+    network_type get_network_type() const { return m_nettype; }
 
     /**
      * @brief returns the newest hardfork version known to the blockchain

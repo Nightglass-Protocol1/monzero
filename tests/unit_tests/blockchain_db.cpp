@@ -490,6 +490,8 @@ TYPED_TEST(BlockchainDBTest, AssetTransactionStateAppliesAtomicallyAndRejectsRep
   const auto payload = make_db_asset_issuance(carrier);
   std::vector<crypto::hash> output_ids;
   std::string error;
+  ASSERT_TRUE(assets::verify_asset_transaction_against_db(*this->m_db,
+    payload, TESTNET, carrier, &error)) << error;
   this->m_db->block_wtxn_start();
   ASSERT_TRUE(assets::apply_asset_transaction_to_db(*this->m_db, payload,
     TESTNET, carrier, 50, output_ids, &error)) << error;
@@ -506,6 +508,8 @@ TYPED_TEST(BlockchainDBTest, AssetTransactionStateAppliesAtomicallyAndRejectsRep
   ASSERT_TRUE(this->m_db->get_asset_output(output_ids.front(), stored));
   ASSERT_EQ(asset_id, stored.asset_id);
   ASSERT_EQ(50u, stored.height);
+  EXPECT_FALSE(assets::verify_asset_transaction_against_db(*this->m_db,
+    payload, TESTNET, carrier, &error));
 
   std::vector<crypto::hash> replay_outputs;
   this->m_db->block_wtxn_start();

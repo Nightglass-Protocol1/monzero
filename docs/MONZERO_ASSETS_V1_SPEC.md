@@ -150,10 +150,10 @@ transaction prefix, then contains exactly one bounded operation payload.
 Version 1 recognizes issuance only. Its canonical parser rejects unknown
 operations, network disagreement, a missing carrier commitment, malformed
 lengths, truncated prefixes, invalid nested signatures, and trailing data.
-Changing the carrier commitment changes the extension ID. The extension is not
-registered as a `tx_extra` variant and therefore does not change what active
-mainnet nodes accept; a reviewed hard-fork integration must define the exact
-non-circular carrier-prefix hashing procedure first.
+Changing the carrier commitment changes the extension ID. The extension has a
+native `tx_extra` envelope with tag `0x7a`, but nodes reject that envelope below
+hard-fork version 17. Version 17 is deliberately not present in any network's
+hard-fork schedule, so the envelope remains inactive on every network.
 
 The inactive block adapter additionally receives independently computed native
 prefix commitments and validates each extension against its corresponding
@@ -291,9 +291,10 @@ proofs cannot make an asset transaction valid on any Monzero network.
 
 ### 6.3 Inactive canonical transaction payload
 
-The source tree contains a version-1 canonical binary payload prototype. It is
-still detached from active transaction parsing. Its byte order and field order
-are fixed as follows:
+The source tree contains a version-1 canonical binary payload and a native
+transaction-envelope parser. The envelope uses `tx_extra` tag `0x7a`, is capped
+at 256 KiB, must occur exactly once, and is rejected before hard-fork version
+17. Its byte order and field order are fixed as follows:
 
 1. one-byte payload version and one-byte network type;
 2. 32-byte carrier-prefix hash;
@@ -320,9 +321,12 @@ Output identities are derived from a domain label, network UUID, carrier hash,
 asset ID, global output index, destination key, and commitment. State
 application validates the entire payload, resolves every ring member, checks
 collection authority and collisions, then atomically writes issuance records,
-spent key images, and outputs. The carrier is defined as the native transaction
-prefix hash with this envelope omitted; the active transaction representation
-and exact stripping procedure remain an activation prerequisite.
+spent key images, and outputs. The carrier is the fast hash of a transaction
+prefix reconstructed from the parsed native prefix after removing the asset
+envelope and canonically reserializing every remaining `tx_extra` field in its
+original semantic order. Malformed or duplicate envelopes invalidate carrier
+derivation. Native block and mempool validation remain activation
+prerequisites.
 
 ## 7. Metadata
 

@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "cryptonote_basic/asset_wire.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "ringct/bulletproofs_plus.h"
 #include "ringct/rctOps.h"
 #include "string_tools.h"
@@ -166,4 +167,81 @@ TEST(asset_wire, fixed_wire_vector_has_stable_size_and_digest)
   const crypto::hash digest = crypto::cn_fast_hash(encoded.data(), encoded.size());
   ASSERT_EQ("7ad38e0c9b90d1d458f69df1ca5c4c27689ba0c86e0fbcb08a2149166b3d999b",
     epee::string_tools::pod_to_hex(digest));
+}
+
+TEST(asset_wire, native_extra_envelope_has_non_circular_carrier_and_rejects_duplicates)
+{
+  cryptonote::transaction tx;
+  tx.version = 2;
+  tx.unlock_time = 0;
+  crypto::public_key public_key{};
+  crypto::secret_key secret_key{};
+  crypto::generate_keys(public_key, secret_key);
+  ASSERT_TRUE(cryptonote::add_tx_pub_key_to_extra(tx, public_key));
+  crypto::hash carrier_before{};
+  std::string error;
+  ASSERT_TRUE(cryptonote::get_transaction_asset_carrier_hash(
+    tx, carrier_before, &error)) << error;
+
+  auto payload = make_payload();
+  payload.carrier_prefix_hash = carrier_before;
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_asset_transaction_payload(
+    payload, encoded, &error)) << error;
+  ASSERT_TRUE(cryptonote::add_monzero_asset_tx_extra(tx.extra, encoded, &error)) << error;
+  EXPECT_NE(carrier_before, cryptonote::get_transaction_prefix_hash(tx));
+  crypto::hash carrier_after{};
+  ASSERT_TRUE(cryptonote::get_transaction_asset_carrier_hash(
+    tx, carrier_after, &error)) << error;
+  EXPECT_EQ(carrier_before, carrier_after);
+
+  std::vector<uint8_t> extracted;
+  bool found = false;
+  ASSERT_TRUE(cryptonote::get_monzero_asset_tx_extra(
+    tx.extra, extracted, found, &error)) << error;
+  ASSERT_TRUE(found);
+  EXPECT_EQ(encoded, extracted);
+  boost::optional<cryptonote::assets::asset_transaction_payload> native_payload;
+  EXPECT_FALSE(cryptonote::assets::parse_native_asset_transaction(tx,
+    HF_VERSION_MONZERO_ASSETS - 1, cryptonote::TESTNET, native_payload, &error));
+  ASSERT_TRUE(cryptonote::assets::parse_native_asset_transaction(tx,
+    HF_VERSION_MONZERO_ASSETS, cryptonote::TESTNET, native_payload, &error)) << error;
+  ASSERT_TRUE(native_payload);
+  EXPECT_EQ(carrier_before, native_payload->carrier_prefix_hash);
+  EXPECT_FALSE(cryptonote::assets::parse_native_asset_transaction(tx,
+    HF_VERSION_MONZERO_ASSETS, cryptonote::MAINNET, native_payload, &error));
+  EXPECT_FALSE(cryptonote::add_monzero_asset_tx_extra(tx.extra, encoded, &error));
+
+  std::vector<uint8_t> encoded_field;
+  ASSERT_TRUE(cryptonote::add_monzero_asset_tx_extra(encoded_field, encoded, &error));
+  tx.extra.insert(tx.extra.end(), encoded_field.begin(), encoded_field.end());
+  EXPECT_FALSE(cryptonote::get_monzero_asset_tx_extra(
+    tx.extra, extracted, found, &error));
+  EXPECT_FALSE(cryptonote::get_transaction_asset_carrier_hash(
+    tx, carrier_after, &error));
+}
+
+TEST(asset_wire, native_envelope_does_not_expand_standard_extra_allowance)
+{
+  cryptonote::transaction tx;
+  tx.version = 2;
+  for (size_t index = 0; index < 5; ++index)
+    ASSERT_TRUE(cryptonote::add_extra_nonce_to_tx_extra(tx.extra,
+      cryptonote::blobdata(TX_EXTRA_NONCE_MAX_COUNT, static_cast<char>(index + 1))));
+  ASSERT_GT(tx.extra.size(), MAX_TX_EXTRA_SIZE);
+
+  crypto::hash carrier{};
+  std::string error;
+  ASSERT_TRUE(cryptonote::get_transaction_asset_carrier_hash(tx, carrier, &error)) << error;
+  auto payload = make_payload();
+  payload.carrier_prefix_hash = carrier;
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_asset_transaction_payload(
+    payload, encoded, &error)) << error;
+  ASSERT_TRUE(cryptonote::add_monzero_asset_tx_extra(tx.extra, encoded, &error)) << error;
+
+  boost::optional<cryptonote::assets::asset_transaction_payload> native_payload;
+  EXPECT_FALSE(cryptonote::assets::parse_native_asset_transaction(tx,
+    HF_VERSION_MONZERO_ASSETS, cryptonote::TESTNET, native_payload, &error));
+  EXPECT_NE(std::string::npos, error.find("standard limit"));
 }

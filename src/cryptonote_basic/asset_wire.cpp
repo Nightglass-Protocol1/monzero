@@ -3,12 +3,16 @@
 #include <cstring>
 #include <limits>
 
+#include "cryptonote_format_utils.h"
 #include "ringct/rctOps.h"
 
 namespace cryptonote
 {
 namespace assets
 {
+static_assert(MAX_ASSET_WIRE_BYTES == TX_EXTRA_MONZERO_ASSET_MAX_COUNT,
+  "asset wire and tx-extra envelope limits must remain identical");
+
 namespace
 {
   constexpr char OUTPUT_ID_DOMAIN[] = "MonzeroAssetOutputIdV1";
@@ -349,6 +353,38 @@ bool derive_asset_output_id(network_type network,
   bytes.pod(carrier_prefix_hash); bytes.pod(asset_id);
   bytes.u32(output_index); bytes.pod(output.destination); bytes.pod(output.commitment);
   output_id = crypto::cn_fast_hash(bytes.bytes.data(), bytes.bytes.size());
+  return true;
+}
+
+bool parse_native_asset_transaction(const transaction_prefix& tx,
+  uint8_t hard_fork_version, network_type expected_network,
+  boost::optional<asset_transaction_payload>& payload, std::string* error)
+{
+  payload = boost::none;
+  std::vector<uint8_t> encoded;
+  bool found = false;
+  if (!get_monzero_asset_tx_extra(tx.extra, encoded, found, error))
+    return false;
+  if (!found)
+    return true;
+  if (hard_fork_version < HF_VERSION_MONZERO_ASSETS)
+    return fail(error, "Monzero asset envelope appears before activation");
+  size_t normalized_extra_size = 0;
+  if (!get_monzero_asset_normalized_extra_size(tx, normalized_extra_size, error))
+    return false;
+  if (normalized_extra_size > MAX_TX_EXTRA_SIZE)
+    return fail(error, "non-asset transaction extra exceeds the standard limit");
+  crypto::hash carrier{};
+  if (!get_transaction_asset_carrier_hash(tx, carrier, error))
+    return false;
+  asset_transaction_payload decoded;
+  if (!decode_asset_transaction_payload(encoded, decoded, error))
+    return false;
+  if (decoded.network != expected_network)
+    return fail(error, "native asset envelope belongs to a different network");
+  if (decoded.carrier_prefix_hash != carrier)
+    return fail(error, "native asset envelope has the wrong carrier hash");
+  payload = std::move(decoded);
   return true;
 }
 }

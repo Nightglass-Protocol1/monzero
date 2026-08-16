@@ -6,6 +6,7 @@
 #include <boost/optional.hpp>
 
 #include "asset_confidential.h"
+#include "cryptonote_basic.h"
 
 namespace cryptonote
 {
@@ -63,6 +64,12 @@ namespace assets
     uint32_t output_index,
     const confidential_asset_output& output,
     crypto::hash& output_id,
+    std::string* error = nullptr);
+  bool parse_native_asset_transaction(
+    const transaction_prefix& tx,
+    uint8_t hard_fork_version,
+    network_type expected_network,
+    boost::optional<asset_transaction_payload>& payload,
     std::string* error = nullptr);
 }
 }

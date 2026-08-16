@@ -40,6 +40,8 @@
 #include "tx_pool.h"
 #include "blockchain.h"
 #include "blockchain_db/blockchain_db.h"
+#include "blockchain_db/asset_db.h"
+#include "cryptonote_basic/asset_wire.h"
 #include "cryptonote_basic/cryptonote_boost_serialization.h"
 #include "cryptonote_basic/events.h"
 #include "cryptonote_config.h"
@@ -4209,6 +4211,7 @@ leave:
   size_t cumulative_block_weight = coinbase_weight;
 
   std::vector<std::pair<transaction, blobdata>> txs;
+  std::vector<boost::optional<assets::asset_transaction_payload>> asset_payloads;
   //                          txid     weight mempool?
   std::vector<std::tuple<crypto::hash, size_t, bool>> txs_meta;
 
@@ -4266,6 +4269,7 @@ leave:
   // from the tx_pool (or from extra_block_txs) and validating them.  Each is then added
   // to txs.  Keys spent in each are added to <keys> by the double spend check.
   txs.reserve(bl.tx_hashes.size());
+  asset_payloads.reserve(bl.tx_hashes.size());
   txs_meta.reserve(bl.tx_hashes.size());
   txpool_events.reserve(bl.tx_hashes.size());
   for (const crypto::hash& tx_id : bl.tx_hashes)
@@ -4354,6 +4358,20 @@ leave:
     // store the list of transactions all at once or return the ones we've
     // taken from the tx_pool back to it if the block fails verification.
     txs_meta.emplace_back(tx_id, tx_weight, found_tx_in_pool);
+
+    boost::optional<assets::asset_transaction_payload> asset_payload;
+    std::string asset_error;
+    if (hf_version >= HF_VERSION_MONZERO_ASSETS
+        && !assets::parse_native_asset_transaction(tx, hf_version, m_nettype,
+          asset_payload, &asset_error))
+    {
+      MERROR_VER("Block with id: " << id << " has transaction " << tx_id
+        << " with an invalid Monzero asset envelope: " << asset_error);
+      bvc.m_verifivation_failed = true;
+      return_txs_to_pool();
+      return false;
+    }
+    asset_payloads.push_back(std::move(asset_payload));
     TIME_MEASURE_START(dd);
 
     // FIXME: the storage should not be responsible for validation.
@@ -4448,6 +4466,16 @@ leave:
     {
       uint64_t long_term_block_weight = get_next_long_term_block_weight(block_weight);
       cryptonote::blobdata bd = cryptonote::block_to_blob(bl);
+      for (const boost::optional<assets::asset_transaction_payload>& payload : asset_payloads)
+      {
+        if (!payload)
+          continue;
+        std::vector<crypto::hash> output_ids;
+        std::string asset_error;
+        if (!assets::apply_asset_transaction_to_db(*m_db, *payload, m_nettype,
+              payload->carrier_prefix_hash, blockchain_height, output_ids, &asset_error))
+          throw std::runtime_error{"Monzero asset state transition failed: " + asset_error};
+      }
       new_height = m_db->add_block(std::make_pair(std::move(bl), std::move(bd)), block_weight, long_term_block_weight, cumulative_difficulty, already_generated_coins, txs);
     }
     catch (const KEY_IMAGE_EXISTS& e)

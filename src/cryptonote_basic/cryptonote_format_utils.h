@@ -73,6 +73,14 @@ namespace cryptonote
 
   bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields);
   bool sort_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<uint8_t> &sorted_tx_extra, bool allow_partial = false);
+  bool get_monzero_asset_tx_extra(const std::vector<uint8_t>& tx_extra,
+    std::vector<uint8_t>& payload, bool& found, std::string* error = nullptr);
+  bool add_monzero_asset_tx_extra(std::vector<uint8_t>& tx_extra,
+    const std::vector<uint8_t>& payload, std::string* error = nullptr);
+  bool get_transaction_asset_carrier_hash(const transaction_prefix& tx,
+    crypto::hash& carrier_hash, std::string* error = nullptr);
+  bool get_monzero_asset_normalized_extra_size(const transaction_prefix& tx,
+    size_t& normalized_size, std::string* error = nullptr);
   crypto::public_key get_tx_pub_key_from_extra(const std::vector<uint8_t>& tx_extra, size_t pk_index = 0);
   crypto::public_key get_tx_pub_key_from_extra(const transaction_prefix& tx, size_t pk_index = 0);
   crypto::public_key get_tx_pub_key_from_extra(const transaction& tx, size_t pk_index = 0);

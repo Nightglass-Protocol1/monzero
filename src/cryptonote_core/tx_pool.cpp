@@ -41,6 +41,8 @@
 #include "blockchain.h"
 #include "blockchain_db/locked_txn.h"
 #include "blockchain_db/blockchain_db.h"
+#include "blockchain_db/asset_db.h"
+#include "cryptonote_basic/asset_wire.h"
 #include "common/boost_serialization_helper.h"
 #include "int-util.h"
 #include "misc_language.h"
@@ -164,6 +166,89 @@ namespace cryptonote
       return false;
     }
 
+    boost::optional<assets::asset_transaction_payload> asset_payload;
+    if (version >= HF_VERSION_MONZERO_ASSETS)
+    {
+      std::string asset_error;
+      if (!assets::parse_native_asset_transaction(tx, version,
+            m_blockchain.get_network_type(), asset_payload, &asset_error))
+      {
+        LOG_PRINT_L1("transaction " << id << " has an invalid Monzero asset envelope: " << asset_error);
+        tvc.m_verifivation_failed = true;
+        return false;
+      }
+      if (asset_payload)
+      {
+        CRITICAL_REGION_LOCAL1(m_blockchain);
+        if (!assets::verify_asset_transaction_against_db(m_blockchain.get_db(),
+              *asset_payload, m_blockchain.get_network_type(),
+              asset_payload->carrier_prefix_hash, &asset_error))
+        {
+          LOG_PRINT_L1("transaction " << id << " has an invalid Monzero asset transition: " << asset_error);
+          tvc.m_verifivation_failed = true;
+          tvc.m_invalid_input = true;
+          return false;
+        }
+
+        crypto::hash candidate_issuance{};
+        const bool has_candidate_issuance = asset_payload->issuance
+          && assets::derive_asset_id(asset_payload->issuance->descriptor,
+               candidate_issuance, &asset_error);
+        if (asset_payload->issuance && !has_candidate_issuance)
+        {
+          tvc.m_verifivation_failed = true;
+          return false;
+        }
+        std::unordered_set<crypto::key_image> candidate_key_images;
+        for (const assets::asset_ownership_proof& proof : asset_payload->ownership_proofs)
+          candidate_key_images.insert(proof.key_image);
+
+        bool conflict = false;
+        m_blockchain.for_all_txpool_txes(
+          [&](const crypto::hash& pooled_id, const txpool_tx_meta_t&,
+              const blobdata_ref* pooled_blob) {
+            if (conflict || pooled_id == id || pooled_blob == nullptr)
+              return !conflict;
+            transaction pooled_tx;
+            boost::optional<assets::asset_transaction_payload> pooled_payload;
+            std::string pooled_error;
+            if (!parse_and_validate_tx_from_blob(*pooled_blob, pooled_tx)
+                || !assets::parse_native_asset_transaction(pooled_tx, version,
+                     m_blockchain.get_network_type(), pooled_payload, &pooled_error))
+            {
+              conflict = true;
+              return false;
+            }
+            if (!pooled_payload)
+              return true;
+            if (has_candidate_issuance && pooled_payload->issuance)
+            {
+              crypto::hash pooled_issuance{};
+              if (!assets::derive_asset_id(pooled_payload->issuance->descriptor,
+                    pooled_issuance, &pooled_error) || pooled_issuance == candidate_issuance)
+              {
+                conflict = true;
+                return false;
+              }
+            }
+            for (const assets::asset_ownership_proof& proof : pooled_payload->ownership_proofs)
+              if (candidate_key_images.count(proof.key_image) != 0)
+              {
+                conflict = true;
+                return false;
+              }
+            return true;
+          }, true, relay_category::all);
+        if (conflict)
+        {
+          LOG_PRINT_L1("transaction " << id << " conflicts with a pending Monzero asset transaction");
+          tvc.m_verifivation_failed = true;
+          tvc.m_double_spend = true;
+          return false;
+        }
+      }
+    }
+
     uint64_t fee;
     bool fee_good = false;
     try
@@ -183,7 +268,7 @@ namespace cryptonote
     }
 
     size_t tx_extra_size = tx.extra.size();
-    if (!kept_by_block && tx_extra_size > MAX_TX_EXTRA_SIZE)
+    if (!kept_by_block && tx_extra_size > MAX_TX_EXTRA_SIZE && !asset_payload)
     {
       LOG_PRINT_L1("transaction tx-extra is too big: " << tx_extra_size << " bytes, the limit is: " << MAX_TX_EXTRA_SIZE);
       tvc.m_verifivation_failed = true;

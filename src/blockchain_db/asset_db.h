@@ -40,6 +40,16 @@ namespace assets
     const crypto::hash& carrier_prefix_hash,
     std::string* error = nullptr);
 
+  // Read-only consensus validation used by the transaction pool. This checks
+  // registry membership, ownership, issuance and output collisions without
+  // mutating persistent state.
+  bool verify_asset_transaction_against_db(
+    const BlockchainDB& db,
+    const asset_transaction_payload& payload,
+    network_type expected_network,
+    const crypto::hash& expected_carrier_prefix_hash,
+    std::string* error = nullptr);
+
   // The caller owns the outer blockchain write transaction. Every semantic,
   // ownership, collision, and collection-authority check completes before the
   // first write so an accepted payload changes registry, output, and spent-key

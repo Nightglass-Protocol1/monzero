@@ -585,6 +585,135 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
+  bool get_monzero_asset_tx_extra(const std::vector<uint8_t>& tx_extra,
+    std::vector<uint8_t>& payload, bool& found, std::string* error)
+  {
+    std::vector<tx_extra_field> fields;
+    if (!parse_tx_extra(tx_extra, fields))
+    {
+      if (error) *error = "failed to parse transaction extra";
+      return false;
+    }
+    found = false;
+    payload.clear();
+    for (const tx_extra_field& field : fields)
+    {
+      if (field.type() != typeid(tx_extra_monzero_asset))
+        continue;
+      if (found)
+      {
+        if (error) *error = "transaction contains multiple Monzero asset envelopes";
+        return false;
+      }
+      const std::string& data = boost::get<tx_extra_monzero_asset>(field).data;
+      payload.assign(data.begin(), data.end());
+      found = true;
+    }
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool add_monzero_asset_tx_extra(std::vector<uint8_t>& tx_extra,
+    const std::vector<uint8_t>& payload, std::string* error)
+  {
+    if (payload.empty() || payload.size() > TX_EXTRA_MONZERO_ASSET_MAX_COUNT)
+    {
+      if (error) *error = "Monzero asset envelope has an invalid size";
+      return false;
+    }
+    std::vector<uint8_t> existing;
+    bool found = false;
+    if (!get_monzero_asset_tx_extra(tx_extra, existing, found, error))
+      return false;
+    if (found)
+    {
+      if (error) *error = "transaction already contains a Monzero asset envelope";
+      return false;
+    }
+    tx_extra_field field = tx_extra_monzero_asset{
+      std::string(reinterpret_cast<const char*>(payload.data()), payload.size())};
+    std::ostringstream stream;
+    binary_archive<true> archive(stream);
+    if (!::do_serialize(archive, field))
+    {
+      if (error) *error = "failed to serialize Monzero asset envelope";
+      return false;
+    }
+    const std::string bytes = stream.str();
+    tx_extra.insert(tx_extra.end(), bytes.begin(), bytes.end());
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool get_transaction_asset_carrier_hash(const transaction_prefix& tx,
+    crypto::hash& carrier_hash, std::string* error)
+  {
+    std::vector<tx_extra_field> fields;
+    if (!parse_tx_extra(tx.extra, fields))
+    {
+      if (error) *error = "failed to parse transaction extra for asset carrier";
+      return false;
+    }
+    size_t envelopes = 0;
+    std::ostringstream stream;
+    binary_archive<true> archive(stream);
+    for (const tx_extra_field& field : fields)
+    {
+      if (field.type() == typeid(tx_extra_monzero_asset))
+      {
+        if (++envelopes > 1)
+        {
+          if (error) *error = "transaction contains multiple Monzero asset envelopes";
+          return false;
+        }
+        continue;
+      }
+      tx_extra_field copy = field;
+      if (!::do_serialize(archive, copy))
+      {
+        if (error) *error = "failed to normalize transaction extra for asset carrier";
+        return false;
+      }
+    }
+    transaction_prefix carrier = tx;
+    const std::string normalized = stream.str();
+    carrier.extra.assign(normalized.begin(), normalized.end());
+    carrier_hash = get_transaction_prefix_hash(carrier);
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool get_monzero_asset_normalized_extra_size(const transaction_prefix& tx,
+    size_t& normalized_size, std::string* error)
+  {
+    std::vector<tx_extra_field> fields;
+    if (!parse_tx_extra(tx.extra, fields))
+    {
+      if (error) *error = "failed to parse transaction extra for asset policy";
+      return false;
+    }
+    size_t envelopes = 0;
+    std::ostringstream stream;
+    binary_archive<true> archive(stream);
+    for (const tx_extra_field& field : fields)
+    {
+      if (field.type() == typeid(tx_extra_monzero_asset))
+      {
+        if (++envelopes > 1)
+        {
+          if (error) *error = "transaction contains multiple Monzero asset envelopes";
+          return false;
+        }
+        continue;
+      }
+      tx_extra_field copy = field;
+      if (!::do_serialize(archive, copy))
+      {
+        if (error) *error = "failed to normalize transaction extra for asset policy";
+        return false;
+      }
+    }
+    normalized_size = stream.str().size();
+    return true;
+  }
+  //---------------------------------------------------------------
   template<typename T>
   static bool pick(binary_archive<true> &ar, std::vector<tx_extra_field> &fields, uint8_t tag)
   {
@@ -643,6 +772,7 @@ namespace cryptonote
     if (!pick<tx_extra_additional_pub_keys>(nar, tx_extra_fields, TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) return false;
     if (!pick<tx_extra_nonce>(nar, tx_extra_fields, TX_EXTRA_NONCE)) return false;
     if (!pick<tx_extra_merge_mining_tag>(nar, tx_extra_fields, TX_EXTRA_MERGE_MINING_TAG)) return false;
+    if (!pick<tx_extra_monzero_asset>(nar, tx_extra_fields, TX_EXTRA_TAG_MONZERO_ASSET)) return false;
     if (!pick<tx_extra_mysterious_minergate>(nar, tx_extra_fields, TX_EXTRA_MYSTERIOUS_MINERGATE_TAG)) return false;
     if (!pick<tx_extra_padding>(nar, tx_extra_fields, TX_EXTRA_TAG_PADDING)) return false;
 
