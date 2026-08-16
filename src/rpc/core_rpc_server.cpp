@@ -46,6 +46,7 @@ using namespace epee;
 #include "cryptonote_basic/account.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "cryptonote_basic/merge_mining.h"
+#include "cryptonote_basic/asset_types.h"
 #include "cryptonote_core/tx_sanity_check.h"
 #include "misc_language.h"
 #include "net/local_ip.h"
@@ -3385,6 +3386,131 @@ namespace cryptonote
       return false;
     }
 
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_assets(const COMMAND_RPC_GET_ASSETS::request& req,
+    COMMAND_RPC_GET_ASSETS::response& res, epee::json_rpc::error& error_resp,
+    const connection_context *ctx)
+  {
+    RPC_TRACKER(get_assets);
+    if (req.count == 0 || req.count > 1000)
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+      error_resp.message = "Asset result count must be between 1 and 1000";
+      return false;
+    }
+    struct stored { crypto::hash id; uint64_t height; assets::issuance_payload payload; };
+    std::vector<stored> records;
+    try
+    {
+      const BlockchainDB& db = m_core.get_blockchain_storage().get_db();
+      db.for_all_asset_records([&](const crypto::hash& id, uint64_t height,
+          const blobdata_ref& bytes) {
+        stored record{id, height, {}};
+        const std::vector<uint8_t> encoded(bytes.begin(), bytes.end());
+        std::string decode_error;
+        if (!assets::decode_issuance_payload(encoded, record.payload, &decode_error))
+          throw std::runtime_error{"invalid stored asset: " + decode_error};
+        records.push_back(std::move(record));
+        return true;
+      });
+      std::sort(records.begin(), records.end(), [](const stored& left, const stored& right) {
+        if (left.height != right.height) return left.height < right.height;
+        return std::memcmp(&left.id, &right.id, sizeof(left.id)) < 0;
+      });
+      res.total = records.size();
+      const uint64_t end = std::min<uint64_t>(records.size(),
+        req.offset > std::numeric_limits<uint64_t>::max() - req.count
+          ? std::numeric_limits<uint64_t>::max() : req.offset + req.count);
+      for (uint64_t index = req.offset; index < end; ++index)
+      {
+        const stored& record = records[index];
+        const assets::issuance_descriptor& descriptor = record.payload.descriptor;
+        COMMAND_RPC_GET_ASSETS::entry entry{};
+        entry.asset_id = epee::string_tools::pod_to_hex(record.id);
+        entry.height = record.height;
+        entry.asset_class = static_cast<uint8_t>(descriptor.type);
+        entry.issuer_key = epee::string_tools::pod_to_hex(descriptor.issuer_key);
+        entry.atomic_supply = descriptor.atomic_supply;
+        entry.display_decimals = descriptor.display_decimals;
+        entry.metadata_content_hash = epee::string_tools::pod_to_hex(descriptor.metadata_hash);
+        entry.metadata_reference = descriptor.metadata_reference;
+        if (descriptor.collection_id != crypto::null_hash)
+          entry.collection_id = epee::string_tools::pod_to_hex(descriptor.collection_id);
+        res.assets.push_back(std::move(entry));
+      }
+    }
+    catch (const std::exception& e)
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+      error_resp.message = std::string{"Failed to enumerate assets: "} + e.what();
+      return false;
+    }
+    res.active = m_core.get_blockchain_storage().get_current_hard_fork_version()
+      >= HF_VERSION_MONZERO_ASSETS;
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_asset_outputs(const COMMAND_RPC_GET_ASSET_OUTPUTS::request& req,
+    COMMAND_RPC_GET_ASSET_OUTPUTS::response& res, epee::json_rpc::error& error_resp,
+    const connection_context *ctx)
+  {
+    RPC_TRACKER(get_asset_outputs);
+    if (req.count == 0 || req.count > 1000)
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+      error_resp.message = "Asset output result count must be between 1 and 1000";
+      return false;
+    }
+    crypto::hash filter{};
+    const bool filtered = !req.asset_id.empty();
+    if (filtered && !epee::string_tools::hex_to_pod(req.asset_id, filter))
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+      error_resp.message = "Asset id must be a 32-byte hexadecimal value";
+      return false;
+    }
+    struct stored { crypto::hash id; asset_output_data_t output; };
+    std::vector<stored> records;
+    try
+    {
+      const BlockchainDB& db = m_core.get_blockchain_storage().get_db();
+      db.for_all_asset_outputs([&](const crypto::hash& id, const asset_output_data_t& output) {
+        if (!filtered || output.asset_id == filter)
+          records.push_back({id, output});
+        return true;
+      });
+      std::sort(records.begin(), records.end(), [](const stored& left, const stored& right) {
+        if (left.output.height != right.output.height) return left.output.height < right.output.height;
+        return std::memcmp(&left.id, &right.id, sizeof(left.id)) < 0;
+      });
+      res.total = records.size();
+      const uint64_t end = std::min<uint64_t>(records.size(),
+        req.offset > std::numeric_limits<uint64_t>::max() - req.count
+          ? std::numeric_limits<uint64_t>::max() : req.offset + req.count);
+      for (uint64_t index = req.offset; index < end; ++index)
+      {
+        const stored& record = records[index];
+        COMMAND_RPC_GET_ASSET_OUTPUTS::entry entry{};
+        entry.output_id = epee::string_tools::pod_to_hex(record.id);
+        entry.asset_id = epee::string_tools::pod_to_hex(record.output.asset_id);
+        entry.destination = epee::string_tools::pod_to_hex(record.output.destination);
+        entry.commitment = epee::string_tools::pod_to_hex(record.output.commitment);
+        entry.height = record.output.height;
+        res.outputs.push_back(std::move(entry));
+      }
+    }
+    catch (const std::exception& e)
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+      error_resp.message = std::string{"Failed to enumerate asset outputs: "} + e.what();
+      return false;
+    }
+    res.active = m_core.get_blockchain_storage().get_current_hard_fork_version()
+      >= HF_VERSION_MONZERO_ASSETS;
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }

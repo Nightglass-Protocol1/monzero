@@ -170,6 +170,7 @@ public:
   virtual bool get_asset_record(const crypto::hash&, uint64_t&, cryptonote::blobdata&) const override { return false; }
   virtual void remove_asset_records_from_height(uint64_t) override {}
   virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const override { return true; }
+  virtual bool for_all_asset_outputs(std::function<bool(const crypto::hash&, const cryptonote::asset_output_data_t&)>) const override { return true; }
   virtual void add_asset_output(const crypto::hash&, const asset_output_data_t&) override {}
   virtual bool get_asset_output(const crypto::hash&, asset_output_data_t&) const override { return false; }
   virtual void add_asset_key_image(const crypto::key_image&, uint64_t) override {}

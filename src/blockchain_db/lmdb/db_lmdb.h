@@ -317,6 +317,7 @@ public:
   virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const;
   virtual void add_asset_output(const crypto::hash &output_id, const asset_output_data_t &output);
   virtual bool get_asset_output(const crypto::hash &output_id, asset_output_data_t &output) const;
+  virtual bool for_all_asset_outputs(std::function<bool(const crypto::hash&, const asset_output_data_t&)>) const;
   virtual void add_asset_key_image(const crypto::key_image &key_image, uint64_t height);
   virtual bool has_asset_key_image(const crypto::key_image &key_image) const;
   virtual void remove_asset_outputs_from_height(uint64_t height);

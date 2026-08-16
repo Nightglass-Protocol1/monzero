@@ -2796,4 +2796,104 @@ namespace cryptonote
     typedef epee::misc_utils::struct_init<response_t> response;
   };
 
+  struct COMMAND_RPC_GET_ASSETS
+  {
+    struct request_t: public rpc_request_base
+    {
+      uint64_t offset;
+      uint64_t count;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE_PARENT(rpc_request_base)
+        KV_SERIALIZE_OPT(offset, (uint64_t)0)
+        KV_SERIALIZE_OPT(count, (uint64_t)100)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<request_t> request;
+
+    struct entry
+    {
+      std::string asset_id;
+      uint64_t height;
+      uint8_t asset_class;
+      std::string issuer_key;
+      uint64_t atomic_supply;
+      uint8_t display_decimals;
+      std::string metadata_content_hash;
+      std::string metadata_reference;
+      std::string collection_id;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(asset_id)
+        KV_SERIALIZE(height)
+        KV_SERIALIZE(asset_class)
+        KV_SERIALIZE(issuer_key)
+        KV_SERIALIZE(atomic_supply)
+        KV_SERIALIZE(display_decimals)
+        KV_SERIALIZE(metadata_content_hash)
+        KV_SERIALIZE(metadata_reference)
+        KV_SERIALIZE(collection_id)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response_t: public rpc_response_base
+    {
+      bool active;
+      uint64_t total;
+      std::vector<entry> assets;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE_PARENT(rpc_response_base)
+        KV_SERIALIZE(active)
+        KV_SERIALIZE(total)
+        KV_SERIALIZE(assets)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<response_t> response;
+  };
+
+  struct COMMAND_RPC_GET_ASSET_OUTPUTS
+  {
+    struct request_t: public rpc_request_base
+    {
+      std::string asset_id;
+      uint64_t offset;
+      uint64_t count;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE_PARENT(rpc_request_base)
+        KV_SERIALIZE_OPT(asset_id, std::string())
+        KV_SERIALIZE_OPT(offset, (uint64_t)0)
+        KV_SERIALIZE_OPT(count, (uint64_t)100)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<request_t> request;
+
+    struct entry
+    {
+      std::string output_id;
+      std::string asset_id;
+      std::string destination;
+      std::string commitment;
+      uint64_t height;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(output_id)
+        KV_SERIALIZE(asset_id)
+        KV_SERIALIZE(destination)
+        KV_SERIALIZE(commitment)
+        KV_SERIALIZE(height)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response_t: public rpc_response_base
+    {
+      bool active;
+      uint64_t total;
+      std::vector<entry> outputs;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE_PARENT(rpc_response_base)
+        KV_SERIALIZE(active)
+        KV_SERIALIZE(total)
+        KV_SERIALIZE(outputs)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<response_t> response;
+  };
+
 }

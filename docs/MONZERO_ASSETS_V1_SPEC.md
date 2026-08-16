@@ -1,12 +1,13 @@
 # Monzero Assets V1 product and privacy specification
 
-Status: early draft; not a consensus specification
+Status: pre-activation consensus implementation; independent review required
 Native coin: XMZ
 Proposed feature: fixed-function private assets
 
-This document records product decisions and unresolved research questions. It
-does not authorize mainnet implementation or claim that the proposed
-cryptographic construction is safe.
+This document records product decisions, implemented consensus rules, and
+unresolved review questions. Hard-fork version 17 is intentionally unscheduled;
+this document does not authorize activation or claim that the construction is
+safe for mainnet.
 
 ## 1. Objective
 
@@ -128,23 +129,23 @@ on-chain issuance, whether it can rotate, and how it is permanently closed.
 Until that complete path exists, wallets must not display a collection as
 verified.
 
-The prototype now includes a strict decoder for this canonical descriptor. It
+The implementation includes a strict decoder for this canonical descriptor. It
 rejects truncated inputs at every byte boundary, unknown network UUIDs,
 unsupported versions and classes, oversized references, embedded NUL bytes,
 trailing bytes, mismatched lengths, and any encoding that does not reproduce
-the canonical byte sequence exactly. This parser is still not connected to
-transaction or block deserialization.
+the canonical byte sequence exactly. The descriptor is carried inside the
+versioned native transaction envelope described below.
 
-An additional inactive issuance-payload envelope binds the descriptor to its
+An issuance-payload envelope binds the descriptor to its
 issuer authorization and, when collection membership is claimed, requires an
 explicit collection authorization slot. Its decoder is length-bounded,
 canonical, verifies the issuer signature, rejects every truncated prefix,
 rejects invalid signature flags and trailing bytes, and prevents collection
 signatures from being silently omitted or attached to unrelated issuance.
-Collection-controller verification still requires the future persistent
-registry lookup and therefore remains part of consensus integration work.
+Collection-controller verification resolves the collection from persistent
+consensus state before accepting a member issuance.
 
-The next inactive layer is a detached, versioned transaction extension. It is
+The versioned transaction extension is
 bound to one public network and a non-zero commitment to the carrier native
 transaction prefix, then contains exactly one bounded operation payload.
 Version 1 recognizes issuance only. Its canonical parser rejects unknown
@@ -155,7 +156,7 @@ native `tx_extra` envelope with tag `0x7a`, but nodes reject that envelope below
 hard-fork version 17. Version 17 is deliberately not present in any network's
 hard-fork schedule, so the envelope remains inactive on every network.
 
-The inactive block adapter additionally receives independently computed native
+The block adapter receives independently computed native
 prefix commitments and validates each extension against its corresponding
 carrier before applying any issuance. Count, network, or commitment mismatch
 rejects the complete batch without changing registry state. This separates the
@@ -164,8 +165,8 @@ tests an explicit boundary for carrier-binding failures.
 
 ### 4.2 Inactive registry and reorganisation model
 
-The prototype includes an in-memory reference registry, disconnected from the
-blockchain database. An issuance is inserted only after its canonical ID and
+The implementation uses the same validated registry model when rebuilding
+state from persistent LMDB issuance records. An issuance is inserted only after its canonical ID and
 issuer signature validate. A claimed collection must already exist on the same
 network, have the collection class, precede the member issuance, and authorize
 the exact member asset ID. Duplicate IDs and unexpected membership signatures
@@ -182,8 +183,8 @@ by height with collections before same-height members, and are fully
 revalidated into temporary state before replacing the active registry.
 Corruption, cross-network input, noncanonical order, duplicate issuance,
 trailing data, and invalid signatures fail without modifying existing state.
-This provides a recovery and migration model; it is not yet an LMDB table or a
-substitute for replaying authenticated transactions from the chain.
+This provides a recovery and migration model in addition to the authoritative
+LMDB issuance, output, key-image, and height indexes.
 
 The registry's inactive block adapter applies issuance payloads in transaction
 order against temporary state and commits only if every issuance succeeds.
@@ -282,12 +283,12 @@ against those records before CLSAG verification, and block detach removes
 outputs and key images at or above the detached height. Restart, transaction
 abort, duplicate-key-image, and chain-pop tests cover this storage layer.
 
-This still does **not** provide end-to-end global double-spend prevention. The
-active transaction and mempool paths do not yet call the verifier or reserve
-key images. The canonical wire and atomic state-application prototypes below
-are not yet embedded in native transactions or invoked by active block and
-mempool validation. Until those layers are integrated and reviewed, these
-proofs cannot make an asset transaction valid on any Monzero network.
+HF17 block validation resolves ownership proofs against authoritative outputs,
+rejects spent key images, and applies issuance, outputs, and key images in the
+same LMDB batch as the native block. Mempool admission performs the same
+read-only validation and rejects pending duplicate issuance IDs or asset key
+images. The fork remains unscheduled, so these rules cannot make an asset
+transaction valid on any currently configured Monzero network.
 
 ### 6.3 Inactive canonical transaction payload
 
@@ -325,7 +326,9 @@ spent key images, and outputs. The carrier is the fast hash of a transaction
 prefix reconstructed from the parsed native prefix after removing the asset
 envelope and canonically reserializing every remaining `tx_extra` field in its
 original semantic order. Malformed or duplicate envelopes invalidate carrier
-derivation. Native block and mempool validation remain activation
+derivation. Public paginated RPC methods expose the authenticated registry and
+output set for wallet restoration and explorer indexing; wallet transaction
+construction and independent cryptographic review remain activation
 prerequisites.
 
 ## 7. Metadata

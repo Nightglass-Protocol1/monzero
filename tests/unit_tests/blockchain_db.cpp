@@ -432,12 +432,26 @@ TYPED_TEST(BlockchainDBTest, AssetOutputsAndKeyImagesPersistAndRollbackAtomicall
   ASSERT_EQ(first.commitment, restored.commitment);
   ASSERT_EQ(first.height, restored.height);
   ASSERT_TRUE(this->m_db->has_asset_key_image(spent));
+  std::vector<crypto::hash> enumerated_outputs;
+  ASSERT_TRUE(this->m_db->for_all_asset_outputs(
+    [&enumerated_outputs](const crypto::hash& id, const asset_output_data_t&) {
+      enumerated_outputs.push_back(id);
+      return true;
+    }));
+  ASSERT_EQ(2u, enumerated_outputs.size());
 
   ASSERT_NO_THROW(this->m_db->remove_asset_outputs_from_height(31));
   ASSERT_NO_THROW(this->m_db->remove_asset_key_images_from_height(31));
   ASSERT_TRUE(this->m_db->get_asset_output(first_id, restored));
   ASSERT_FALSE(this->m_db->get_asset_output(later_id, restored));
   ASSERT_FALSE(this->m_db->has_asset_key_image(spent));
+  enumerated_outputs.clear();
+  ASSERT_TRUE(this->m_db->for_all_asset_outputs(
+    [&enumerated_outputs](const crypto::hash& id, const asset_output_data_t&) {
+      enumerated_outputs.push_back(id);
+      return true;
+    }));
+  ASSERT_EQ(std::vector<crypto::hash>{first_id}, enumerated_outputs);
 }
 
 TYPED_TEST(BlockchainDBTest, AssetOwnershipResolvesAuthoritativeRingAndSpentState)

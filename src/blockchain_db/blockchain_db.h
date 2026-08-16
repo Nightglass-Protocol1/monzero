@@ -1801,6 +1801,7 @@ public:
   virtual bool for_all_asset_records(std::function<bool(const crypto::hash&, uint64_t, const cryptonote::blobdata_ref&)>) const = 0;
   virtual void add_asset_output(const crypto::hash &output_id, const asset_output_data_t &output) = 0;
   virtual bool get_asset_output(const crypto::hash &output_id, asset_output_data_t &output) const = 0;
+  virtual bool for_all_asset_outputs(std::function<bool(const crypto::hash&, const asset_output_data_t&)>) const = 0;
   virtual void add_asset_key_image(const crypto::key_image &key_image, uint64_t height) = 0;
   virtual bool has_asset_key_image(const crypto::key_image &key_image) const = 0;
   virtual void remove_asset_outputs_from_height(uint64_t height) = 0;

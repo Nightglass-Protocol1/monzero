@@ -2604,6 +2604,36 @@ bool BlockchainLMDB::get_asset_output(const crypto::hash &output_id, asset_outpu
   return true;
 }
 
+bool BlockchainLMDB::for_all_asset_outputs(
+  std::function<bool(const crypto::hash&, const asset_output_data_t&)> f) const
+{
+  check_open();
+  TXN_PREFIX_RDONLY();
+  MDB_cursor *cursor = nullptr;
+  int result = mdb_cursor_open(m_txn, m_asset_outputs, &cursor);
+  if (result)
+    throw0(DB_ERROR(lmdb_error("Error opening asset output cursor: ", result).c_str()));
+  MDB_val key, value;
+  bool ret = true;
+  for (MDB_cursor_op op = MDB_FIRST; ; op = MDB_NEXT)
+  {
+    result = mdb_cursor_get(cursor, &key, &value, op);
+    if (result == MDB_NOTFOUND)
+      break;
+    if (result)
+      throw0(DB_ERROR(lmdb_error("Error enumerating asset outputs: ", result).c_str()));
+    if (key.mv_size != sizeof(crypto::hash) || value.mv_size != sizeof(asset_output_data_t))
+      throw0(DB_ERROR("Asset output has an invalid size"));
+    crypto::hash output_id;
+    asset_output_data_t output;
+    std::memcpy(&output_id, key.mv_data, sizeof(output_id));
+    std::memcpy(&output, value.mv_data, sizeof(output));
+    if (!f(output_id, output)) { ret = false; break; }
+  }
+  mdb_cursor_close(cursor);
+  return ret;
+}
+
 void BlockchainLMDB::add_asset_key_image(const crypto::key_image &key_image, uint64_t height)
 {
   check_open();
