@@ -1053,6 +1053,31 @@ uint64_t WalletImpl::balance(uint32_t accountIndex) const
     return m_wallet->balance(accountIndex, false);
 }
 
+std::vector<AssetOutput> WalletImpl::assetOutputs(bool includeSpent) const
+{
+    std::vector<AssetOutput> result;
+    const auto &outputs = m_wallet->get_asset_transfers();
+    result.reserve(outputs.size());
+    for (const auto &output : outputs)
+    {
+        if (!includeSpent && output.m_spent)
+            continue;
+        AssetOutput entry;
+        entry.assetId = epee::string_tools::pod_to_hex(output.m_asset_id);
+        entry.outputId = epee::string_tools::pod_to_hex(output.m_output_id);
+        entry.transactionId = epee::string_tools::pod_to_hex(output.m_txid);
+        entry.blockHeight = output.m_block_height;
+        entry.amount = output.m_amount;
+        entry.accountIndex = output.m_subaddr_index.major;
+        entry.addressIndex = output.m_subaddr_index.minor;
+        entry.keyImageKnown = output.m_key_image_known;
+        entry.spent = output.m_spent;
+        entry.spentHeight = output.m_spent_height;
+        result.push_back(std::move(entry));
+    }
+    return result;
+}
+
 uint64_t WalletImpl::unlockedBalance(uint32_t accountIndex) const
 {
     return m_wallet->unlocked_balance(accountIndex, false);

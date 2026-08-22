@@ -425,6 +425,20 @@ struct WalletListener
 /**
  * @brief Interface for wallet operations.
  */
+struct AssetOutput
+{
+    std::string assetId;
+    std::string outputId;
+    std::string transactionId;
+    uint64_t blockHeight = 0;
+    uint64_t amount = 0;
+    uint32_t accountIndex = 0;
+    uint32_t addressIndex = 0;
+    bool keyImageKnown = false;
+    bool spent = false;
+    uint64_t spentHeight = 0;
+};
+
 struct Wallet
 {
     enum Device {
@@ -613,6 +627,9 @@ struct Wallet
     virtual bool trustedDaemon() const = 0;
     virtual bool setProxy(const std::string &address) = 0;
     virtual uint64_t balance(uint32_t accountIndex = 0) const = 0;
+    //! Returns confirmed wallet-owned asset outputs. Asset support remains
+    //! activation-gated; this read-only view is safe on inactive networks.
+    virtual std::vector<AssetOutput> assetOutputs(bool includeSpent = false) const = 0;
     uint64_t balanceAll() const {
         uint64_t result = 0;
         for (uint32_t i = 0; i < numSubaddressAccounts(); ++i)
