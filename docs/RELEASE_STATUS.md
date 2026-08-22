@@ -154,6 +154,16 @@ when they are outside the source repository.
   glibc-family dependencies, and strict verification stops only at independent
   reproduction. The website candidate links now identify both packages as
   unsigned, unaudited prereleases rather than production releases.
+- Genesis pre5 is deployed on `https://monzero.org` as an explicitly unsigned,
+  unaudited prerelease. A post-deployment HTTPS download of each complete
+  archive matched its published SHA-256 digest: Linux
+  `99e4be1dda90dad94ca624fb19f734f8a5faf9ad6c8cbcb3391da7269c507675`
+  and Windows
+  `7870ed552f4c1d4b92260d8cfbd25260b1c983edc36c5136965e555162cdcc42`.
+  The explorer remained reachable and the node-info endpoint returned status
+  `OK` after deployment, but the node reported `synchronized: false` at height
+  1023. The prior homepage is retained server-side in the timestamped rollback
+  directory `Monzero-backup-20260822T194244Z-pre5`.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -192,8 +202,8 @@ promoted without satisfying the remaining strict and external release gates.
   complete.
 - Finalize supported-platform, migration, rollback, upgrade, and known-
   limitation documentation for the chosen release candidate.
-- Independently reproduce the strict-verifier-compatible Linux candidate and
-  produce an equivalent verified Windows candidate from a pinned environment.
+- Independently reproduce both strict-verifier-compatible pinned Linux and
+  Windows candidates on separate clean systems.
 
 ## External evidence required before production release
 
