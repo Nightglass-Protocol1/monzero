@@ -181,6 +181,13 @@ when they are outside the source repository.
   addition to the full pre5 rollback directory. Post-deployment checks confirm
   that the explorer still returns valid JSON and both artifact endpoints retain
   their expected MIME types and byte sizes.
+- The homepage node indicator now distinguishes RPC reachability from network
+  readiness: `status: OK` with `synchronized: false` is displayed as “Node
+  unsynchronized” with the offline warning state, rather than “Node online”.
+  The updated JavaScript and cache-busted homepage are deployed and match the
+  committed files byte-for-byte. Server-side pre-change copies are retained as
+  `index.html.before-node-state-20260822` and
+  `app.js.before-node-state-20260822`.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
