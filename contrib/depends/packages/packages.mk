@@ -19,7 +19,7 @@ freebsd_native_packages = freebsd_base
 freebsd_packages = ncurses readline sodium
 
 linux_packages = eudev ncurses readline sodium $(hardware_packages)
-linux_native_packages = $(hardware_native_packages)
+linux_native_packages = $(hardware_native_packages) native_gperf
 
 ifeq ($(build_tests),ON)
 packages += gtest
@@ -35,4 +35,3 @@ mingw32_native_packages = $(hardware_native_packages)
 ifneq ($(build_os),darwin)
 darwin_native_packages += darwin_sdk native_clang native_cctools native_libtapi
 endif
-

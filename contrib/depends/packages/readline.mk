@@ -6,13 +6,15 @@ $(package)_sha256_hash=e339f51971478d369f8a053a330a190781acb9864cf4c541060f12078
 $(package)_dependencies=ncurses
 
 define $(package)_set_vars
+  # Readline 8.0 uses legacy empty parameter declarations that GCC 15's
+  # default C23 mode interprets as functions accepting no arguments.
   $(package)_build_opts=CC="$($(package)_cc)"
   $(package)_config_opts+=--prefix=$(host_prefix)
   $(package)_config_opts+=--exec-prefix=$(host_prefix)
   $(package)_config_opts+=--host=$(HOST)
   $(package)_config_opts+=--disable-shared --with-curses
   $(package)_config_opts_release=--disable-debug-mode
-  $(package)_build_opts=CFLAGS="$($(package)_cflags) $($(package)_cppflags) -fPIC"
+  $(package)_build_opts=CFLAGS="$($(package)_cflags) $($(package)_cppflags) -fPIC -std=gnu17 -DVOID_SIGHANDLER"
 endef
 
 define $(package)_config_cmds
@@ -26,4 +28,3 @@ endef
 define $(package)_stage_cmds
   $(MAKE) install DESTDIR=$($(package)_staging_dir) prefix=$(host_prefix) exec-prefix=$(host_prefix)
 endef
-

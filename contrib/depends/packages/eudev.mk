@@ -4,6 +4,7 @@ $(package)_download_path=https://github.com/gentoo/eudev/archive/
 $(package)_download_file=$($(package)_version).tar.gz
 $(package)_file_name=$(package)-$($(package)_version).tar.gz
 $(package)_sha256_hash=a96ecb8637667897b8bd4dee4c22c7c5f08b327be45186e912ce6bc768385852
+$(package)_dependencies=native_gperf
 
 define $(package)_set_vars
   $(package)_config_opts=--disable-gudev --disable-introspection --disable-hwdb --disable-manpages --disable-shared
