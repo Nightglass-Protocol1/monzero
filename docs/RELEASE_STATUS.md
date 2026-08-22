@@ -138,6 +138,23 @@ when they are outside the source repository.
   Normal verification passes. Strict verification checks all three binaries,
   accepts their stripped/minimal runtime surface, and stops only because the
   required independent binary reproduction remains honestly `unverified`.
+- The pinned Windows dependency environment now builds the daemon, CLI wallet,
+  and wallet RPC with mandatory Trezor support using the same source baseline
+  as Linux. The PE32+ executables import only allowlisted Windows system DLLs,
+  carry one identical source revision, and are deterministically stripped.
+  Two Genesis pre5 Windows archives produced from the same binaries are byte-
+  for-byte identical with SHA-256
+  `b37f991b6d59b2a1ae0ea85da06146b07051fc81593e51fbfb571cf37a18af23`.
+  Normal verification passes; strict verification stops at the required
+  independent reproduction attestation. Execution testing on a clean Windows
+  system and the separately pinned GUI package remain outstanding.
+- Linux was rebuilt at the same pre5 source baseline. Two packages are byte-
+  for-byte identical with SHA-256
+  `03b90084297a1fdbd92adca5b395af765f83da327c638f6e43a830d0849ffbcf`.
+  Normal verification passes, the three binaries retain only the permitted
+  glibc-family dependencies, and strict verification stops only at independent
+  reproduction. The website candidate links now identify both packages as
+  unsigned, unaudited prereleases rather than production releases.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -151,9 +168,12 @@ it. Genesis pre3 is a clean, deterministic local packaging candidate, but its
 host-built binaries have non-permitted runtime dependencies and have not been
 independently reproduced or signed. Genesis pre4 replaces that host-built
 candidate with pinned-dependency binaries and passes every local strict check,
-but still lacks independent reproduction and signing. None of these archives
-is a production release or may be promoted without satisfying the remaining
-strict and external release gates.
+but still lacks independent reproduction and signing. Genesis pre5 aligns the
+pinned Linux and Windows command-line packages at source commit `10ec39009`;
+both pass normal verification and deterministic same-machine packaging, but
+neither has been independently reproduced, signed, or tested on a clean
+Windows system. None of these archives is a production release or may be
+promoted without satisfying the remaining strict and external release gates.
 
 ## Repository work still required
 
