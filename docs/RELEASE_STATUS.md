@@ -164,6 +164,15 @@ when they are outside the source repository.
   `OK` after deployment, but the node reported `synchronized: false` at height
   1023. The prior homepage is retained server-side in the timestamped rollback
   directory `Monzero-backup-20260822T194244Z-pre5`.
+- A subsequent public verification downloaded both complete archives over
+  HTTPS and reproduced the same published digests. HTTP metadata reports the
+  expected `application/gzip` and `application/zip` MIME types and exact sizes
+  of 28,530,347 and 25,739,082 bytes. Both normal package verifiers pass;
+  strict verification rejects both packages solely because independent binary
+  reproduction remains `unverified`. The public explorer RPC still responds,
+  but its latest block is height 1022 with timestamp 1786833652 and the node
+  reports zero peers and `synchronized: false`; public-network freshness and
+  independent-node synchronization therefore remain unproven.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
