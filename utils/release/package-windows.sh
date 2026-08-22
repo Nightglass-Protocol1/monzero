@@ -48,7 +48,7 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
 done
 strip_tool=${STRIP:-x86_64-w64-mingw32-strip}
 command -v "$strip_tool" >/dev/null || { echo "Strip tool not found: $strip_tool" >&2; exit 1; }
-"$strip_tool" --strip-all "$package_dir"/*.exe
+SOURCE_DATE_EPOCH=$source_epoch "$strip_tool" --strip-all "$package_dir"/*.exe
 
 for document in LICENSE README.md MONZERO_CHAIN_SPEC.md; do
   install -m 0644 "$source_root/$document" "$package_dir/$document"
