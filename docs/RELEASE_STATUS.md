@@ -107,13 +107,16 @@ when they are outside the source repository.
   `monzero:` scheme, and the unsafe inherited Windows installer is removed.
 - Two development Linux packages built from the same binaries are byte-for-
   byte identical and pass the normal package verifier. Strict verification
-  correctly rejects them because they are dirty, dynamic, unstripped, and not
-  independently reproducible.
+  correctly rejects them when their manifests are dirty or reproducibility is
+  not independently verified.
 - The packager includes README, release status, checklist, and explicit
   migration/rollback guidance. It refuses mixed daemon/wallet versions and the
   verifier binds their identical reported version into the build manifest,
   screens unsafe archive paths before extraction, and requires the release
   documents. A deliberately mixed historical binary set is rejected.
+  Packaged ELF binaries are deterministically stripped; strict verification
+  permits only minimal glibc-family dynamic dependencies and rejects the
+  broader host-library set produced outside the pinned depends environment.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

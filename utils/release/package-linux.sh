@@ -60,6 +60,14 @@ for optional in monzero-wallet-rpc monzero-gen-ssl-cert; do
   [[ -x "$build_bin/$optional" ]] && install -m 0755 "$build_bin/$optional" "$package_dir/$optional"
 done
 
+strip_tool=${STRIP:-strip}
+command -v "$strip_tool" >/dev/null || { echo "Strip tool not found: $strip_tool" >&2; exit 1; }
+"$strip_tool" --strip-all "$package_dir/monzerod" "$package_dir/monzero-wallet-cli"
+[[ ! -x "$package_dir/monzero-wallet-rpc" ]] ||
+  "$strip_tool" --strip-all "$package_dir/monzero-wallet-rpc"
+[[ ! -x "$package_dir/monzero-gen-ssl-cert" ]] ||
+  "$strip_tool" --strip-all "$package_dir/monzero-gen-ssl-cert"
+
 install -m 0755 "$source_root/start-monzerod.sh" "$package_dir/start-monzerod.sh"
 install -m 0755 "$source_root/start-monzero-wallet-cli.sh" "$package_dir/start-monzero-wallet-cli.sh"
 install -m 0755 "$source_root/start-monzero-miner.sh" "$package_dir/start-monzero-miner.sh"
@@ -77,6 +85,7 @@ install -m 0644 "$source_root/docs/UPGRADE.md" "$package_dir/UPGRADE.md"
   echo "source_date_epoch=$source_epoch"
   echo "source_tree_dirty=$dirty"
   echo "binary_version=$daemon_version"
+  echo "binaries_stripped=true"
   echo "binary_build_reproducibility=$build_reproducibility"
   echo "assets_consensus_enabled=false"
   echo "native_ticker=XMZ"

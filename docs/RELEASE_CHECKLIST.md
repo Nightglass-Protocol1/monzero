@@ -76,8 +76,10 @@ formats, and identical manifest-bound versions across the daemon and wallet.
 This makes packaging
 deterministic; it does not by itself make locally compiled binaries
 reproducible. `RELEASE_STRICT=1` additionally rejects dirty manifests,
-unverified build reproducibility, dynamically linked binaries, debug
-information, and unstripped executables.
+unverified build reproducibility, unexpected non-system runtime dependencies,
+debug information, and unstripped executables. Linux binaries may retain the
+minimal glibc-family dynamic dependencies permitted by the strict verifier;
+third-party dependencies must be linked into the candidate.
 
 `BINARY_BUILD_REPRODUCIBILITY=verified` may be supplied to the packager only
 after an independent builder has reproduced the exact packaged binaries. The

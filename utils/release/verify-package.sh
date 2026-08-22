@@ -69,10 +69,31 @@ grep -Fqx "binary_version=$daemon_version" "$root/BUILD-MANIFEST.txt" || {
   exit 1
 }
 if [[ ${RELEASE_STRICT:-0} == 1 ]]; then
-  if grep -Eq 'dynamically linked|not stripped|with debug_info' <<< "$binary_report"; then
-    echo "Strict release verification rejects dynamic, unstripped, or debug binaries" >&2
+  if grep -Eq 'not stripped|with debug_info' <<< "$binary_report"; then
+    echo "Strict release verification rejects unstripped or debug binaries" >&2
     exit 1
   fi
+  grep -qx 'binaries_stripped=true' "$root/BUILD-MANIFEST.txt" || {
+    echo "Strict release verification requires a stripped-binary manifest" >&2
+    exit 1
+  }
+  command -v readelf >/dev/null || {
+    echo "Strict release verification requires readelf" >&2
+    exit 1
+  }
+  for binary in "$root/monzerod" "$root/monzero-wallet-cli"; do
+    mapfile -t needed < <(readelf -d "$binary" 2>/dev/null |
+      sed -n 's/.*Shared library: \[\([^]]*\)\].*/\1/p')
+    for library in "${needed[@]}"; do
+      case "$library" in
+        libc.so.6|libm.so.6|libpthread.so.0|libdl.so.2|librt.so.1|libresolv.so.2) ;;
+        *)
+          echo "Strict release verification rejects runtime dependency $library in $(basename "$binary")" >&2
+          exit 1
+          ;;
+      esac
+    done
+  done
   grep -qx 'source_tree_dirty=false' "$root/BUILD-MANIFEST.txt" || {
     echo "Strict release verification rejects a dirty source manifest" >&2
     exit 1
