@@ -35,7 +35,7 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
   report=$(file "$root/$binary")
   echo "$report"
   grep -Fq 'PE32+ executable' <<< "$report" || { echo "Not a Windows x64 PE binary: $binary" >&2; exit 1; }
-  strings "$root/$binary" | grep -Fq "0.18.5.1-$source_short" || { echo "Version mismatch: $binary" >&2; exit 1; }
+  strings "$root/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || { echo "Version mismatch: $binary" >&2; exit 1; }
   while read -r library; do
     case ${library^^} in
       ADVAPI32.DLL|BCRYPT.DLL|CRYPT32.DLL|IPHLPAPI.DLL|KERNEL32.DLL|MSVCRT.DLL|MSWSOCK.DLL|SHELL32.DLL|USER32.DLL|WS2_32.DLL) ;;

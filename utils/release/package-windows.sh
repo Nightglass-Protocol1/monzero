@@ -30,7 +30,7 @@ if [[ -n $(git -C "$source_root" status --porcelain --untracked-files=normal) ]]
 fi
 
 for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
-  strings "$build_bin/$binary" | grep -Fq "0.18.5.1-$source_short" || {
+  strings "$build_bin/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || {
     echo "Binary version does not match source commit: $binary" >&2; exit 1;
   }
 done
