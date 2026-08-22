@@ -86,6 +86,15 @@ after an independent builder has reproduced the exact packaged binaries. The
 default is `unverified`; setting the variable is an attestation input, not a
 reproducibility test.
 
+Before publication, run `utils/release/verify-publication.sh` against the
+machine-readable release metadata and final artifact directory. For a stable
+release, set `RELEASE_PRODUCTION=1` and `MONZERO_RELEASE_FINGERPRINT` to the
+exact trusted 40-character uppercase OpenPGP fingerprint. Production mode
+requires stable/production metadata, completed security audit and independent
+reproduction states, a detached `.json.asc` signature from that exact key, and
+strict verification of both Linux and Windows archives. The verifier never
+downloads or implicitly trusts a key.
+
 Gitian builds must be given the explicit Monzero source URL with `--url`.
 There is deliberately no implicit upstream fallback. During initial setup,
 provide the independent Monzero signatures repository through

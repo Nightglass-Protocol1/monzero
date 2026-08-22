@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: verify-publication.sh <release-metadata.json> <artifact-directory>
+
+Validates artifact names, sizes, hashes, source commits, and package contents.
+Set RELEASE_PRODUCTION=1 to additionally require production-ready metadata,
+strict package verification, and a detached OpenPGP signature made by the
+exact fingerprint in MONZERO_RELEASE_FINGERPRINT.
+EOF
+  exit 2
+}
+
+[[ $# -eq 2 ]] || usage
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+metadata=$(realpath "$1")
+artifact_dir=$(realpath "$2")
+[[ -f $metadata ]] || { echo "Release metadata not found: $metadata" >&2; exit 2; }
+[[ -d $artifact_dir ]] || { echo "Artifact directory not found: $artifact_dir" >&2; exit 2; }
+
+production=${RELEASE_PRODUCTION:-0}
+[[ $production == 0 || $production == 1 ]] || {
+  echo "RELEASE_PRODUCTION must be 0 or 1" >&2
+  exit 2
+}
+
+validation_output=$(mktemp "${TMPDIR:-/tmp}/monzero-publication.XXXXXX")
+trap 'rm -f -- "$validation_output"' EXIT
+if ! python3 - "$metadata" > "$validation_output" <<'PY'
+import json, pathlib, sys
+
+path = pathlib.Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"Invalid release metadata: {exc}")
+
+required = {
+    "schema_version", "project", "release", "channel", "production_ready",
+    "source_commit", "published_at", "security_audit", "signing",
+    "independent_reproducibility", "artifacts",
+}
+missing = sorted(required - data.keys())
+if missing:
+    raise SystemExit("Missing release metadata fields: " + ", ".join(missing))
+if data["schema_version"] != 1 or data["project"] != "Monzero":
+    raise SystemExit("Unsupported release metadata schema or project")
+commit = data["source_commit"]
+if not isinstance(commit, str) or len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit):
+    raise SystemExit("source_commit must be a 40-character lowercase hexadecimal commit")
+if not isinstance(data["production_ready"], bool):
+    raise SystemExit("production_ready must be boolean")
+artifacts = data["artifacts"]
+if not isinstance(artifacts, list) or not artifacts:
+    raise SystemExit("artifacts must be a non-empty array")
+if len(artifacts) != 2:
+    raise SystemExit("A Monzero publication must contain exactly two artifacts")
+
+print("true" if data["production_ready"] else "false")
+print(data["channel"])
+print(commit)
+print(data["security_audit"])
+print(data["signing"])
+print(data["independent_reproducibility"])
+seen_filenames = set()
+seen_platforms = set()
+for artifact in artifacts:
+    if not isinstance(artifact, dict):
+        raise SystemExit("Each artifact must be an object")
+    filename = artifact.get("filename")
+    size = artifact.get("size_bytes")
+    digest = artifact.get("sha256")
+    platform = artifact.get("platform")
+    if not isinstance(filename, str) or pathlib.PurePosixPath(filename).name != filename:
+        raise SystemExit(f"Unsafe artifact filename: {filename!r}")
+    if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
+        raise SystemExit(f"Invalid artifact size for {filename}")
+    if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+        raise SystemExit(f"Invalid SHA-256 for {filename}")
+    if not isinstance(platform, str) or not platform:
+        raise SystemExit(f"Invalid platform for {filename}")
+    if filename in seen_filenames:
+        raise SystemExit(f"Duplicate artifact filename: {filename}")
+    if platform in seen_platforms:
+        raise SystemExit(f"Duplicate artifact platform: {platform}")
+    seen_filenames.add(filename)
+    seen_platforms.add(platform)
+    print("artifact\t" + platform + "\t" + filename + "\t" + str(size) + "\t" + digest)
+if seen_platforms != {"linux-x86_64", "windows-x64"}:
+    raise SystemExit("Artifacts must contain exactly linux-x86_64 and windows-x64")
+PY
+then
+  exit 1
+fi
+mapfile -t release_fields < "$validation_output"
+
+[[ ${#release_fields[@]} -ge 7 ]] || { echo "Release metadata produced incomplete validation output" >&2; exit 1; }
+production_ready=${release_fields[0]}
+channel=${release_fields[1]}
+source_commit=${release_fields[2]}
+security_audit=${release_fields[3]}
+signing=${release_fields[4]}
+reproducibility=${release_fields[5]}
+
+if [[ $production == 1 ]]; then
+  [[ $production_ready == true && $channel == stable ]] || {
+    echo "Production verification requires production_ready=true and channel=stable" >&2; exit 1;
+  }
+  [[ $security_audit == completed ]] || {
+    echo "Production verification requires security_audit=completed" >&2; exit 1;
+  }
+  [[ $signing == openpgp ]] || {
+    echo "Production verification requires signing=openpgp" >&2; exit 1;
+  }
+  [[ $reproducibility == verified ]] || {
+    echo "Production verification requires independent_reproducibility=verified" >&2; exit 1;
+  }
+  fingerprint=${MONZERO_RELEASE_FINGERPRINT:-}
+  [[ $fingerprint =~ ^[0-9A-F]{40}$ ]] || {
+    echo "MONZERO_RELEASE_FINGERPRINT must be an exact 40-character uppercase fingerprint" >&2; exit 1;
+  }
+  signature="$metadata.asc"
+  [[ -f $signature ]] || { echo "Detached release metadata signature is missing: $signature" >&2; exit 1; }
+  command -v gpg >/dev/null || { echo "Production verification requires gpg" >&2; exit 1; }
+  signer=$(gpg --status-fd 1 --verify "$signature" "$metadata" 2>/dev/null |
+    sed -n 's/^\[GNUPG:\] VALIDSIG \([0-9A-F]*\) .*/\1/p' | head -n 1)
+  [[ $signer == "$fingerprint" ]] || {
+    echo "Release metadata signature does not match MONZERO_RELEASE_FINGERPRINT" >&2; exit 1;
+  }
+else
+  [[ $production_ready == false && $channel == prerelease ]] || {
+    echo "Non-production verification requires an explicitly marked prerelease" >&2; exit 1;
+  }
+fi
+
+artifact_count=0
+for row in "${release_fields[@]:6}"; do
+  IFS=$'\t' read -r marker platform filename expected_size expected_hash <<< "$row"
+  [[ $marker == artifact ]] || { echo "Malformed artifact validation record" >&2; exit 1; }
+  artifact="$artifact_dir/$filename"
+  [[ -f $artifact ]] || { echo "Published artifact is missing: $artifact" >&2; exit 1; }
+  actual_size=$(stat -c %s "$artifact")
+  [[ $actual_size == "$expected_size" ]] || {
+    echo "Size mismatch for $filename: expected $expected_size, got $actual_size" >&2; exit 1;
+  }
+  actual_hash=$(sha256sum "$artifact" | awk '{print $1}')
+  [[ $actual_hash == "$expected_hash" ]] || {
+    echo "SHA-256 mismatch for $filename" >&2; exit 1;
+  }
+
+  case "$platform:$filename" in
+    linux-x86_64:*.tar.gz)
+      package_commit=$(tar -xOf "$artifact" --wildcards '*/BUILD-MANIFEST.txt' |
+        sed -n 's/^source_commit=//p')
+      if [[ $production == 1 ]]; then
+        RELEASE_STRICT=1 "$script_dir/verify-package.sh" "$artifact"
+      else
+        "$script_dir/verify-package.sh" "$artifact"
+      fi
+      ;;
+    windows-x64:*.zip)
+      package_commit=$(unzip -p "$artifact" '*/BUILD-MANIFEST.txt' |
+        sed -n 's/^source_commit=//p')
+      if [[ $production == 1 ]]; then
+        RELEASE_STRICT=1 "$script_dir/verify-windows-package.sh" "$artifact"
+      else
+        "$script_dir/verify-windows-package.sh" "$artifact"
+      fi
+      ;;
+    *) echo "No package verifier for $platform artifact $filename" >&2; exit 1 ;;
+  esac
+  [[ $package_commit == "$source_commit" ]] || {
+    echo "Source commit mismatch in $filename" >&2; exit 1;
+  }
+  ((artifact_count += 1))
+done
+
+[[ $artifact_count -eq 2 ]] || {
+  echo "A Monzero publication must contain exactly Linux and Windows artifacts" >&2; exit 1;
+}
+echo "Publication verification passed ($artifact_count artifacts, source $source_commit)"
