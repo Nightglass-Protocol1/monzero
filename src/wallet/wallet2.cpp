@@ -4489,11 +4489,8 @@ bool wallet2::get_rct_distribution(uint64_t &start_height, std::vector<uint64_t>
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-wallet2::detached_blockchain_data wallet2::detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache)
+void wallet2::detach_asset_transfers(uint64_t height)
 {
-  LOG_PRINT_L0("Detaching blockchain on height " << height);
-  detached_blockchain_data dbd;
-
   for (asset_transfer_details &td : m_asset_transfers)
     if (td.m_spent && td.m_spent_height >= height)
     {
@@ -4504,6 +4501,14 @@ wallet2::detached_blockchain_data wallet2::detach_blockchain(uint64_t height, st
     m_asset_transfers.end(), [height](const asset_transfer_details &td) {
       return td.m_block_height >= height;
     }), m_asset_transfers.end());
+}
+//----------------------------------------------------------------------------------------------------
+wallet2::detached_blockchain_data wallet2::detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache)
+{
+  LOG_PRINT_L0("Detaching blockchain on height " << height);
+  detached_blockchain_data dbd;
+
+  detach_asset_transfers(height);
 
   size_t transfers_detached = 0;
 

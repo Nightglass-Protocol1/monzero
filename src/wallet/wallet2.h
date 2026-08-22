@@ -2085,6 +2085,7 @@ private:
     void scan_asset_outputs(const crypto::hash &txid,
       const cryptonote::transaction &tx, uint64_t height,
       uint8_t block_version, bool pool);
+    void detach_asset_transfers(uint64_t height);
 
     cryptonote::account_base m_account;
     boost::optional<epee::net_utils::http::login> m_daemon_login;

@@ -28,6 +28,11 @@ public:
   {
     wallet.scan_asset_outputs(txid, tx, height, version, pool);
   }
+
+  static void detach_assets(tools::wallet2 &wallet, uint64_t height)
+  {
+    wallet.detach_asset_transfers(height);
+  }
 };
 
 namespace
@@ -262,7 +267,7 @@ TEST(asset_types, software_wallet_creates_network_bound_offline_issuance)
   EXPECT_EQ("asset issuance network does not match the wallet network", error);
 }
 
-TEST(asset_types, wallet_discovers_confirmed_owned_asset_outputs_once)
+TEST(asset_types, wallet_discovers_and_seed_restores_confirmed_owned_asset_outputs)
 {
   tools::wallet2 wallet(cryptonote::STAGENET);
   wallet.get_account().generate();
@@ -313,6 +318,93 @@ TEST(asset_types, wallet_discovers_confirmed_owned_asset_outputs_once)
   EXPECT_TRUE(owned.m_key_image_known);
   EXPECT_NE(crypto::key_image{}, owned.m_key_image);
   EXPECT_FALSE(owned.m_spent);
+
+  // A fresh wallet reconstructed from the same account keys must rediscover
+  // the identical output opening and ownership key image from chain data. The
+  // encrypted wallet cache is an optimization, not the source of ownership.
+  const cryptonote::account_keys &keys = wallet.get_account().get_keys();
+  tools::wallet2 restored(cryptonote::STAGENET);
+  restored.get_account().create_from_keys(keys.m_account_address,
+    keys.m_spend_secret_key, keys.m_view_secret_key);
+  wallet_accessor_test::prepare_asset_scan(restored);
+  wallet_accessor_test::scan_asset(restored, txid, tx, 123,
+    HF_VERSION_MONZERO_ASSETS);
+
+  ASSERT_EQ(1u, restored.get_asset_transfers().size());
+  const auto &recovered = restored.get_asset_transfers().front();
+  EXPECT_EQ(owned.m_asset_id, recovered.m_asset_id);
+  EXPECT_EQ(owned.m_output_id, recovered.m_output_id);
+  EXPECT_EQ(owned.m_amount, recovered.m_amount);
+  EXPECT_EQ(owned.m_mask, recovered.m_mask);
+  EXPECT_EQ(owned.m_destination, recovered.m_destination);
+  EXPECT_EQ(owned.m_tx_public_key, recovered.m_tx_public_key);
+  EXPECT_EQ(owned.m_subaddr_index, recovered.m_subaddr_index);
+  EXPECT_TRUE(recovered.m_key_image_known);
+  EXPECT_EQ(owned.m_key_image, recovered.m_key_image);
+  EXPECT_FALSE(recovered.m_spent);
+
+  crypto::key_derivation derivation{};
+  cryptonote::keypair ephemeral{};
+  crypto::key_image regenerated_image{};
+  ASSERT_TRUE(crypto::generate_key_derivation(owned.m_tx_public_key,
+    keys.m_view_secret_key, derivation));
+  ASSERT_TRUE(cryptonote::generate_key_image_helper_precomp(keys,
+    rct::rct2pk(owned.m_destination), derivation, owned.m_output_index,
+    owned.m_subaddr_index, ephemeral, regenerated_image,
+    wallet.get_account().get_device()));
+  ASSERT_EQ(owned.m_key_image, regenerated_image);
+
+  constexpr size_t real_index = 7;
+  std::vector<cryptonote::assets::asset_ring_member> ring(
+    cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE);
+  for (size_t index = 0; index < ring.size(); ++index)
+  {
+    ring[index].asset_id = asset_id;
+    ring[index].output_id.data[0] = static_cast<unsigned char>(index + 1);
+    rct::key ignored{};
+    rct::skpkGen(ignored, ring[index].public_output.dest);
+    rct::skpkGen(ignored, ring[index].public_output.mask);
+  }
+  ring[real_index].output_id = owned.m_output_id;
+  ring[real_index].public_output.dest = owned.m_destination;
+  ring[real_index].public_output.mask = rct::commit(owned.m_amount, owned.m_mask);
+
+  cryptonote::transaction spend_tx;
+  spend_tx.version = 2;
+  crypto::public_key spend_tx_public{};
+  crypto::secret_key spend_tx_secret{};
+  crypto::generate_keys(spend_tx_public, spend_tx_secret);
+  ASSERT_TRUE(cryptonote::add_tx_pub_key_to_extra(spend_tx, spend_tx_public));
+  crypto::hash carrier{};
+  ASSERT_TRUE(cryptonote::get_transaction_asset_carrier_hash(
+    spend_tx, carrier, &error)) << error;
+  cryptonote::assets::asset_transaction_payload spend_payload;
+  std::vector<cryptonote::assets::asset_transfer_destination> destinations{
+    {keys.m_account_address, false, 40}};
+  ASSERT_TRUE(cryptonote::assets::create_asset_transfer_transaction_payload(
+    cryptonote::STAGENET, asset_id, ring, real_index, rct::sk2rct(ephemeral.sec),
+    owned.m_amount, owned.m_mask, destinations, 2, carrier, spend_payload,
+    &error)) << error;
+  std::vector<uint8_t> encoded_spend;
+  ASSERT_TRUE(cryptonote::assets::encode_asset_transaction_payload(
+    spend_payload, encoded_spend, &error)) << error;
+  ASSERT_TRUE(cryptonote::add_monzero_asset_tx_extra(
+    spend_tx.extra, encoded_spend, &error)) << error;
+
+  crypto::hash spend_txid{};
+  spend_txid.data[0] = 0xb6;
+  wallet_accessor_test::scan_asset(wallet, spend_txid, spend_tx, 124,
+    HF_VERSION_MONZERO_ASSETS);
+  ASSERT_EQ(2u, wallet.get_asset_transfers().size());
+  EXPECT_TRUE(wallet.get_asset_transfers()[0].m_spent);
+  EXPECT_EQ(124u, wallet.get_asset_transfers()[0].m_spent_height);
+  EXPECT_EQ(40u, wallet.get_asset_transfers()[1].m_amount);
+  EXPECT_FALSE(wallet.get_asset_transfers()[1].m_spent);
+
+  wallet_accessor_test::detach_assets(wallet, 124);
+  ASSERT_EQ(1u, wallet.get_asset_transfers().size());
+  EXPECT_FALSE(wallet.get_asset_transfers()[0].m_spent);
+  EXPECT_EQ(0u, wallet.get_asset_transfers()[0].m_spent_height);
 }
 
 TEST(asset_types, issuance_payload_rejects_tampering_and_signature_shape_errors)

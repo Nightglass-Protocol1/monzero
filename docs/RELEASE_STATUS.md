@@ -69,6 +69,12 @@ when they are outside the source repository.
   confirmed-balance workflows in the CLI; spend-restoration material is stored
   in the versioned encrypted wallet cache. Activated-chain end-to-end coverage
   and multi-input asset coin selection remain unfinished.
+- A fresh software wallet reconstructed from the same account keys rediscovers
+  the identical asset opening and ownership key image from confirmed chain
+  data. The restoration test spends that output into confidential change with
+  an explicit burn, then verifies reorg rollback removes the detached change
+  and restores the original output to unspent. An activated daemon fixture is
+  still required to prove the complete RPC/relay/mining path.
 - Website copies of the Genesis pre2 Linux and Windows archives are byte-for-
   byte identical to `dist/`; their outer SHA-256 files verify and all website
   download links resolve locally.
