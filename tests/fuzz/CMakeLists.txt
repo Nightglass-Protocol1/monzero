@@ -54,6 +54,22 @@ set_property(TARGET transaction_fuzz_tests
   PROPERTY
     FOLDER "tests")
 
+monero_add_minimal_executable(asset-wire_fuzz_tests asset-wire.cpp fuzzer.cpp)
+target_link_libraries(asset-wire_fuzz_tests
+  PRIVATE
+    cryptonote_basic
+    ringct
+    cryptonote_core
+    p2p
+    epee
+    device
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${EXTRA_LIBRARIES}
+    $ENV{LIB_FUZZING_ENGINE})
+set_property(TARGET asset-wire_fuzz_tests
+  PROPERTY
+    FOLDER "tests")
+
 monero_add_minimal_executable(signature_fuzz_tests signature.cpp fuzzer.cpp)
 target_link_libraries(signature_fuzz_tests
   PRIVATE

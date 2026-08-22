@@ -24,6 +24,10 @@ when they are outside the source repository.
   wallet RPC issuance, confirmed discovery, confidential transfer, explicit
   burn, restoration from seed, and reorganisation rollback. The opt-in fixture
   does not modify any public-network hard-fork schedule.
+- A dedicated asset-wire fuzz target directly exercises arbitrary payload
+  decoding, successful encode/decode round trips, and activated native asset
+  envelope parsing. It builds and completes local smoke inputs; a sustained
+  sanitizer-backed fuzz campaign is still required for the release gate.
 - A disposable stagenet software wallet successfully creates and re-opens both
   fungible-token and NFT issuance artifacts through `monzero-wallet-cli`.
   Inspection rejects a tampered declared asset ID, and creation rejects an NFT
