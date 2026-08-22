@@ -13,7 +13,7 @@ define $(package)_set_vars
   $(package)_config_opts_freebsd=--with-pic
   # GCC 15 defaults to C23, where an empty parameter list means no arguments.
   # libiconv 1.15 uses legacy empty parameter declarations and requires C17.
-  $(package)_cflags_linux=-std=gnu17
+  $(package)_cflags=-std=gnu17
 endef
 
 define $(package)_preprocess_cmds
