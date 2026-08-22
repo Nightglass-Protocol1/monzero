@@ -68,15 +68,17 @@ when they are outside the source repository.
   are excluded, and reorg/cache reset paths remove stale records.
 - Issuance seeds a complete 16-member same-asset anonymity set, preventing a
   singleton NFT from becoming unspendable under the fixed-ring ownership
-  rules. A verified single-input primitive now constructs confidential asset
+  rules. A verified multi-input primitive now constructs confidential asset
   transfers and explicit burns, pads the successor anonymity pool, proves
-  amount/mask conservation, and emits a stable-key-image CLSAG ownership proof.
-- The full software wallet can construct activation-gated single-input asset
-  transfers and irreversible burns after authenticating the real ring member.
+  amount/mask conservation, and emits one stable-key-image CLSAG ownership
+  proof per selected input.
+- The full software wallet can construct activation-gated multi-input asset
+  transfers and irreversible burns after authenticating every real ring member.
+  Selection is deterministic, scoped to the requested account/subaddresses,
+  and bounded by the existing 64-input consensus limit.
   `asset_transfer`, `asset_burn`, and `asset_list` expose submission and raw
   confirmed-balance workflows in the CLI; spend-restoration material is stored
-  in the versioned encrypted wallet cache. Multi-input asset coin selection
-  remains unfinished.
+  in the versioned encrypted wallet cache.
 - A fresh software wallet reconstructed from the same account keys rediscovers
   the identical asset opening and ownership key image from confirmed chain
   data. The restoration test spends that output into confidential change with
@@ -129,10 +131,10 @@ pre2.
 - Add the asset creation/inspection workflow to the desktop GUI. The CLI can export and
   validate canonical signed fungible, NFT, collection, and edition artifacts,
   and its direct issuance command becomes usable only after HF17 activation.
-- Complete multi-input asset coin selection, authenticated metadata retrieval,
-  and richer ownership workflows for fungible tokens, NFTs, collections, and
+- Complete authenticated metadata retrieval and richer ownership workflows for
+  fungible tokens, NFTs, collections, and
   editions. Direct fixed-supply creation, confirmed owned-output discovery,
-  single-input spending, burns, cache round trips, seed restoration, and reorg
+  multi-input spending, burns, cache round trips, seed restoration, and reorg
   handling are wired and covered, but the broader asset wallet is not yet
   complete.
 - Finalize supported-platform, migration, rollback, upgrade, and known-

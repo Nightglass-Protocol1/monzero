@@ -48,6 +48,15 @@ namespace assets
     uint64_t amount = 0;
   };
 
+  struct asset_transfer_input
+  {
+    std::vector<asset_ring_member> ring;
+    size_t real_output_index = 0;
+    rct::key spend_secret{};
+    uint64_t amount = 0;
+    rct::key mask{};
+  };
+
   bool validate_asset_transaction_payload_shape(
     const asset_transaction_payload& payload,
     std::string* error = nullptr);
@@ -72,10 +81,20 @@ namespace assets
     const crypto::hash& carrier_prefix_hash,
     asset_transaction_payload& payload,
     std::string* error = nullptr);
-  // Constructs one confidential single-input transfer or burn. The ring must
-  // contain exactly 16 chain outputs for asset_id and include the real output
-  // at real_output_index. Zero-valued outputs are added automatically to keep
-  // the same-asset anonymity set populated for subsequent transfers.
+  // Constructs a confidential transfer or burn with one ownership proof per
+  // input. Each ring must contain exactly 16 chain outputs for asset_id and
+  // include its real output at real_output_index. Zero-valued outputs are
+  // added automatically to keep the same-asset anonymity set populated.
+  bool create_asset_transfer_transaction_payload(
+    network_type network,
+    const crypto::hash& asset_id,
+    const std::vector<asset_transfer_input>& inputs,
+    const std::vector<asset_transfer_destination>& destinations,
+    uint64_t burn_amount,
+    const crypto::hash& carrier_prefix_hash,
+    asset_transaction_payload& payload,
+    std::string* error = nullptr);
+  // Compatibility wrapper for callers constructing a single-input transfer.
   bool create_asset_transfer_transaction_payload(
     network_type network,
     const crypto::hash& asset_id,

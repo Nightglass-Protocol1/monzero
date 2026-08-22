@@ -15437,25 +15437,51 @@ bool wallet2::create_asset_transfer_transaction(const crypto::hash& asset_id,
   }
 
   const uint64_t required = transfer_amount + burn_amount;
-  const auto input = std::find_if(m_asset_transfers.begin(), m_asset_transfers.end(),
-    [&](const asset_transfer_details &td) {
-      return td.m_asset_id == asset_id && !td.m_spent && td.m_key_image_known
-        && td.m_amount >= required && td.m_tx_public_key != crypto::null_pkey;
-    });
-  if (input == m_asset_transfers.end())
-    return fail("wallet has no single unspent asset output large enough for this operation");
+  struct selected_asset_input
+  {
+    const asset_transfer_details* transfer = nullptr;
+    rct::key spend_secret{};
+  };
+  std::vector<const asset_transfer_details*> eligible;
+  for (const asset_transfer_details& td : m_asset_transfers)
+    if (td.m_asset_id == asset_id && !td.m_spent && td.m_key_image_known
+        && td.m_amount != 0 && td.m_tx_public_key != crypto::null_pkey
+        && td.m_subaddr_index.major == subaddr_account
+        && (subaddr_indices.empty()
+          || subaddr_indices.count(td.m_subaddr_index.minor) != 0))
+      eligible.push_back(&td);
+  std::sort(eligible.begin(), eligible.end(), [](const auto* left, const auto* right) {
+    if (left->m_amount != right->m_amount)
+      return left->m_amount > right->m_amount;
+    return std::memcmp(&left->m_output_id, &right->m_output_id,
+      sizeof(left->m_output_id)) < 0;
+  });
 
-  crypto::key_derivation derivation{};
-  cryptonote::keypair ephemeral{};
-  crypto::key_image derived_image{};
-  if (!crypto::generate_key_derivation(input->m_tx_public_key,
-        m_account.get_keys().m_view_secret_key, derivation)
-      || !cryptonote::generate_key_image_helper_precomp(m_account.get_keys(),
-        rct::rct2pk(input->m_destination), derivation, input->m_output_index,
-        input->m_subaddr_index, ephemeral, derived_image, m_account.get_device())
-      || derived_image != input->m_key_image)
-    return fail("wallet could not regenerate the selected asset spend key");
-  const rct::key spend_secret = rct::sk2rct(ephemeral.sec);
+  std::vector<selected_asset_input> selected;
+  uint64_t selected_total = 0;
+  for (const asset_transfer_details* td : eligible)
+  {
+    if (selected.size() == cryptonote::assets::MAX_CONFIDENTIAL_ASSET_INPUTS)
+      break;
+    crypto::key_derivation derivation{};
+    cryptonote::keypair ephemeral{};
+    crypto::key_image derived_image{};
+    if (!crypto::generate_key_derivation(td->m_tx_public_key,
+          m_account.get_keys().m_view_secret_key, derivation)
+        || !cryptonote::generate_key_image_helper_precomp(m_account.get_keys(),
+          rct::rct2pk(td->m_destination), derivation, td->m_output_index,
+          td->m_subaddr_index, ephemeral, derived_image, m_account.get_device())
+        || derived_image != td->m_key_image)
+      return fail("wallet could not regenerate a selected asset spend key");
+    selected.push_back({td, rct::sk2rct(ephemeral.sec)});
+    if (td->m_amount > std::numeric_limits<uint64_t>::max() - selected_total)
+      return fail("selected asset input amount overflows");
+    selected_total += td->m_amount;
+    if (selected_total >= required)
+      break;
+  }
+  if (selected_total < required)
+    return fail("wallet has insufficient spendable asset outputs for this operation");
 
   COMMAND_RPC_GET_ASSET_OUTPUTS::request total_request{};
   COMMAND_RPC_GET_ASSET_OUTPUTS::response total_response{};
@@ -15478,7 +15504,9 @@ bool wallet2::create_asset_transfer_transaction(const crypto::hash& asset_id,
   COMMAND_RPC_GET_ASSET_OUTPUTS::response ring_response{};
   ring_request.asset_id = total_request.asset_id;
   ring_request.indices.assign(random_indices.begin(), random_indices.end());
-  ring_request.output_ids.push_back(epee::string_tools::pod_to_hex(input->m_output_id));
+  for (const selected_asset_input& input : selected)
+    ring_request.output_ids.push_back(
+      epee::string_tools::pod_to_hex(input.transfer->m_output_id));
   {
     boost::lock_guard<boost::recursive_mutex> lock(m_daemon_rpc_mutex);
     if (!net_utils::invoke_http_json_rpc("/json_rpc", "get_asset_outputs",
@@ -15504,31 +15532,41 @@ bool wallet2::create_asset_transfer_transaction(const crypto::hash& asset_id,
         }))
       candidates.push_back(member);
   }
-  const auto real = std::find_if(candidates.begin(), candidates.end(), [&](const auto &member) {
-    return member.output_id == input->m_output_id;
-  });
-  if (real == candidates.end()
-      || !rct::equalKeys(real->public_output.dest, input->m_destination)
-      || !rct::equalKeys(real->public_output.mask,
-           rct::commit(input->m_amount, input->m_mask)))
-    return fail("daemon did not return the authentic selected asset output");
-  const auto real_member = *real;
-  candidates.erase(real);
-  if (candidates.size() < cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE - 1)
-    return fail("daemon returned too few distinct asset decoys");
-  for (size_t index = candidates.size(); index > 1; --index)
-    std::swap(candidates[index - 1], candidates[crypto::rand_idx(index)]);
-  candidates.resize(cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE - 1);
-  candidates.push_back(real_member);
-  for (size_t index = candidates.size(); index > 1; --index)
-    std::swap(candidates[index - 1], candidates[crypto::rand_idx(index)]);
-  const size_t real_index = std::find_if(candidates.begin(), candidates.end(),
-    [&](const auto &member) { return member.output_id == input->m_output_id; }) - candidates.begin();
+  std::vector<cryptonote::assets::asset_transfer_input> asset_inputs;
+  for (const selected_asset_input& selected_input : selected)
+  {
+    const asset_transfer_details& td = *selected_input.transfer;
+    const auto real = std::find_if(candidates.begin(), candidates.end(), [&](const auto &member) {
+      return member.output_id == td.m_output_id;
+    });
+    if (real == candidates.end()
+        || !rct::equalKeys(real->public_output.dest, td.m_destination)
+        || !rct::equalKeys(real->public_output.mask,
+             rct::commit(td.m_amount, td.m_mask)))
+      return fail("daemon did not return an authentic selected asset output");
+    std::vector<cryptonote::assets::asset_ring_member> ring;
+    ring.reserve(cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE);
+    for (const auto& candidate : candidates)
+      if (candidate.output_id != td.m_output_id)
+        ring.push_back(candidate);
+    if (ring.size() < cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE - 1)
+      return fail("daemon returned too few distinct asset decoys");
+    for (size_t index = ring.size(); index > 1; --index)
+      std::swap(ring[index - 1], ring[crypto::rand_idx(index)]);
+    ring.resize(cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE - 1);
+    ring.push_back(*real);
+    for (size_t index = ring.size(); index > 1; --index)
+      std::swap(ring[index - 1], ring[crypto::rand_idx(index)]);
+    const size_t real_index = std::find_if(ring.begin(), ring.end(),
+      [&](const auto &member) { return member.output_id == td.m_output_id; }) - ring.begin();
+    asset_inputs.push_back({std::move(ring), real_index, selected_input.spend_secret,
+      td.m_amount, td.m_mask});
+  }
 
   std::vector<cryptonote::assets::asset_transfer_destination> destinations;
   if (transfer_amount != 0)
     destinations.push_back({recipient, recipient_is_subaddress, transfer_amount});
-  const uint64_t change_amount = input->m_amount - required;
+  const uint64_t change_amount = selected_total - required;
   const cryptonote::subaddress_index change_index{subaddr_account, 0};
   if (change_amount != 0)
     destinations.push_back({get_subaddress(change_index), subaddr_account != 0, change_amount});
@@ -15542,8 +15580,8 @@ bool wallet2::create_asset_transfer_transaction(const crypto::hash& asset_id,
     std::vector<uint8_t> encoded;
     return cryptonote::get_transaction_asset_carrier_hash(tx, carrier, &attach_error)
       && cryptonote::assets::create_asset_transfer_transaction_payload(m_nettype,
-        asset_id, candidates, real_index, spend_secret, input->m_amount,
-        input->m_mask, destinations, burn_amount, carrier, asset_payload, &attach_error)
+        asset_id, asset_inputs, destinations, burn_amount, carrier,
+        asset_payload, &attach_error)
       && cryptonote::assets::encode_asset_transaction_payload(asset_payload,
         encoded, &attach_error)
       && cryptonote::add_monzero_asset_tx_extra(tx.extra, encoded, &attach_error);
@@ -15561,9 +15599,14 @@ bool wallet2::create_asset_transfer_transaction(const crypto::hash& asset_id,
     std::string parse_error;
     if (!cryptonote::assets::parse_native_asset_transaction(transactions.front().tx,
           HF_VERSION_MONZERO_ASSETS, m_nettype, parsed, &parse_error) || !parsed
-        || parsed->ownership_proofs.size() != 1
-        || parsed->ownership_proofs.front().key_image != input->m_key_image)
+        || parsed->ownership_proofs.size() != selected.size())
       return fail("constructed asset transfer failed verification: " + parse_error);
+    for (const selected_asset_input& input : selected)
+      if (std::count_if(parsed->ownership_proofs.begin(),
+            parsed->ownership_proofs.end(), [&](const auto& proof) {
+              return proof.key_image == input.transfer->m_key_image;
+            }) != 1)
+        return fail("constructed asset transfer has the wrong asset key images");
     ptx = std::move(transactions.front());
     return true;
   }

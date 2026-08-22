@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026, The Monzero Project
 
-"""Activated-regtest asset issuance, transfer, burn, restoration, and reorg."""
+"""Activated-regtest asset issuance, multi-input transfer, burn, restore, and reorg."""
 
 from framework.daemon import Daemon
 from framework.wallet import Wallet
@@ -102,6 +102,40 @@ class AssetTest:
         wallets[1].refresh()
         rolled_back = wallets[1].get_assets(asset_id).outputs
         assert len(rolled_back) == 1 and rolled_back[0].amount == 1, rolled_back
+
+        # Split a fungible asset into two one-unit outputs owned by one wallet,
+        # then burn both together. No single output can satisfy the burn, so
+        # this transaction exercises wallet selection and two ownership proofs.
+        wallets[0].refresh()
+        fungible = wallets[0].create_asset(
+            issuer_address, 'fungible', 2, 0, '33' * 32,
+            'ipfs://activated-regtest-multi-input', '', do_not_relay=False)
+        assert len(fungible.asset_id) == 64, fungible
+        multi_asset_id = fungible.asset_id
+        daemon.generateblocks(issuer_address, 1)
+        wallets[0].refresh()
+
+        split = wallets[0].transfer_asset(
+            multi_asset_id, issuer_address, amount=1, do_not_relay=False)
+        assert len(split.tx_hash) == 64, split
+        daemon.generateblocks(issuer_address, 1)
+        wallets[0].refresh()
+        split_outputs = wallets[0].get_assets(multi_asset_id).outputs
+        assert len(split_outputs) == 2, split_outputs
+        assert sorted(output.amount for output in split_outputs) == [1, 1], split_outputs
+
+        multi_burn = wallets[0].transfer_asset(
+            multi_asset_id, amount=0, burn_amount=2, do_not_relay=False)
+        assert len(multi_burn.tx_hash) == 64, multi_burn
+        daemon.generateblocks(issuer_address, 1)
+        wallets[0].refresh()
+        assert wallets[0].get_assets(multi_asset_id).get('outputs', []) == []
+        spent_multi = wallets[0].get_assets(
+            multi_asset_id, include_spent=True).outputs
+        selected_multi = [output for output in spent_multi if output.amount == 1]
+        assert len(selected_multi) == 2 and all(
+            output.spent for output in selected_multi), spent_multi
+        assert selected_multi[0].spent_height == selected_multi[1].spent_height, spent_multi
 
 
 if __name__ == '__main__':

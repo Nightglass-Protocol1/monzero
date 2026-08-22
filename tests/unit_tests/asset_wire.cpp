@@ -225,6 +225,59 @@ TEST(asset_wire, constructs_spendable_transfer_and_burn_with_preserved_ring_pool
     burn.ownership_proofs.front().key_image);
 }
 
+TEST(asset_wire, constructs_multi_input_transfer_with_one_proof_per_input)
+{
+  crypto::hash asset_id{};
+  asset_id.data[0] = 0x81;
+  crypto::hash carrier{};
+  carrier.data[0] = 0x82;
+  std::vector<cryptonote::assets::asset_transfer_input> inputs;
+  for (size_t input_index = 0; input_index < 2; ++input_index)
+  {
+    cryptonote::assets::asset_transfer_input input;
+    input.real_output_index = 3 + input_index;
+    input.spend_secret = rct::skGen();
+    input.amount = input_index == 0 ? 5 : 7;
+    input.mask = rct::skGen();
+    input.ring.resize(cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE);
+    for (size_t ring_index = 0; ring_index < input.ring.size(); ++ring_index)
+    {
+      auto& member = input.ring[ring_index];
+      member.asset_id = asset_id;
+      member.output_id.data[0] = static_cast<unsigned char>(
+        1 + input_index * input.ring.size() + ring_index);
+      rct::key ignored{};
+      rct::skpkGen(ignored, member.public_output.dest);
+      rct::skpkGen(ignored, member.public_output.mask);
+    }
+    rct::scalarmultBase(
+      input.ring[input.real_output_index].public_output.dest, input.spend_secret);
+    input.ring[input.real_output_index].public_output.mask =
+      rct::commit(input.amount, input.mask);
+    inputs.push_back(std::move(input));
+  }
+
+  cryptonote::account_base recipient;
+  recipient.generate();
+  std::vector<cryptonote::assets::asset_transfer_destination> destinations{
+    {recipient.get_keys().m_account_address, false, 10}};
+  cryptonote::assets::asset_transaction_payload payload;
+  std::string error;
+  ASSERT_TRUE(cryptonote::assets::create_asset_transfer_transaction_payload(
+    cryptonote::TESTNET, asset_id, inputs, destinations, 2, carrier,
+    payload, &error)) << error;
+  ASSERT_EQ(2u, payload.balances.front().pseudo_inputs.size());
+  ASSERT_EQ(2u, payload.ownership_proofs.size());
+  EXPECT_NE(payload.ownership_proofs[0].key_image,
+    payload.ownership_proofs[1].key_image);
+  EXPECT_TRUE(cryptonote::assets::verify_asset_transaction_payload(
+    payload, {asset_id}, cryptonote::TESTNET, carrier, &error)) << error;
+
+  payload.ownership_proofs.pop_back();
+  EXPECT_FALSE(cryptonote::assets::verify_asset_transaction_payload(
+    payload, {asset_id}, cryptonote::TESTNET, carrier, &error));
+}
+
 TEST(asset_wire, attaches_constructed_issuance_to_native_prefix_before_signing)
 {
   crypto::public_key issuer_public{};
