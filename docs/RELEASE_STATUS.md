@@ -117,6 +117,15 @@ when they are outside the source repository.
   Packaged ELF binaries are deterministically stripped; strict verification
   permits only minimal glibc-family dynamic dependencies and rejects the
   broader host-library set produced outside the pinned depends environment.
+- A clean static Release configuration at source commit `be2fb8313` produced
+  version-consistent daemon, CLI, and wallet RPC binaries. Two Genesis pre3
+  archives created from that binary set are byte-for-byte identical with
+  SHA-256 `c0ee269628b4d05729bdf3a4db4eb7e11ae74159858a0fca74cfbdb6a9b65aa0`;
+  normal verification passes and the manifest records a clean tree, stripped
+  binaries, inactive public asset consensus, and unverified reproducibility.
+  Strict verification rejects the host build at `libgssapi_krb5.so.2`, proving
+  that a pinned depends build and independent reproduction are still required.
+  A crafted `../` archive entry is rejected before extraction.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -126,10 +135,11 @@ host exposing signatures and a usable trust anchor. Run the unit suite with
 
 Genesis pre2 is a private prerelease, not a production candidate. Its Linux
 archive predates `BUILD-MANIFEST.txt`, so the current package verifier rejects
-it. The existing developer binaries are not established as static, stripped,
-or independently reproducible, and the archives do not have a Monzero release
-signature. A new package version must be produced rather than relabelling
-pre2.
+it. Genesis pre3 is a clean, deterministic local packaging candidate, but its
+host-built binaries have non-permitted runtime dependencies and have not been
+independently reproduced or signed. Neither archive is a production release;
+pre2 must not be relabelled and pre3 must not be promoted without satisfying
+the strict and external release gates.
 
 ## Repository work still required
 
