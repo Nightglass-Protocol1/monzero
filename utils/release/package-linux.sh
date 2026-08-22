@@ -4,6 +4,7 @@ set -euo pipefail
 usage() {
   echo "Usage: $0 <build-bin-dir> <output-dir> <version>" >&2
   echo "Set ALLOW_DIRTY=1 only for an explicitly marked development artifact." >&2
+  echo "Set BINARY_BUILD_REPRODUCIBILITY=verified only after an independent byte-for-byte build comparison." >&2
   exit 2
 }
 
@@ -18,9 +19,23 @@ version=$3
 [[ -x "$build_bin/monzerod" ]] || { echo "Missing executable: $build_bin/monzerod" >&2; exit 2; }
 [[ -x "$build_bin/monzero-wallet-cli" ]] || { echo "Missing executable: $build_bin/monzero-wallet-cli" >&2; exit 2; }
 
+daemon_version=$("$build_bin/monzerod" --version | head -n 1)
+wallet_version=$("$build_bin/monzero-wallet-cli" --version | head -n 1)
+[[ -n $daemon_version && $daemon_version == "$wallet_version" ]] || {
+  echo "Refusing to package binaries with inconsistent versions:" >&2
+  echo "  monzerod: $daemon_version" >&2
+  echo "  wallet:   $wallet_version" >&2
+  exit 1
+}
+
 source_commit=$(git -C "$source_root" rev-parse HEAD)
 source_epoch=${SOURCE_DATE_EPOCH:-$(git -C "$source_root" show -s --format=%ct "$source_commit")}
 [[ $source_epoch =~ ^[0-9]+$ ]] || { echo "SOURCE_DATE_EPOCH must be an integer" >&2; exit 2; }
+build_reproducibility=${BINARY_BUILD_REPRODUCIBILITY:-unverified}
+[[ $build_reproducibility == unverified || $build_reproducibility == verified ]] || {
+  echo "BINARY_BUILD_REPRODUCIBILITY must be 'unverified' or 'verified'" >&2
+  exit 2
+}
 
 dirty=false
 if [[ -n $(git -C "$source_root" status --porcelain --untracked-files=normal) ]]; then
@@ -50,15 +65,19 @@ install -m 0755 "$source_root/start-monzero-wallet-cli.sh" "$package_dir/start-m
 install -m 0755 "$source_root/start-monzero-miner.sh" "$package_dir/start-monzero-miner.sh"
 install -m 0755 "$source_root/stop-monzero-miner.sh" "$package_dir/stop-monzero-miner.sh"
 install -m 0644 "$source_root/LICENSE" "$package_dir/LICENSE"
+install -m 0644 "$source_root/README.md" "$package_dir/README.md"
 install -m 0644 "$source_root/MONZERO_CHAIN_SPEC.md" "$package_dir/MONZERO_CHAIN_SPEC.md"
 install -m 0644 "$source_root/docs/RELEASE_CHECKLIST.md" "$package_dir/RELEASE_CHECKLIST.md"
+install -m 0644 "$source_root/docs/RELEASE_STATUS.md" "$package_dir/RELEASE_STATUS.md"
+install -m 0644 "$source_root/docs/UPGRADE.md" "$package_dir/UPGRADE.md"
 
 {
   echo "package=$package_name"
   echo "source_commit=$source_commit"
   echo "source_date_epoch=$source_epoch"
   echo "source_tree_dirty=$dirty"
-  echo "binary_build_reproducibility=unverified"
+  echo "binary_version=$daemon_version"
+  echo "binary_build_reproducibility=$build_reproducibility"
   echo "assets_consensus_enabled=false"
   echo "native_ticker=XMZ"
 } > "$package_dir/BUILD-MANIFEST.txt"

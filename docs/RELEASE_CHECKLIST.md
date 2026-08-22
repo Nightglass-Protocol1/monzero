@@ -71,11 +71,18 @@ The Linux archive layer is generated with `utils/release/package-linux.sh`.
 It refuses a dirty tree unless `ALLOW_DIRTY=1` is explicitly supplied, in
 which case the filename and embedded manifest are marked development/dirty.
 `utils/release/verify-package.sh` verifies archive shape, inner checksums,
-executable presence, formats, and reported versions. This makes packaging
+safe extraction paths, required release documents, executable presence,
+formats, and identical manifest-bound versions across the daemon and wallet.
+This makes packaging
 deterministic; it does not by itself make locally compiled binaries
 reproducible. `RELEASE_STRICT=1` additionally rejects dirty manifests,
 unverified build reproducibility, dynamically linked binaries, debug
 information, and unstripped executables.
+
+`BINARY_BUILD_REPRODUCIBILITY=verified` may be supplied to the packager only
+after an independent builder has reproduced the exact packaged binaries. The
+default is `unverified`; setting the variable is an attestation input, not a
+reproducibility test.
 
 Gitian builds must be given the explicit Monzero source URL with `--url`.
 There is deliberately no implicit upstream fallback. During initial setup,

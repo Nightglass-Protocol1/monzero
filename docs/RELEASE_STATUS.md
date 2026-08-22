@@ -11,7 +11,7 @@ when they are outside the source repository.
 ## Verified in the current working tree
 
 - The complete CMake build succeeds with the configured local toolchain.
-- All 1,297 unit tests pass in one run with workspace-backed temporary storage,
+- All 1,298 unit tests pass in one run with workspace-backed temporary storage,
   including protected Monzero consensus vectors and
   the inactive asset, recipient-restoration, and persistent-state tests.
 - All 18 default RPC functional tests pass in one clean run. This covers wallet
@@ -22,8 +22,10 @@ when they are outside the source repository.
   expectations.
 - A separate regtest-only HF17 scenario passes the complete live NFT lifecycle:
   wallet RPC issuance, confirmed discovery, confidential transfer, explicit
-  burn, restoration from seed, and reorganisation rollback. The opt-in fixture
-  does not modify any public-network hard-fork schedule.
+  burn, restoration from seed, and reorganisation rollback. It also splits a
+  fungible holding into two one-unit outputs and spends both in one burn,
+  proving activated multi-input wallet selection. The opt-in fixture does not
+  modify any public-network hard-fork schedule.
 - A dedicated asset-wire fuzz target directly exercises arbitrary payload
   decoding, successful encode/decode round trips, and activated native asset
   envelope parsing. It builds and completes local smoke inputs; a sustained
@@ -96,7 +98,7 @@ when they are outside the source repository.
   byte identical to `dist/`; their outer SHA-256 files verify and all website
   download links resolve locally.
 - Linux release, packaged launcher, and utility shell scripts pass `bash -n`.
-- A native Linux GUI build succeeds against pinned core commit `488946b35`,
+- A native Linux GUI build succeeds against pinned core commit `8afa04b46`,
   its bundled daemon links successfully,
   and the headless QML suite exits successfully without QML type/reference
   errors. The startup banner reports `0.18.5.1-release` and logs under
@@ -107,6 +109,11 @@ when they are outside the source repository.
   byte identical and pass the normal package verifier. Strict verification
   correctly rejects them because they are dirty, dynamic, unstripped, and not
   independently reproducible.
+- The packager includes README, release status, checklist, and explicit
+  migration/rollback guidance. It refuses mixed daemon/wallet versions and the
+  verifier binds their identical reported version into the build manifest,
+  screens unsafe archive paths before extraction, and requires the release
+  documents. A deliberately mixed historical binary set is rejected.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
