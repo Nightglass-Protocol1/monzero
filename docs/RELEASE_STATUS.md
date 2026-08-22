@@ -126,6 +126,18 @@ when they are outside the source repository.
   Strict verification rejects the host build at `libgssapi_krb5.so.2`, proving
   that a pinned depends build and independent reproduction are still required.
   A crafted `../` archive entry is rejected before extraction.
+- The pinned Linux depends environment now builds completely on GCC 15 and
+  glibc 2.34+ without host-package leakage. It bootstraps gperf, pins legacy C
+  sources to C17 where required, carries the established Boost thread fix, and
+  disables ZeroMQ transports that are absent from the pinned dependency set.
+  A clean build at source commit `4c5cd3353` produced version-consistent daemon,
+  CLI, and wallet RPC binaries whose only ELF dependencies are `libm.so.6`,
+  `libc.so.6`, and `ld-linux-x86-64.so.2`. Two Genesis pre4 archives are
+  byte-for-byte identical with SHA-256
+  `0bbc3571db4530076ab863d1f6f6ca291322dd6fe1bda977ecf4453be229a433`.
+  Normal verification passes. Strict verification checks all three binaries,
+  accepts their stripped/minimal runtime surface, and stops only because the
+  required independent binary reproduction remains honestly `unverified`.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -137,9 +149,11 @@ Genesis pre2 is a private prerelease, not a production candidate. Its Linux
 archive predates `BUILD-MANIFEST.txt`, so the current package verifier rejects
 it. Genesis pre3 is a clean, deterministic local packaging candidate, but its
 host-built binaries have non-permitted runtime dependencies and have not been
-independently reproduced or signed. Neither archive is a production release;
-pre2 must not be relabelled and pre3 must not be promoted without satisfying
-the strict and external release gates.
+independently reproduced or signed. Genesis pre4 replaces that host-built
+candidate with pinned-dependency binaries and passes every local strict check,
+but still lacks independent reproduction and signing. None of these archives
+is a production release or may be promoted without satisfying the remaining
+strict and external release gates.
 
 ## Repository work still required
 
@@ -159,8 +173,8 @@ the strict and external release gates.
   complete.
 - Finalize supported-platform, migration, rollback, upgrade, and known-
   limitation documentation for the chosen release candidate.
-- Produce a strict-verifier-compatible Linux candidate and an equivalent
-  verified Windows candidate from pinned build environments.
+- Independently reproduce the strict-verifier-compatible Linux candidate and
+  produce an equivalent verified Windows candidate from a pinned environment.
 
 ## External evidence required before production release
 
