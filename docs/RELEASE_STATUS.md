@@ -143,14 +143,13 @@ when they are outside the source repository.
   as Linux. The PE32+ executables import only allowlisted Windows system DLLs,
   carry one identical source revision, and are deterministically stripped.
   Two Genesis pre5 Windows archives produced from the same binaries are byte-
-  for-byte identical with SHA-256
-  `b37f991b6d59b2a1ae0ea85da06146b07051fc81593e51fbfb571cf37a18af23`.
+  for-byte identical; the outer digest is published in the adjacent checksum
+  file and on the website rather than embedded recursively in the archive.
   Normal verification passes; strict verification stops at the required
   independent reproduction attestation. Execution testing on a clean Windows
   system and the separately pinned GUI package remain outstanding.
 - Linux was rebuilt at the same pre5 source baseline. Two packages are byte-
-  for-byte identical with SHA-256
-  `03b90084297a1fdbd92adca5b395af765f83da327c638f6e43a830d0849ffbcf`.
+  for-byte identical, with the outer digest published separately.
   Normal verification passes, the three binaries retain only the permitted
   glibc-family dependencies, and strict verification stops only at independent
   reproduction. The website candidate links now identify both packages as
@@ -169,7 +168,7 @@ host-built binaries have non-permitted runtime dependencies and have not been
 independently reproduced or signed. Genesis pre4 replaces that host-built
 candidate with pinned-dependency binaries and passes every local strict check,
 but still lacks independent reproduction and signing. Genesis pre5 aligns the
-pinned Linux and Windows command-line packages at source commit `10ec39009`;
+pinned Linux and Windows command-line packages at the manifest source commit;
 both pass normal verification and deterministic same-machine packaging, but
 neither has been independently reproduced, signed, or tested on a clean
 Windows system. None of these archives is a production release or may be
