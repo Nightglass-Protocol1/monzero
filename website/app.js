@@ -97,8 +97,16 @@ async function updateNodeStatus() {
       ? 'Connection counts are intentionally hidden by the public restricted RPC.'
       : 'Current incoming and outgoing P2P peer nodes, not unique people.';
     fields.rpc.textContent = info.restricted ? 'RESTRICTED' : 'ONLINE';
-    fields.state.textContent = info.status === 'OK' ? 'Node online' : info.status;
-    fields.dot.className = 'status-dot online';
+    if (info.status !== 'OK') {
+      fields.state.textContent = info.status || 'Node unavailable';
+      fields.dot.className = 'status-dot offline';
+    } else if (info.synchronized !== true) {
+      fields.state.textContent = 'Node unsynchronized';
+      fields.dot.className = 'status-dot offline';
+    } else {
+      fields.state.textContent = 'Node synchronized';
+      fields.dot.className = 'status-dot online';
+    }
   } catch {
     fields.state.textContent = 'Status unavailable';
     fields.rpc.textContent = '—';
