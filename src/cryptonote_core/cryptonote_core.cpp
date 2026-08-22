@@ -87,6 +87,11 @@ namespace cryptonote
   , "Run in a regression testing mode."
   , false
   };
+  const command_line::arg_descriptor<bool> arg_regtest_asset_hard_fork = {
+    "regtest-asset-hard-fork"
+  , "Activate experimental Monzero Assets HF17 at height 2 (regtest only)."
+  , false
+  };
   const command_line::arg_descriptor<bool> arg_keep_fakechain = {
     "keep-fakechain"
   , "Don't delete any existing database when in fakechain mode."
@@ -321,6 +326,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg_testnet_on);
     command_line::add_arg(desc, arg_stagenet_on);
     command_line::add_arg(desc, arg_regtest_on);
+    command_line::add_arg(desc, arg_regtest_asset_hard_fork);
     command_line::add_arg(desc, arg_keep_fakechain);
     command_line::add_arg(desc, arg_fixed_difficulty);
     command_line::add_arg(desc, arg_dns_checkpoints);
@@ -351,6 +357,9 @@ namespace cryptonote
     const bool testnet = command_line::get_arg(vm, arg_testnet_on);
     const bool stagenet = command_line::get_arg(vm, arg_stagenet_on);
     const bool regtest = command_line::get_arg(vm, arg_regtest_on);
+    const bool regtest_assets = command_line::get_arg(vm, arg_regtest_asset_hard_fork);
+    if (regtest_assets && !regtest)
+      throw std::runtime_error("--regtest-asset-hard-fork requires --regtest");
     if (testnet + stagenet + regtest > 1)
       throw std::runtime_error("More than one network type argument was specified");
     return testnet ? TESTNET : stagenet ? STAGENET : regtest ? FAKECHAIN : MAINNET;
@@ -669,7 +678,12 @@ namespace cryptonote
       MERROR("Failed to parse block rate notify spec: " << e.what());
     }
 
-    const std::pair<uint8_t, uint64_t> regtest_hard_forks[3] = {std::make_pair(1, 0), std::make_pair(mainnet_hard_forks[num_mainnet_hard_forks-1].version, 1), std::make_pair(0, 0)};
+    const bool regtest_assets = command_line::get_arg(vm, arg_regtest_asset_hard_fork);
+    const std::pair<uint8_t, uint64_t> regtest_hard_forks[4] = {
+      std::make_pair(1, 0),
+      std::make_pair(mainnet_hard_forks[num_mainnet_hard_forks-1].version, 1),
+      std::make_pair(regtest_assets ? HF_VERSION_MONZERO_ASSETS : 0, 2),
+      std::make_pair(0, 0)};
     const cryptonote::test_options regtest_test_options = {
       regtest_hard_forks,
       0

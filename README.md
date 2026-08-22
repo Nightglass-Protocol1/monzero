@@ -45,11 +45,13 @@ sudo apt install build-essential cmake pkg-config libboost-all-dev \
   libudev-dev ccache doxygen graphviz
 ```
 
-Clone recursively and build the release binaries:
+Build the release binaries from this source tree. A public clone URL is not
+currently published, so prerelease source should be obtained as a verified
+archive from a maintainer and unpacked first:
 
 ```bash
-git clone --recursive https://code.monzero.org/monzero-core.git
 cd monzero-core
+git submodule update --init --recursive
 cmake -S . -B build/release -D CMAKE_BUILD_TYPE=Release
 cmake --build build/release -j"$(nproc)"
 ```

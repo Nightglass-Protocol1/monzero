@@ -482,20 +482,6 @@ namespace cryptonote
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
-    // This hook runs after native inputs, outputs, and public keys are final,
-    // but before the prefix is signed. Versioned extensions can therefore
-    // commit to the native carrier without invalidating the native signature.
-    if (finalize_prefix && !finalize_prefix(tx))
-      return false;
-
-    size_t normalized_extra_size = tx.extra.size();
-    std::string asset_extra_error;
-    CHECK_AND_ASSERT_MES(get_monzero_asset_normalized_extra_size(
-      tx, normalized_extra_size, &asset_extra_error), false, asset_extra_error);
-    CHECK_AND_ASSERT_MES(normalized_extra_size <= MAX_TX_EXTRA_SIZE, false,
-      "Non-asset TX extra size (" << normalized_extra_size
-      << ") is greater than max allowed (" << MAX_TX_EXTRA_SIZE << ")");
-
     //check money
     if(summary_outs_money > summary_inputs_money )
     {
@@ -512,8 +498,25 @@ namespace cryptonote
       MDEBUG("Null secret key, skipping signatures");
     }
 
+    const auto finalize_and_check_prefix = [&]() {
+      // RingCT masks native amounts below, so this must run only once every
+      // serialized prefix field has reached its final value.
+      if (finalize_prefix && !finalize_prefix(tx))
+        return false;
+      size_t normalized_extra_size = tx.extra.size();
+      std::string asset_extra_error;
+      CHECK_AND_ASSERT_MES(get_monzero_asset_normalized_extra_size(
+        tx, normalized_extra_size, &asset_extra_error), false, asset_extra_error);
+      CHECK_AND_ASSERT_MES(normalized_extra_size <= MAX_TX_EXTRA_SIZE, false,
+        "Non-asset TX extra size (" << normalized_extra_size
+        << ") is greater than max allowed (" << MAX_TX_EXTRA_SIZE << ")");
+      return true;
+    };
+
     if (tx.version == 1)
     {
+      if (!finalize_and_check_prefix())
+        return false;
       //generate ring signatures
       crypto::hash tx_prefix_hash;
       get_transaction_prefix_hash(tx, tx_prefix_hash);
@@ -644,6 +647,8 @@ namespace cryptonote
       for (size_t i = 0; i < tx.vout.size(); ++i)
         tx.vout[i].amount = 0;
 
+      if (!finalize_and_check_prefix())
+        return false;
       crypto::hash tx_prefix_hash;
       get_transaction_prefix_hash(tx, tx_prefix_hash, hwdev);
       rct::ctkeyV outSk;

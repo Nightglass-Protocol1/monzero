@@ -4361,8 +4361,9 @@ leave:
 
     boost::optional<assets::asset_transaction_payload> asset_payload;
     std::string asset_error;
+    const network_type asset_network = m_nettype == FAKECHAIN ? MAINNET : m_nettype;
     if (hf_version >= HF_VERSION_MONZERO_ASSETS
-        && !assets::parse_native_asset_transaction(tx, hf_version, m_nettype,
+        && !assets::parse_native_asset_transaction(tx, hf_version, asset_network,
           asset_payload, &asset_error))
     {
       MERROR_VER("Block with id: " << id << " has transaction " << tx_id
@@ -4472,7 +4473,8 @@ leave:
           continue;
         std::vector<crypto::hash> output_ids;
         std::string asset_error;
-        if (!assets::apply_asset_transaction_to_db(*m_db, *payload, m_nettype,
+        const network_type asset_network = m_nettype == FAKECHAIN ? MAINNET : m_nettype;
+        if (!assets::apply_asset_transaction_to_db(*m_db, *payload, asset_network,
               payload->carrier_prefix_hash, blockchain_height, output_ids, &asset_error))
           throw std::runtime_error{"Monzero asset state transition failed: " + asset_error};
       }

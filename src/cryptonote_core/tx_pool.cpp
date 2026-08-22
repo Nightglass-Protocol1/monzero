@@ -170,8 +170,10 @@ namespace cryptonote
     if (version >= HF_VERSION_MONZERO_ASSETS)
     {
       std::string asset_error;
+      const network_type asset_network = m_blockchain.get_network_type() == FAKECHAIN
+        ? MAINNET : m_blockchain.get_network_type();
       if (!assets::parse_native_asset_transaction(tx, version,
-            m_blockchain.get_network_type(), asset_payload, &asset_error))
+            asset_network, asset_payload, &asset_error))
       {
         LOG_PRINT_L1("transaction " << id << " has an invalid Monzero asset envelope: " << asset_error);
         tvc.m_verifivation_failed = true;
@@ -181,7 +183,7 @@ namespace cryptonote
       {
         CRITICAL_REGION_LOCAL1(m_blockchain);
         if (!assets::verify_asset_transaction_against_db(m_blockchain.get_db(),
-              *asset_payload, m_blockchain.get_network_type(),
+              *asset_payload, asset_network,
               asset_payload->carrier_prefix_hash, &asset_error))
         {
           LOG_PRINT_L1("transaction " << id << " has an invalid Monzero asset transition: " << asset_error);
@@ -214,7 +216,7 @@ namespace cryptonote
             std::string pooled_error;
             if (!parse_and_validate_tx_from_blob(*pooled_blob, pooled_tx)
                 || !assets::parse_native_asset_transaction(pooled_tx, version,
-                     m_blockchain.get_network_type(), pooled_payload, &pooled_error))
+                     asset_network, pooled_payload, &pooled_error))
             {
               conflict = true;
               return false;

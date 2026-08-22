@@ -199,10 +199,11 @@ class Daemon(object):
         return self.rpc.send_json_rpc_request(get_info)
     getinfo = get_info
 
-    def hard_fork_info(self, client = ""):
+    def hard_fork_info(self, version = 0, client = ""):
         hard_fork_info = {
             'method': 'hard_fork_info',
             'params': {
+                'version': version,
                 'client': client,
             },
             'jsonrpc': '2.0',
