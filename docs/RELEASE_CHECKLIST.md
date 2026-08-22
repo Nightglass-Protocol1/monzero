@@ -105,6 +105,12 @@ with an upstream project or publish unsigned Gitian results.
 
 ## Deployment
 
+Run `utils/release/verify-network-readiness.sh http://127.0.0.1:6175` on the
+public-node host against its operator-local RPC before promotion. The gate
+requires mainnet, status `OK`, current synchronization, a fresh tip, internally
+consistent heights, and at least two peers by default. A restricted public RPC
+may hide peer information and is not sufficient evidence for this gate.
+
 - [ ] Public node binaries backed up before replacement
 - [ ] Public node database backup or recovery procedure confirmed
 - [ ] New node starts, binds expected ports, and reports correct version
