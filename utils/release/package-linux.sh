@@ -85,6 +85,8 @@ install -m 0644 "$source_root/MONZERO_CHAIN_SPEC.md" "$package_dir/MONZERO_CHAIN
 install -m 0644 "$source_root/docs/RELEASE_CHECKLIST.md" "$package_dir/RELEASE_CHECKLIST.md"
 install -m 0644 "$source_root/docs/RELEASE_STATUS.md" "$package_dir/RELEASE_STATUS.md"
 install -m 0644 "$source_root/docs/UPGRADE.md" "$package_dir/UPGRADE.md"
+install -m 0644 "$source_root/utils/systemd/README.md" "$package_dir/README-SYSTEMD.md"
+install -m 0644 "$source_root/utils/systemd/monzerod.service" "$package_dir/monzerod.service"
 
 {
   echo "package=$package_name"
