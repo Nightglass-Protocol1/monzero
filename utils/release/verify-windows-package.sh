@@ -19,7 +19,7 @@ mapfile -t roots < <(find "$work_dir" -mindepth 1 -maxdepth 1 -type d)
 [[ ${#roots[@]} -eq 1 ]] || { echo "Archive must contain exactly one root directory" >&2; exit 1; }
 root=${roots[0]}
 
-for required in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe BUILD-MANIFEST.txt SHA256SUMS README.md UPGRADE.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE; do
+for required in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe BUILD-MANIFEST.txt SHA256SUMS README.md README-WINDOWS.txt UPGRADE.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE start-node.bat start-wallet-cli.bat start-mining.bat stop-mining.bat; do
   [[ -f "$root/$required" ]] || { echo "Required package file is missing: $required" >&2; exit 1; }
 done
 [[ $(sed -n 's/^package=//p' "$root/BUILD-MANIFEST.txt") == "$(basename "$root")" ]] || {

@@ -56,6 +56,10 @@ done
 for document in RELEASE_CHECKLIST.md RELEASE_STATUS.md UPGRADE.md; do
   install -m 0644 "$source_root/docs/$document" "$package_dir/$document"
 done
+install -m 0644 "$source_root/utils/release/windows/README-WINDOWS.txt" "$package_dir/README-WINDOWS.txt"
+for launcher in start-node.bat start-wallet-cli.bat start-mining.bat stop-mining.bat; do
+  install -m 0644 "$source_root/utils/release/windows/$launcher" "$package_dir/$launcher"
+done
 
 {
   echo "package=$package_name"
