@@ -34,6 +34,23 @@ bool make_asset_recipient_data(const account_public_address& recipient,
   size_t output_index, uint64_t amount, asset_recipient_data& output,
   rct::key& commitment, std::string* error)
 {
+  crypto::key_derivation derivation{};
+  if (!crypto::generate_key_derivation(recipient.m_view_public_key,
+        tx_secret_key, derivation))
+    return fail(error, "failed to derive asset output shared secret");
+  const rct::key amount_key = derivation_scalar(derivation, output_index);
+  return make_asset_recipient_data_with_mask(recipient, is_subaddress,
+    tx_secret_key, output_index, amount, rct::genCommitmentMask(amount_key),
+    output, commitment, error);
+}
+
+bool make_asset_recipient_data_with_mask(const account_public_address& recipient,
+  bool is_subaddress, const crypto::secret_key& tx_secret_key,
+  size_t output_index, uint64_t amount, const rct::key& mask,
+  asset_recipient_data& output, rct::key& commitment, std::string* error)
+{
+  if (sc_check(mask.bytes) != 0)
+    return fail(error, "asset output mask is not a reduced scalar");
   crypto::public_key tx_public_key{};
   crypto::public_key base_tx_public_key{};
   crypto::key_derivation derivation{};
@@ -60,10 +77,12 @@ bool make_asset_recipient_data(const account_public_address& recipient,
   crypto::derive_view_tag(derivation, output_index, candidate.view_tag);
 
   const rct::key amount_key = derivation_scalar(derivation, output_index);
-  const rct::key mask = rct::genCommitmentMask(amount_key);
   candidate.encrypted_amount.mask = mask;
   candidate.encrypted_amount.amount = rct::d2h(amount);
-  rct::ecdhEncode(candidate.encrypted_amount, amount_key, true);
+  // Asset balance construction must coordinate output masks. The v2 RingCT
+  // ECDH form discards the supplied mask and derives a replacement, so the
+  // versioned asset wire format uses the mask-carrying form.
+  rct::ecdhEncode(candidate.encrypted_amount, amount_key, false);
   commitment = rct::commit(amount, mask);
   output = candidate;
   return true;
@@ -100,7 +119,7 @@ bool decode_asset_recipient_data(const asset_recipient_data& input,
 
   const rct::key amount_key = derivation_scalar(derivation, output_index);
   rct::ecdhTuple opening = input.encrypted_amount;
-  rct::ecdhDecode(opening, amount_key, true);
+  rct::ecdhDecode(opening, amount_key, false);
   const uint64_t amount = rct::h2d(opening.amount);
   const rct::key expected_commitment = rct::commit(amount, opening.mask);
   if (std::memcmp(expected_commitment.bytes, commitment.bytes,

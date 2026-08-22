@@ -39,7 +39,7 @@ from framework.wallet import Wallet
 class ProofsTest():
     def run_test(self):
         self.reset()
-        self.mine('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 80)
+        self.mine('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 80)
         self.create_wallets()
         txid, tx_key, amount = self.transfer()
         self.check_tx_key(txid, tx_key, amount)
@@ -62,12 +62,12 @@ class ProofsTest():
     def transfer(self):
         print('Creating transaction')
         self.wallet[0].refresh()
-        dst = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount':123456789000}
+        dst = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount':123456789000}
         res = self.wallet[0].transfer([dst], get_tx_key = True)
         assert len(res.tx_hash) == 64
         assert len(res.tx_key) == 64
         daemon = Daemon()
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         return (res.tx_hash, res.tx_key, 123456789000)
 
     def create_wallets(self):
@@ -91,8 +91,8 @@ class ProofsTest():
         self.wallet[0].refresh()
         self.wallet[1].refresh()
 
-        sending_address = '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
-        receiving_address = '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        sending_address = 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
+        receiving_address = 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
         res = self.wallet[0].get_tx_key(txid)
         assert res.tx_key == tx_key
         res = self.wallet[0].check_tx_key(txid = txid, tx_key = tx_key, address = receiving_address)
@@ -127,8 +127,8 @@ class ProofsTest():
         self.wallet[0].refresh()
         self.wallet[1].refresh()
 
-        sending_address = '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
-        receiving_address = '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        sending_address = 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
+        receiving_address = 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
         res = self.wallet[0].get_tx_proof(txid, sending_address, 'foo');
         assert res.signature.startswith('InProofV2');
         signature0i = res.signature
@@ -276,8 +276,8 @@ class ProofsTest():
 
         print('Checking reserve proof')
 
-        address0 = '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
-        address1 = '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        address0 = 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
+        address1 = 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
 
         self.wallet[0].refresh()
         res = self.wallet[0].get_balance()

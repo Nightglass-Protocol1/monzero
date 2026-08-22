@@ -28,6 +28,7 @@
 
 #include "gtest/gtest.h"
 
+#include "common/updates.h"
 #include "common/util.h"
 
 TEST(LocalAddress, localhost) { ASSERT_TRUE(tools::is_local_address("localhost")); }
@@ -44,7 +45,16 @@ TEST(LocalAddress, onion) { ASSERT_FALSE(tools::is_local_address("vww6ybal4bd7sz
 TEST(LocalAddress, i2p) { ASSERT_FALSE(tools::is_local_address("xmrto2bturnore26xmrto2bturnore26xmrto2bturnore26xmr2.b32.i2p")); }
 TEST(LocalAddress, valid_ip) { ASSERT_FALSE(tools::is_local_address("1.2.3.4")); }
 TEST(LocalAddress, valid_ipv6) { ASSERT_FALSE(tools::is_local_address("[0:0:0:0:0:0:0:2]")); }
-TEST(LocalAddress, valid_domain) { ASSERT_FALSE(tools::is_local_address("getmonero.org")); }
+TEST(LocalAddress, valid_domain) { ASSERT_FALSE(tools::is_local_address("monzero.org")); }
 TEST(LocalAddress, local_prefix) { ASSERT_FALSE(tools::is_local_address("localhost.com")); }
 TEST(LocalAddress, invalid) { ASSERT_FALSE(tools::is_local_address("test")); }
 TEST(LocalAddress, empty) { ASSERT_FALSE(tools::is_local_address("")); }
+
+TEST(UpdateInfrastructure, fails_closed_without_monzero_service)
+{
+  std::string version;
+  std::string hash;
+  EXPECT_FALSE(tools::check_updates("monzerod", "linux-x64", version, hash));
+  EXPECT_TRUE(tools::get_update_url("monzerod", "cli", "linux-x64", "1.0", true).empty());
+  EXPECT_TRUE(tools::get_update_url("monzerod", "cli", "linux-x64", "1.0", false).empty());
+}

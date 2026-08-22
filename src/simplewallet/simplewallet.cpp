@@ -207,7 +207,7 @@ namespace
   const char* USAGE_SWEEP_ACCOUNT("sweep_account <account> [index=<N1>[,<N2>,...] | index=all] [<priority>] [<ring_size>] [outputs=<N>] <address> [<payment_id (obsolete)>]");
   const char* USAGE_SWEEP_BELOW("sweep_below <amount_threshold> [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] <address> [<payment_id (obsolete)>]");
   const char* USAGE_SWEEP_SINGLE("sweep_single [<priority>] [<ring_size>] [outputs=<N>] <key_image> <address> [<payment_id (obsolete)>]");
-  const char* USAGE_DONATE("donate [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] <amount> [<payment_id (obsolete)>]");
+  const char* USAGE_DONATE("donate");
   const char* USAGE_SIGN_TRANSFER("sign_transfer [export_raw] [<filename>]");
   const char* USAGE_SET_LOG("set_log <level>|{+,-,}<categories>");
   const char* USAGE_ACCOUNT("account\n"
@@ -239,6 +239,9 @@ namespace
   const char* USAGE_SET_DESCRIPTION("set_description [free text note]");
   const char* USAGE_SIGN("sign [<account_index>,<address_index>] [--spend|--view] <filename>");
   const char* USAGE_VERIFY("verify <filename> <address> <signature>");
+  const char* USAGE_ASSET_CREATE("asset_create <fungible|nft|collection|edition> <atomic_supply> <decimals> <metadata_hash|none> <metadata_reference|none> <collection_id|none> <filename>");
+  const char* USAGE_ASSET_ISSUE("asset_issue <address> <fungible|nft|collection|edition> <atomic_supply> <decimals> <metadata_hash|none> <metadata_reference|none> <collection_id|none>");
+  const char* USAGE_ASSET_INSPECT("asset_inspect <filename>");
   const char* USAGE_EXPORT_KEY_IMAGES("export_key_images [all] <filename>");
   const char* USAGE_IMPORT_KEY_IMAGES("import_key_images <filename>");
   const char* USAGE_HW_KEY_IMAGES_SYNC("hw_key_images_sync");
@@ -3274,7 +3277,7 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
     message_writer() << tr("\"balance\" - Show balance.");
     message_writer() << tr("\"address all\" - Show all addresses.");
     message_writer() << tr("\"address new\" - Create new subaddress.");
-    message_writer() << tr("\"transfer <address> <amount>\" - Send XMR to an address.");
+    message_writer() << tr("\"transfer <address> <amount>\" - Send XMZ to an address.");
     message_writer() << tr("\"show_transfers [in|out|pending|failed|pool]\" - Show transactions.");
     message_writer() << tr("\"sweep_all <address>\" - Send whole balance to another wallet.");
     message_writer() << tr("\"seed\" - Show secret 25 words that can be used to recover this wallet.");
@@ -3283,7 +3286,7 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
     message_writer() << tr("\"version\" - Check software version.");
     message_writer() << tr("\"exit\" - Exit wallet.");
     message_writer() << "";
-    message_writer() << tr("\"donate <amount>\" - Donate XMR to the development team.");
+    message_writer() << tr("\"donate\" - Show the donation availability for this release.");
     message_writer() << "";
   }
   else if ((args.size() == 1) && (args.front() == "all"))
@@ -3672,6 +3675,18 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::verify, _1),
                            tr(USAGE_VERIFY),
                            tr("Verify a signature on the contents of a file."));
+  m_cmd_binder.set_handler("asset_create",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_create, _1),
+                           tr(USAGE_ASSET_CREATE),
+                           tr("Create and export a signed OFFLINE-ONLY token or NFT issuance artifact. Assets are not active or broadcast."));
+  m_cmd_binder.set_handler("asset_issue",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_issue, _1),
+                           tr(USAGE_ASSET_ISSUE),
+                           tr("Create and submit a token or NFT issuance transaction after the asset hard fork activates."));
+  m_cmd_binder.set_handler("asset_inspect",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_inspect, _1),
+                           tr(USAGE_ASSET_INSPECT),
+                           tr("Decode and verify a signed offline Monzero asset issuance artifact."));
   m_cmd_binder.set_handler("export_key_images",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::export_key_images, _1),
                            tr(USAGE_EXPORT_KEY_IMAGES),
@@ -7831,66 +7846,6 @@ bool simple_wallet::donate(const std::vector<std::string> &args_)
   (void)args_;
   fail_msg_writer() << tr("Donations are not configured for this Monzero release.");
   return true;
-#if 0
-  CHECK_IF_BACKGROUND_SYNCING("cannot donate");
-  std::vector<std::string> local_args = args_;
-  if(local_args.empty() || local_args.size() > 5)
-  {
-     PRINT_USAGE(USAGE_DONATE);
-     return true;
-  }
-  std::string amount_str;
-  std::string payment_id_str;
-  // get payment id and pop
-  crypto::hash payment_id;
-  crypto::hash8 payment_id8;
-  if (tools::wallet2::parse_long_payment_id (local_args.back(), payment_id ) ||
-      tools::wallet2::parse_short_payment_id(local_args.back(), payment_id8))
-  {
-    payment_id_str = local_args.back();
-    local_args.pop_back();
-  }
-  // get amount and pop
-  uint64_t amount;
-  bool ok = cryptonote::parse_amount(amount, local_args.back());
-  if (ok && amount != 0)
-  {
-    amount_str = local_args.back();
-    local_args.pop_back();
-  }
-  else
-  { 
-    fail_msg_writer() << tr("amount is wrong: ") << local_args.back() << ", " << tr("expected number from 0 to ") << print_money(std::numeric_limits<uint64_t>::max());
-    return true;
-  }
-  // push back address, amount, payment id
-  std::string address_str;
-  if (m_wallet->nettype() != cryptonote::MAINNET)
-  {
-    // if not mainnet, convert donation address string to the relevant network type
-    address_parse_info info;
-    if (!cryptonote::get_account_address_from_str(info, cryptonote::MAINNET, MONERO_DONATION_ADDR))
-    {
-      fail_msg_writer() << tr("Failed to parse donation address: ") << MONERO_DONATION_ADDR;
-      return true;
-    }
-    address_str = cryptonote::get_account_address_as_str(m_wallet->nettype(), info.is_subaddress, info.address);
-  }
-  else
-  {
-    address_str = MONERO_DONATION_ADDR;
-  }
-  local_args.push_back(address_str);
-  local_args.push_back(amount_str);
-  if (!payment_id_str.empty())
-    local_args.push_back(payment_id_str);
-  if (m_wallet->nettype() == cryptonote::MAINNET)
-    message_writer() << (boost::format(tr("Donating %s %s to The Monero Project (donate.getmonero.org or %s).")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % MONERO_DONATION_ADDR).str();
-  else
-    message_writer() << (boost::format(tr("Donating %s %s to %s.")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % address_str).str();
-  transfer(local_args);
-  return true;
-#endif
 }
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes, const std::function<const tools::wallet2::tx_construction_data&(size_t)> &get_tx, const std::string &extra_message)
@@ -10278,6 +10233,280 @@ bool simple_wallet::sign(const std::vector<std::string> &args)
 
   std::string signature = m_wallet->sign(data, message_signature_type, index);
   success_msg_writer() << signature;
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::asset_create(const std::vector<std::string> &args)
+{
+  CHECK_IF_BACKGROUND_SYNCING("cannot create an asset issuance artifact");
+  if (args.size() != 7)
+  {
+    PRINT_USAGE(USAGE_ASSET_CREATE);
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig() || m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("asset issuance currently requires a full, non-multisig software wallet");
+    return true;
+  }
+
+  cryptonote::assets::issuance_descriptor descriptor;
+  descriptor.network = m_wallet->nettype();
+  if (args[0] == "fungible")
+    descriptor.type = cryptonote::assets::asset_class::fungible;
+  else if (args[0] == "nft")
+    descriptor.type = cryptonote::assets::asset_class::non_fungible;
+  else if (args[0] == "collection")
+    descriptor.type = cryptonote::assets::asset_class::collection;
+  else if (args[0] == "edition")
+    descriptor.type = cryptonote::assets::asset_class::edition;
+  else
+  {
+    fail_msg_writer() << tr("unknown asset class");
+    return true;
+  }
+
+  unsigned int decimals = 0;
+  if (!epee::string_tools::get_xtype_from_string(descriptor.atomic_supply, args[1])
+      || !epee::string_tools::get_xtype_from_string(decimals, args[2])
+      || decimals > std::numeric_limits<uint8_t>::max())
+  {
+    fail_msg_writer() << tr("invalid atomic supply or decimal precision");
+    return true;
+  }
+  descriptor.display_decimals = static_cast<uint8_t>(decimals);
+  if (args[3] != "none" && !epee::string_tools::hex_to_pod(args[3], descriptor.metadata_hash))
+  {
+    fail_msg_writer() << tr("metadata hash must be a 64-character hexadecimal hash or 'none'");
+    return true;
+  }
+  descriptor.metadata_reference = args[4] == "none" ? "" : args[4];
+  if (args[5] != "none" && !epee::string_tools::hex_to_pod(args[5], descriptor.collection_id))
+  {
+    fail_msg_writer() << tr("collection ID must be a 64-character hexadecimal hash or 'none'");
+    return true;
+  }
+
+  const std::string& filename = args[6];
+  if (m_wallet->confirm_export_overwrite() && !check_file_overwrite(filename))
+    return true;
+
+  SCOPED_WALLET_UNLOCK();
+  cryptonote::assets::issuance_payload payload;
+  crypto::hash asset_id{};
+  std::string error;
+  if (!m_wallet->create_asset_issuance(descriptor, payload, asset_id, &error))
+  {
+    fail_msg_writer() << tr("failed to create asset issuance: ") << error;
+    return true;
+  }
+  std::vector<uint8_t> encoded;
+  if (!cryptonote::assets::encode_issuance_payload(payload, encoded, &error))
+  {
+    fail_msg_writer() << tr("failed to encode asset issuance: ") << error;
+    return true;
+  }
+  const std::string bytes(reinterpret_cast<const char*>(encoded.data()), encoded.size());
+  std::ostringstream artifact;
+  artifact << "MONZERO-ASSET-ISSUANCE-V1\n"
+           << "inactive=true\n"
+           << "asset_id=" << epee::string_tools::pod_to_hex(asset_id) << "\n"
+           << "payload_hex=" << epee::string_tools::buff_to_hex_nodelimer(bytes) << "\n";
+  if (!m_wallet->save_to_file(filename, artifact.str(), true))
+  {
+    fail_msg_writer() << tr("failed to save asset issuance artifact to ") << filename;
+    return true;
+  }
+  success_msg_writer() << tr("Offline-only asset issuance artifact exported to ") << filename
+    << "\n" << tr("Asset ID: ") << epee::string_tools::pod_to_hex(asset_id)
+    << "\n" << tr("This artifact cannot be broadcast; assets remain inactive at consensus.");
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::asset_issue(const std::vector<std::string> &args)
+{
+  CHECK_IF_BACKGROUND_SYNCING("cannot issue an asset");
+  if (args.size() != 7)
+  {
+    PRINT_USAGE(USAGE_ASSET_ISSUE);
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig() || m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("asset issuance currently requires a full, non-multisig software wallet");
+    return true;
+  }
+
+  cryptonote::address_parse_info recipient;
+  if (!cryptonote::get_account_address_from_str(recipient, m_wallet->nettype(), args[0]))
+  {
+    fail_msg_writer() << tr("invalid asset recipient address");
+    return true;
+  }
+
+  cryptonote::assets::issuance_descriptor descriptor;
+  descriptor.network = m_wallet->nettype();
+  if (args[1] == "fungible")
+    descriptor.type = cryptonote::assets::asset_class::fungible;
+  else if (args[1] == "nft")
+    descriptor.type = cryptonote::assets::asset_class::non_fungible;
+  else if (args[1] == "collection")
+    descriptor.type = cryptonote::assets::asset_class::collection;
+  else if (args[1] == "edition")
+    descriptor.type = cryptonote::assets::asset_class::edition;
+  else
+  {
+    fail_msg_writer() << tr("unknown asset class");
+    return true;
+  }
+
+  unsigned int decimals = 0;
+  if (!epee::string_tools::get_xtype_from_string(descriptor.atomic_supply, args[2])
+      || !epee::string_tools::get_xtype_from_string(decimals, args[3])
+      || decimals > std::numeric_limits<uint8_t>::max())
+  {
+    fail_msg_writer() << tr("invalid atomic supply or decimal precision");
+    return true;
+  }
+  descriptor.display_decimals = static_cast<uint8_t>(decimals);
+  if (args[4] != "none" && !epee::string_tools::hex_to_pod(args[4], descriptor.metadata_hash))
+  {
+    fail_msg_writer() << tr("metadata hash must be a 64-character hexadecimal hash or 'none'");
+    return true;
+  }
+  descriptor.metadata_reference = args[5] == "none" ? "" : args[5];
+  if (args[6] != "none" && !epee::string_tools::hex_to_pod(args[6], descriptor.collection_id))
+  {
+    fail_msg_writer() << tr("collection ID must be a 64-character hexadecimal hash or 'none'");
+    return true;
+  }
+
+  SCOPED_WALLET_UNLOCK();
+  tools::wallet2::pending_tx ptx;
+  crypto::hash asset_id{};
+  std::string error;
+  const size_t fake_outs_count = m_wallet->get_min_ring_size() - 1;
+  if (!m_wallet->create_asset_issuance_transaction(
+        descriptor, recipient.address, recipient.is_subaddress,
+        fake_outs_count, m_wallet->get_default_priority(),
+        m_current_subaddress_account, {}, ptx, asset_id, &error))
+  {
+    fail_msg_writer() << tr("failed to construct asset issuance transaction: ") << error;
+    return true;
+  }
+
+  std::ostringstream prompt;
+  prompt << tr("Asset ID: ") << epee::string_tools::pod_to_hex(asset_id) << ENDL
+         << tr("Native transaction fee: ") << print_money(ptx.fee) << ENDL
+         << tr("Issuance is permanent once mined. Submit this transaction?");
+  const std::string accepted = input_line(prompt.str(), true);
+  if (std::cin.eof() || !command_line::is_yes(accepted))
+  {
+    fail_msg_writer() << tr("asset issuance cancelled");
+    return true;
+  }
+
+  std::vector<tools::wallet2::pending_tx> transactions;
+  transactions.push_back(std::move(ptx));
+  commit_or_save(transactions, m_do_not_relay);
+  success_msg_writer() << tr("Asset ID: ") << epee::string_tools::pod_to_hex(asset_id);
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::asset_inspect(const std::vector<std::string> &args)
+{
+  if (args.size() != 1)
+  {
+    PRINT_USAGE(USAGE_ASSET_INSPECT);
+    return true;
+  }
+  std::string artifact;
+  if (!m_wallet->load_from_file(args[0], artifact))
+  {
+    fail_msg_writer() << tr("failed to read asset issuance artifact ") << args[0];
+    return true;
+  }
+  constexpr char header[] = "MONZERO-ASSET-ISSUANCE-V1\n";
+  constexpr char id_field[] = "asset_id=";
+  constexpr char field[] = "payload_hex=";
+  if (artifact.compare(0, sizeof(header) - 1, header) != 0)
+  {
+    fail_msg_writer() << tr("not a Monzero asset issuance artifact");
+    return true;
+  }
+  if (artifact.find("inactive=true\n") == std::string::npos)
+  {
+    fail_msg_writer() << tr("asset issuance artifact is missing its inactive safety marker");
+    return true;
+  }
+  const size_t id_pos = artifact.find(id_field);
+  if (id_pos == std::string::npos)
+  {
+    fail_msg_writer() << tr("asset issuance artifact has no declared asset ID");
+    return true;
+  }
+  const size_t id_begin = id_pos + sizeof(id_field) - 1;
+  const size_t id_end = artifact.find('\n', id_begin);
+  crypto::hash declared_asset_id{};
+  if (id_end == std::string::npos
+      || !epee::string_tools::hex_to_pod(artifact.substr(id_begin, id_end - id_begin), declared_asset_id))
+  {
+    fail_msg_writer() << tr("asset issuance artifact has an invalid declared asset ID");
+    return true;
+  }
+  const size_t field_pos = artifact.find(field);
+  if (field_pos == std::string::npos)
+  {
+    fail_msg_writer() << tr("asset issuance artifact has no payload");
+    return true;
+  }
+  const size_t hex_begin = field_pos + sizeof(field) - 1;
+  const size_t hex_end = artifact.find('\n', hex_begin);
+  const std::string hex = artifact.substr(hex_begin, hex_end - hex_begin);
+  std::string binary;
+  if (!epee::string_tools::parse_hexstr_to_binbuff(hex, binary))
+  {
+    fail_msg_writer() << tr("asset issuance payload is not valid hexadecimal");
+    return true;
+  }
+  const std::vector<uint8_t> encoded(binary.begin(), binary.end());
+  cryptonote::assets::issuance_payload payload;
+  std::string error;
+  if (!cryptonote::assets::decode_issuance_payload(encoded, payload, &error))
+  {
+    fail_msg_writer() << tr("invalid asset issuance payload: ") << error;
+    return true;
+  }
+  crypto::hash asset_id{};
+  if (!cryptonote::assets::derive_asset_id(payload.descriptor, asset_id, &error))
+  {
+    fail_msg_writer() << tr("could not derive asset ID: ") << error;
+    return true;
+  }
+  if (asset_id != declared_asset_id)
+  {
+    fail_msg_writer() << tr("asset issuance artifact ID does not match its signed payload");
+    return true;
+  }
+  const char* class_name =
+    payload.descriptor.type == cryptonote::assets::asset_class::fungible ? "fungible" :
+    payload.descriptor.type == cryptonote::assets::asset_class::non_fungible ? "nft" :
+    payload.descriptor.type == cryptonote::assets::asset_class::collection ? "collection" : "edition";
+  const char* network_name = payload.descriptor.network == cryptonote::MAINNET ? "mainnet" :
+    payload.descriptor.network == cryptonote::TESTNET ? "testnet" : "stagenet";
+  success_msg_writer()
+    << tr("Valid signed offline asset issuance")
+    << "\n" << tr("Asset ID: ") << epee::string_tools::pod_to_hex(asset_id)
+    << "\n" << tr("Network: ") << network_name
+    << "\n" << tr("Class: ") << class_name
+    << "\n" << tr("Atomic supply: ") << payload.descriptor.atomic_supply
+    << "\n" << tr("Decimals: ") << static_cast<unsigned int>(payload.descriptor.display_decimals)
+    << "\n" << tr("Issuer key: ") << epee::string_tools::pod_to_hex(payload.descriptor.issuer_key)
+    << "\n" << tr("Metadata hash: ") << epee::string_tools::pod_to_hex(payload.descriptor.metadata_hash)
+    << "\n" << tr("Metadata reference: ") << payload.descriptor.metadata_reference
+    << "\n" << tr("Collection ID: ") << epee::string_tools::pod_to_hex(payload.descriptor.collection_id)
+    << "\n" << tr("Collection authorization: ") << (payload.collection_signature ? "present; registry verification required" : "not applicable")
+    << "\n" << tr("Inactive: this artifact cannot be submitted or broadcast.");
   return true;
 }
 //----------------------------------------------------------------------------------------------------

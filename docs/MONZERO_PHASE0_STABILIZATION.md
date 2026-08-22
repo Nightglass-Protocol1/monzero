@@ -129,6 +129,8 @@ isolated disposable development network may be used after cryptographic review.
 - [x] Inactive authenticated issuance registry with deterministic reorg rollback.
 - [x] Strict canonical issuance-descriptor decoder with byte-boundary truncation tests.
 - [x] Bounded authenticated issuance-payload envelope with strict signature shape rules.
+- [x] Fail-closed signed issuance constructor with fresh nonce generation and collection authority checks.
+- [x] Network-bound software-wallet issuance authorization with unsupported key modes rejected.
 - [x] Deterministic authenticated registry snapshots with atomic restore failure behavior.
 - [x] Atomic ordered block-issuance adapter, detach behavior, and deterministic state commitments.
 - [x] Detached versioned transaction extension bound to a native prefix commitment.
@@ -136,13 +138,18 @@ isolated disposable development network may be used after cryptographic review.
 - [x] Persistent LMDB issuance registry with restart reconstruction and native reorg rollback.
 - [x] Inactive per-asset Pedersen/Bulletproof+ conservation and burn verifier.
 - [x] Inactive network/carrier/asset-bound CLSAG ownership proof verifier.
+- [x] Recipient-decodable fixed-supply issuance payload constructor with coordinated commitment masks.
+- [x] Pre-signing attachment of a constructed issuance envelope to a native transaction prefix.
+- [x] Activation-gated software-wallet and CLI construction of one signed native issuance transaction.
+- [x] Inactive v2 transaction serialization with strict parser limits and obsolete-v1 rejection.
 - [x] External cryptographic-review brief and mandatory threat cases.
 - [ ] Reviewed confidential per-asset commitment and range-proof construction.
-- [ ] Versioned asset transaction serialization with strict parser limits.
-- [ ] Persistent database indexes and production reorganisation-safe asset state.
+- [ ] Production review of transaction serialization, database indexes, and reorganisation-safe state.
 - [ ] Isolated asset development network and faucet.
-- [ ] Wallet issuance, scanning, restoration, transfer, burn, and metadata UI.
-- [ ] Explorer display with unverified/verified collection distinction.
+- [ ] Wallet asset workflow: confirmed owned-output scanning and reorg/cache
+  handling are implemented; complete spend tracking, restoration fixtures,
+  transfer, burn, and metadata UI.
+- [x] Explorer registry/detail display with inactive-state and metadata/collection trust distinctions.
 
 All completed items in this section are inactive primitives and unit tests.
 They do not enable token or NFT issuance on mainnet, testnet, or stagenet.

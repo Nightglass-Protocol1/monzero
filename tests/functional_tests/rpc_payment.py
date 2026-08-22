@@ -145,7 +145,7 @@ class RPCPaymentTest():
         res = daemon.rpc_access_info(client = self.get_signature())
         assert len(res.hashing_blob) > 39
         assert res.height == 1
-        assert res.top_hash == '418015bb9ae982a1975da7d79277c2705727a56894ba0fb246adaabb1f4632e3'
+        assert res.top_hash == '3850cb9e2fb2ba3c680b24cee7574765acd6be1cc4d84a4360c7c53e83e3270d'
         assert res.credits_per_hash_found == 5000
         assert res.diff == 10
         assert res.credits == 0
@@ -361,7 +361,7 @@ class RPCPaymentTest():
         assert res.credits == credits - 1
         credits = res.credits
 
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 100)
+        res = daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 100)
         block_hashes = res.blocks
 
         # ask for 1 block -> 1 credit

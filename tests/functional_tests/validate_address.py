@@ -39,12 +39,11 @@ class AddressValidationTest():
       self.create()
       self.check_bad_addresses()
       self.check_good_addresses()
-      self.check_openalias_addresses()
 
     def create(self):
         print('Creating wallet')
         seed = 'velvet lymph giddy number token physics poetry unquoted nibs useful sabotage limits benches lifestyle eden nitrogen anvil fewest avoid batch vials washing fences goat unquoted'
-        address = '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        address = 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
         self.wallet = Wallet()
         # close the wallet if any, will throw if none is loaded
         try: self.wallet.close_wallet()
@@ -65,19 +64,19 @@ class AddressValidationTest():
     def check_good_addresses(self):
         print('Validating good addresses')
         addresses = [
-            [ 'mainnet',  '', '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm' ],
-            [ 'mainnet',  '', '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW' ],
-            [ 'testnet',  '', '9ujeXrjzf7bfeK3KZdCqnYaMwZVFuXemPU8Ubw335rj2FN1CdMiWNyFV3ksEfMFvRp9L9qum5UxkP5rN9aLcPxbH1au4WAB' ],
-            [ 'stagenet', '', '53teqCAESLxeJ1REzGMAat1ZeHvuajvDiXqboEocPaDRRmqWoVPzy46GLo866qRFjbNhfkNckyhST3WEvBviDwpUDd7DSzB' ],
-            [ 'mainnet', 'i', '4BxSHvcgTwu25WooY4BVmgdcKwZu5EksVZSZkDd6ooxSVVqQ4ubxXkhLF6hEqtw96i9cf3cVfLw8UWe95bdDKfRQeYtPwLm1Jiw7AKt2LY' ],
-            [ 'mainnet', 's', '8AsN91rznfkBGTY8psSNkJBg9SZgxxGGRUhGwRptBhgr5XSQ1XzmA9m8QAnoxydecSh5aLJXdrgXwTDMMZ1AuXsN1EX5Mtm' ],
-            [ 'mainnet', 's', '86kKnBKFqzCLxtK1Jmx2BkNBDBSMDEVaRYMMyVbeURYDWs8uNGDZURKCA5yRcyMxHzPcmCf1q2fSdhQVcaKsFrtGRsdGfNk' ],
-            [ 'testnet', 'i', 'AApMA1VuhiCaHzr5X2KXi2Zc9oJ3VaGjkfChxxpRpxkyKf1NetvbRbQTbFMrGkr85DjnEH7JsBaoUFsgKwZnmtnVWnoB8MDotCsLb7eWwz' ],
-            [ 'testnet', 's', 'BdKg9udkvckC5T58a8Nmtb6BNsgRAxs7uA2D49sWNNX5HPW5Us6Wxu8QMXrnSx3xPBQQ2iu9kwEcRGAoiz6EPmcZKbF62GS' ],
-            [ 'testnet', 's', 'BcFvPa3fT4gVt5QyRDe5Vv7VtUFao9ci8NFEy3r254KF7R1N2cNB5FYhGvrHbMStv4D6VDzZ5xtxeKV8vgEPMnDcNFuwZb9' ],
-            [ 'stagenet', 'i', '5K8mwfjumVseCcQEjNbf59Um6R9NfVUNkHTLhhPCmNvgDLVS88YW5tScnm83rw9mfgYtchtDDTW5jEfMhygi27j1QYphX38hg6m4VMtN29' ],
-            [ 'stagenet', 's', '73LhUiix4DVFMcKhsPRG51QmCsv8dYYbL6GcQoLwEEFvPvkVvc7BhebfA4pnEFF9Lq66hwvLqBvpHjTcqvpJMHmmNjPPBqa' ],
-            [ 'stagenet', 's', '7A1Hr63MfgUa8pkWxueD5xBqhQczkusYiCMYMnJGcGmuQxa7aDBxN1G7iCuLCNB3VPeb2TW7U9FdxB27xKkWKfJ8VhUZthF' ],
+            [ 'mainnet',  '', 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf' ],
+            [ 'mainnet',  '', 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB' ],
+            [ 'testnet',  '', 'KcQfLgEbvdbfeK3KZdCqnYaMwZVFuXemPU8Ubw335rj2FN1CdMiWNyFV3ksEfMFvRp9L9qum5UxkP5rN9aLcPxbH1dKmy9x' ],
+            [ 'stagenet', '', 'NuunP2x7QRZ1K9jHGYvPAXeduk5fVABFNXPuyqjsUhiD4SdzD2EoJxFGHHojSQWE4UBTPsYnGyodtLQuwAB1WaWp31F8Up1pz' ],
+            [ 'mainnet', 'i', 'FZeBEpJDp9525WooY4BVmgdcKwZu5EksVZSZkDd6ooxSVVqQ4ubxXkhLF6hEqtw96i9cf3cVfLw8UWe95bdDKfRQeYtPwLm1Jiw78tbAKG' ],
+            [ 'mainnet', 's', 'Fs8Jn9XgkyYBGTY8psSNkJBg9SZgxxGGRUhGwRptBhgr5XSQ1XzmA9m8QAnoxydecSh5aLJXdrgXwTDMMZ1AuXsN1K5RWre' ],
+            [ 'mainnet', 's', 'Fo1GRJywpHzLxtK1Jmx2BkNBDBSMDEVaRYMMyVbeURYDWs8uNGDZURKCA5yRcyMxHzPcmCf1q2fSdhQVcaKsFrtGRqEJDv3' ],
+            [ 'testnet', 'i', 'KsVMxpzWyECaHzr5X2KXi2Zc9oJ3VaGjkfChxxpRpxkyKf1NetvbRbQTbFMrGkr85DjnEH7JsBaoUFsgKwZnmtnVWnoB8MDotCsLZ3NMBr' ],
+            [ 'testnet', 's', 'KzPJrGaRKzcC5T58a8Nmtb6BNsgRAxs7uA2D49sWNNX5HPW5Us6Wxu8QMXrnSx3xPBQQ2iu9kwEcRGAoiz6EPmcZKZJeKRP' ],
+            [ 'testnet', 's', 'KyKZ5vzKrSYVt5QyRDe5Vv7VtUFao9ci8NFEy3r254KF7R1N2cNB5FYhGvrHbMStv4D6VDzZ5xtxeKV8vgEPMnDcNEgyCBH' ],
+            [ 'stagenet', 'i', 'P5diDtsDQ4LYFrwwMw5VZtfuyqs1en7ttSf28kTeovDtKHERWLSzJmUEMWRtmtHCNc9ezMpG2A7edA5xqpSK1N4SLVgUNi5ENfx1VwZcE7Q8' ],
+            [ 'stagenet', 's', 'PFJuiRs8AJDaWWAnc2gyQoHpWWs7oFrNRdemYxkbQsejMzrMVADkVF29r7No1DdmZ8QmjWjneJLkMddVaNfo8kib1TGcmecUA' ],
+            [ 'stagenet', 's', 'PFLRJVoLwXEg6u9Ci2xBcPiMfauV9S4aRfgZarMCVYd1RBQgqQFZ8uuj1Y1toDzK39ABPEeMsocN6Cv4RGUNW7X92bctvBgNA' ],
         ]
         for any_net_type in [True, False]:
             for address in addresses:
@@ -90,21 +89,6 @@ class AddressValidationTest():
                     assert res.openalias_address == ''
                 else:
                     assert not res.valid
-
-    def check_openalias_addresses(self):
-        print('Validating openalias addresses')
-        addresses = [
-            ['donate@getmonero.org', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H']
-        ]
-        for address in addresses:
-            res = self.wallet.validate_address(address[0])
-            assert not res.valid
-            res = self.wallet.validate_address(address[0], allow_openalias = True)
-            assert res.valid
-            assert not res.integrated
-            assert res.subaddress
-            assert res.nettype == 'mainnet'
-            assert res.openalias_address == address[1]
 
 if __name__ == '__main__':
     AddressValidationTest().run_test()

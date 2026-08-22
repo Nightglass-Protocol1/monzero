@@ -7,7 +7,28 @@
 #include <vector>
 
 #include "cryptonote_basic/asset_types.h"
+#include "cryptonote_basic/asset_wire.h"
 #include "string_tools.h"
+#include "wallet/wallet2.h"
+
+class wallet_accessor_test
+{
+public:
+  static void prepare_asset_scan(tools::wallet2 &wallet)
+  {
+    const auto &address = wallet.m_account.get_keys().m_account_address;
+    wallet.m_subaddresses.clear();
+    wallet.m_subaddresses.emplace(address.m_spend_public_key,
+      cryptonote::subaddress_index{0, 0});
+  }
+
+  static void scan_asset(tools::wallet2 &wallet, const crypto::hash &txid,
+    const cryptonote::transaction &tx, uint64_t height, uint8_t version,
+    bool pool = false)
+  {
+    wallet.scan_asset_outputs(txid, tx, height, version, pool);
+  }
+};
 
 namespace
 {
@@ -140,6 +161,158 @@ TEST(asset_types, authenticated_issuance_payload_round_trip)
   crypto::hash asset_id{};
   EXPECT_TRUE(registry.apply_issuance(decoded, 1, asset_id));
   EXPECT_TRUE(registry.contains(asset_id));
+}
+
+TEST(asset_types, creation_helper_builds_signed_fungible_and_nft_payloads)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+
+  auto fungible = make_descriptor(cryptonote::TESTNET);
+  fungible.issuer_key = crypto::public_key{};
+  fungible.issuance_nonce = crypto::null_hash;
+  cryptonote::assets::issuance_payload fungible_payload;
+  crypto::hash fungible_id{};
+  std::string error;
+  ASSERT_TRUE(cryptonote::assets::create_issuance_payload(
+    fungible, issuer_secret, boost::none, fungible_payload, fungible_id, &error)) << error;
+  EXPECT_EQ(issuer_public, fungible_payload.descriptor.issuer_key);
+  EXPECT_NE(crypto::null_hash, fungible_payload.descriptor.issuance_nonce);
+  EXPECT_FALSE(fungible_payload.collection_signature);
+  EXPECT_TRUE(cryptonote::assets::verify_issuance_authorization(
+    fungible_payload.descriptor, fungible_payload.issuer_signature, &error)) << error;
+  crypto::hash derived_fungible_id{};
+  ASSERT_TRUE(cryptonote::assets::derive_asset_id(
+    fungible_payload.descriptor, derived_fungible_id, &error)) << error;
+  EXPECT_EQ(derived_fungible_id, fungible_id);
+
+  crypto::public_key collection_public{};
+  crypto::secret_key collection_secret{};
+  crypto::generate_keys(collection_public, collection_secret);
+  auto collection = make_descriptor(cryptonote::TESTNET);
+  collection.type = cryptonote::assets::asset_class::collection;
+  collection.atomic_supply = 1;
+  collection.display_decimals = 0;
+  collection.issuer_key = collection_public;
+  crypto::hash collection_id{};
+  ASSERT_TRUE(cryptonote::assets::derive_asset_id(collection, collection_id, &error)) << error;
+
+  auto nft = make_descriptor(cryptonote::TESTNET);
+  nft.type = cryptonote::assets::asset_class::non_fungible;
+  nft.atomic_supply = 1;
+  nft.display_decimals = 0;
+  nft.collection_id = collection_id;
+  cryptonote::assets::issuance_payload nft_payload;
+  crypto::hash nft_id{};
+  ASSERT_TRUE(cryptonote::assets::create_issuance_payload(
+    nft, issuer_secret, collection_secret, nft_payload, nft_id, &error)) << error;
+  ASSERT_TRUE(nft_payload.collection_signature);
+  EXPECT_TRUE(cryptonote::assets::verify_collection_membership(
+    collection_id, nft_id, collection_public, *nft_payload.collection_signature, &error)) << error;
+}
+
+TEST(asset_types, creation_helper_rejects_invalid_or_mismatched_authority)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+  cryptonote::assets::issuance_payload payload;
+  crypto::hash asset_id{};
+  std::string error;
+
+  auto nft = make_descriptor(cryptonote::STAGENET);
+  nft.type = cryptonote::assets::asset_class::non_fungible;
+  nft.atomic_supply = 1;
+  nft.display_decimals = 0;
+  std::memset(nft.collection_id.data, 0x51, sizeof(nft.collection_id.data));
+  EXPECT_FALSE(cryptonote::assets::create_issuance_payload(
+    nft, issuer_secret, boost::none, payload, asset_id, &error));
+  EXPECT_EQ("collection controller secret key is required", error);
+
+  auto fungible = make_descriptor(cryptonote::STAGENET);
+  EXPECT_FALSE(cryptonote::assets::create_issuance_payload(
+    fungible, issuer_secret, issuer_secret, payload, asset_id, &error));
+  EXPECT_EQ("collection controller secret key is only valid for a collection member", error);
+
+  crypto::secret_key invalid_secret{};
+  std::memset(invalid_secret.data, 0xff, sizeof(invalid_secret.data));
+  EXPECT_FALSE(cryptonote::assets::create_issuance_payload(
+    fungible, invalid_secret, boost::none, payload, asset_id, &error));
+  EXPECT_EQ("invalid asset issuer secret key", error);
+}
+
+TEST(asset_types, software_wallet_creates_network_bound_offline_issuance)
+{
+  tools::wallet2 wallet(cryptonote::STAGENET);
+  wallet.get_account().generate();
+  auto descriptor = make_descriptor(cryptonote::STAGENET);
+  descriptor.issuer_key = crypto::public_key{};
+  descriptor.issuance_nonce = crypto::null_hash;
+  cryptonote::assets::issuance_payload payload;
+  crypto::hash asset_id{};
+  std::string error;
+  ASSERT_TRUE(wallet.create_asset_issuance(descriptor, payload, asset_id, &error)) << error;
+  EXPECT_EQ(wallet.get_account().get_keys().m_account_address.m_spend_public_key,
+    payload.descriptor.issuer_key);
+  EXPECT_EQ(cryptonote::STAGENET, payload.descriptor.network);
+
+  descriptor.network = cryptonote::TESTNET;
+  EXPECT_FALSE(wallet.create_asset_issuance(descriptor, payload, asset_id, &error));
+  EXPECT_EQ("asset issuance network does not match the wallet network", error);
+}
+
+TEST(asset_types, wallet_discovers_confirmed_owned_asset_outputs_once)
+{
+  tools::wallet2 wallet(cryptonote::STAGENET);
+  wallet.get_account().generate();
+  wallet_accessor_test::prepare_asset_scan(wallet);
+
+  auto descriptor = make_descriptor(cryptonote::STAGENET);
+  descriptor.issuer_key = crypto::public_key{};
+  descriptor.issuance_nonce = crypto::null_hash;
+  descriptor.atomic_supply = 42;
+  cryptonote::assets::issuance_payload issuance;
+  crypto::hash asset_id{};
+  std::string error;
+  ASSERT_TRUE(wallet.create_asset_issuance(
+    descriptor, issuance, asset_id, &error)) << error;
+
+  cryptonote::transaction tx;
+  tx.version = 2;
+  crypto::public_key tx_public{};
+  crypto::secret_key tx_secret{};
+  crypto::generate_keys(tx_public, tx_secret);
+  ASSERT_TRUE(cryptonote::add_tx_pub_key_to_extra(tx, tx_public));
+  cryptonote::assets::asset_transaction_payload attached;
+  ASSERT_TRUE(cryptonote::assets::attach_issuance_to_native_transaction(tx,
+    issuance, wallet.get_account().get_keys().m_account_address, false,
+    attached, &error)) << error;
+  crypto::hash txid{};
+  txid.data[0] = 0xa5;
+
+  wallet_accessor_test::scan_asset(wallet, txid, tx, 123,
+    HF_VERSION_MONZERO_ASSETS - 1);
+  EXPECT_TRUE(wallet.get_asset_transfers().empty());
+  wallet_accessor_test::scan_asset(wallet, txid, tx, 123,
+    HF_VERSION_MONZERO_ASSETS, true);
+  EXPECT_TRUE(wallet.get_asset_transfers().empty());
+  wallet_accessor_test::scan_asset(wallet, txid, tx, 123,
+    HF_VERSION_MONZERO_ASSETS);
+  wallet_accessor_test::scan_asset(wallet, txid, tx, 123,
+    HF_VERSION_MONZERO_ASSETS);
+
+  ASSERT_EQ(1u, wallet.get_asset_transfers().size());
+  const auto &owned = wallet.get_asset_transfers().front();
+  EXPECT_EQ(asset_id, owned.m_asset_id);
+  EXPECT_EQ(txid, owned.m_txid);
+  EXPECT_EQ(123u, owned.m_block_height);
+  EXPECT_EQ(42u, owned.m_amount);
+  EXPECT_EQ((cryptonote::subaddress_index{0, 0}), owned.m_subaddr_index);
+  EXPECT_NE(crypto::null_hash, owned.m_output_id);
+  EXPECT_TRUE(owned.m_key_image_known);
+  EXPECT_NE(crypto::key_image{}, owned.m_key_image);
+  EXPECT_FALSE(owned.m_spent);
 }
 
 TEST(asset_types, issuance_payload_rejects_tampering_and_signature_shape_errors)
@@ -357,6 +530,9 @@ TEST(asset_types, rejects_invalid_descriptors)
   EXPECT_FALSE(cryptonote::assets::validate_issuance_descriptor(descriptor, &error));
   descriptor = make_descriptor(cryptonote::MAINNET);
   descriptor.metadata_reference = std::string("bad\0reference", 13);
+  EXPECT_FALSE(cryptonote::assets::validate_issuance_descriptor(descriptor, &error));
+  descriptor = make_descriptor(cryptonote::MAINNET);
+  descriptor.metadata_reference = "bad\x1b[2Jreference";
   EXPECT_FALSE(cryptonote::assets::validate_issuance_descriptor(descriptor, &error));
 }
 

@@ -13,7 +13,7 @@ namespace cryptonote
 {
 namespace assets
 {
-  constexpr uint8_t ASSET_TRANSACTION_WIRE_VERSION = 1;
+  constexpr uint8_t ASSET_TRANSACTION_WIRE_VERSION = 2;
   constexpr size_t MAX_ASSET_BALANCE_GROUPS = 8;
   constexpr size_t MAX_ASSET_TOTAL_INPUTS = 64;
   constexpr size_t MAX_ASSET_TOTAL_DESTINATIONS = 64;
@@ -41,6 +41,13 @@ namespace assets
     std::vector<asset_ownership_proof> ownership_proofs;
   };
 
+  struct asset_transfer_destination
+  {
+    account_public_address address{};
+    bool is_subaddress = false;
+    uint64_t amount = 0;
+  };
+
   bool validate_asset_transaction_payload_shape(
     const asset_transaction_payload& payload,
     std::string* error = nullptr);
@@ -57,6 +64,37 @@ namespace assets
     const std::set<crypto::hash>& known_assets,
     network_type expected_network,
     const crypto::hash& expected_carrier_prefix_hash,
+    std::string* error = nullptr);
+  bool create_issuance_transaction_payload(
+    const issuance_payload& issuance,
+    const account_public_address& recipient,
+    bool is_subaddress,
+    const crypto::hash& carrier_prefix_hash,
+    asset_transaction_payload& payload,
+    std::string* error = nullptr);
+  // Constructs one confidential single-input transfer or burn. The ring must
+  // contain exactly 16 chain outputs for asset_id and include the real output
+  // at real_output_index. Zero-valued outputs are added automatically to keep
+  // the same-asset anonymity set populated for subsequent transfers.
+  bool create_asset_transfer_transaction_payload(
+    network_type network,
+    const crypto::hash& asset_id,
+    const std::vector<asset_ring_member>& ring,
+    size_t real_output_index,
+    const rct::key& input_spend_secret,
+    uint64_t input_amount,
+    const rct::key& input_mask,
+    const std::vector<asset_transfer_destination>& destinations,
+    uint64_t burn_amount,
+    const crypto::hash& carrier_prefix_hash,
+    asset_transaction_payload& payload,
+    std::string* error = nullptr);
+  bool attach_issuance_to_native_transaction(
+    transaction& tx,
+    const issuance_payload& issuance,
+    const account_public_address& recipient,
+    bool is_subaddress,
+    asset_transaction_payload& payload,
     std::string* error = nullptr);
   bool derive_asset_output_id(
     network_type network,

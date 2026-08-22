@@ -292,7 +292,7 @@ transaction valid on any currently configured Monzero network.
 
 ### 6.3 Inactive canonical transaction payload
 
-The source tree contains a version-1 canonical binary payload and a native
+The source tree contains a version-2 canonical binary payload and a native
 transaction-envelope parser. The envelope uses `tx_extra` tag `0x7a`, is capped
 at 256 KiB, must occur exactly once, and is rejected before hard-fork version
 17. Its byte order and field order are fixed as follows:
@@ -316,7 +316,14 @@ flags, noncanonical ring sizes, and counts over the per-group and aggregate
 limits. The payload is capped at 256 KiB, eight asset groups, 64 total inputs,
 64 total destinations, and 64 ownership proofs. A fixed 589-byte test vector
 has canonical fast-hash
-`35006295aa9f7fe02efc24d0ba9dd10bc1c498b3f1466fad35fb677a4bea3994`.
+`130a808631ad221e009ec3b22e4ef00eb20e8afec48a41b820251962867d1f2b`.
+
+Wire version 2 replaces the earlier inactive v1 recipient-opening semantics.
+Asset builders must coordinate commitment masks so inputs equal outputs plus
+burns. The inherited compact RingCT ECDH form discards a supplied mask and
+derives another, making a constructible conserved issuance impossible. V2
+therefore encrypts and carries the builder-selected reduced mask, and v1 is
+rejected rather than reinterpreted.
 
 Output identities are derived from a domain label, network UUID, carrier hash,
 asset ID, global output index, destination key, and commitment. State
@@ -336,7 +343,7 @@ key, one-time destination, view tag, encrypted amount opening, commitment, and
 global asset-output index. Standard addresses publish `rG`; subaddresses
 publish `rD`, matching the established one-time-address construction. A
 view-only wallet can reject unrelated outputs by view tag, derive the expected
-destination, decrypt the amount and deterministic commitment mask, and accept
+destination, decrypt the amount and builder-selected commitment mask, and accept
 it only when the reconstructed commitment matches consensus state. These
 fields are included in the canonical transaction envelope and paginated output
 restoration RPC.

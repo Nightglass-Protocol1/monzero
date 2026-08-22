@@ -112,21 +112,14 @@ namespace tools
 
   std::string get_update_url(const std::string &software, const std::string &subdir, const std::string &buildtag, const std::string &version, bool user)
   {
-    const char *base = user ? "https://downloads.getmonero.org/" : "https://updates.getmonero.org/";
-#ifdef _WIN32
-    static const char *extension = strncmp(buildtag.c_str(), "source", 6) ? (strncmp(buildtag.c_str(), "install-", 8) ? ".zip" : ".exe") : ".tar.bz2";
-#elif defined(__APPLE__)
-    static const char *extension = strncmp(software.c_str(), "monero-gui", 10) ? ".tar.bz2" : ".dmg";
-#else
-    static const char extension[] = ".tar.bz2";
-#endif
-
-    std::string url;
-
-    url =  base;
-    if (!subdir.empty())
-      url += subdir + "/";
-    url = url + software + "-" + buildtag + "-v" + version + extension;
-    return url;
+    // A URL must never fall back to upstream Monero infrastructure. Update
+    // discovery is disabled above; keep direct callers fail-closed until a
+    // signed, project-controlled Monzero update service is deployed.
+    (void)software;
+    (void)subdir;
+    (void)buildtag;
+    (void)version;
+    (void)user;
+    return {};
   }
 }

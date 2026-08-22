@@ -72,6 +72,19 @@ namespace assets
     boost::optional<crypto::signature> collection_signature;
   };
 
+  // Constructs and signs a canonical inactive issuance payload. The issuer
+  // public key is always derived from issuer_secret, and a fresh nonce is
+  // generated when descriptor.issuance_nonce is zero. A collection controller
+  // secret is required exactly when the descriptor claims collection
+  // membership. This helper does not submit, broadcast, or activate assets.
+  bool create_issuance_payload(
+    issuance_descriptor descriptor,
+    const crypto::secret_key& issuer_secret,
+    const boost::optional<crypto::secret_key>& collection_controller_secret,
+    issuance_payload& payload,
+    crypto::hash& asset_id,
+    std::string* error = nullptr);
+
   bool encode_issuance_payload(const issuance_payload& payload, std::vector<uint8_t>& encoded, std::string* error = nullptr);
   bool decode_issuance_payload(const std::vector<uint8_t>& encoded, issuance_payload& payload, std::string* error = nullptr);
 

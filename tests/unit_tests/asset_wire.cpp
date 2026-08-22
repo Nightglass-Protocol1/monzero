@@ -81,6 +81,203 @@ TEST(asset_wire, canonical_round_trip_preserves_verified_issuance)
     decoded, {}, cryptonote::TESTNET, other_carrier, &error));
 }
 
+TEST(asset_wire, constructs_recipient_decodable_fixed_supply_issuance)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+  cryptonote::assets::issuance_descriptor descriptor;
+  descriptor.network = cryptonote::STAGENET;
+  descriptor.atomic_supply = 5000000;
+  descriptor.display_decimals = 3;
+  descriptor.metadata_reference = "ipfs://monzero-created-issuance";
+  cryptonote::assets::issuance_payload issuance;
+  crypto::hash asset_id{};
+  std::string error;
+  ASSERT_TRUE(cryptonote::assets::create_issuance_payload(
+    descriptor, issuer_secret, boost::none, issuance, asset_id, &error)) << error;
+
+  cryptonote::account_base recipient;
+  recipient.generate();
+  crypto::hash carrier{};
+  carrier.data[0] = 0xa7;
+  cryptonote::assets::asset_transaction_payload payload;
+  ASSERT_TRUE(cryptonote::assets::create_issuance_transaction_payload(
+    issuance, recipient.get_keys().m_account_address, false, carrier,
+    payload, &error)) << error;
+  ASSERT_EQ(1u, payload.balances.size());
+  ASSERT_EQ(cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE,
+    payload.balances.front().outputs.size());
+  ASSERT_EQ(1u, payload.output_recipients.size());
+  ASSERT_EQ(cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE,
+    payload.output_recipients.front().size());
+  EXPECT_EQ(asset_id, payload.balances.front().asset_id);
+  EXPECT_TRUE(cryptonote::assets::verify_asset_transaction_payload(
+    payload, {}, cryptonote::STAGENET, carrier, &error)) << error;
+
+  cryptonote::assets::decoded_asset_recipient decoded;
+  ASSERT_TRUE(cryptonote::assets::decode_asset_recipient_data(
+    payload.output_recipients.front().front(),
+    recipient.get_keys().m_account_address.m_spend_public_key,
+    recipient.get_keys().m_view_secret_key, 0,
+    payload.balances.front().outputs.front(), decoded, &error)) << error;
+  EXPECT_EQ(descriptor.atomic_supply, decoded.amount);
+  uint64_t decoded_total = decoded.amount;
+  for (size_t index = 1; index < payload.balances.front().outputs.size(); ++index)
+  {
+    ASSERT_TRUE(cryptonote::assets::decode_asset_recipient_data(
+      payload.output_recipients.front()[index],
+      recipient.get_keys().m_account_address.m_spend_public_key,
+      recipient.get_keys().m_view_secret_key, index,
+      payload.balances.front().outputs[index], decoded, &error)) << error;
+    EXPECT_EQ(0u, decoded.amount);
+    decoded_total += decoded.amount;
+  }
+  EXPECT_EQ(descriptor.atomic_supply, decoded_total);
+
+  std::vector<uint8_t> encoded;
+  ASSERT_TRUE(cryptonote::assets::encode_asset_transaction_payload(
+    payload, encoded, &error)) << error;
+  cryptonote::assets::asset_transaction_payload round_trip;
+  ASSERT_TRUE(cryptonote::assets::decode_asset_transaction_payload(
+    encoded, round_trip, &error)) << error;
+  EXPECT_TRUE(cryptonote::assets::verify_asset_transaction_payload(
+    round_trip, {}, cryptonote::STAGENET, carrier, &error)) << error;
+}
+
+TEST(asset_wire, issuance_constructor_rejects_zero_carrier)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+  cryptonote::assets::issuance_descriptor descriptor;
+  descriptor.network = cryptonote::TESTNET;
+  descriptor.atomic_supply = 1;
+  cryptonote::assets::issuance_payload issuance;
+  crypto::hash asset_id{};
+  std::string error;
+  ASSERT_TRUE(cryptonote::assets::create_issuance_payload(
+    descriptor, issuer_secret, boost::none, issuance, asset_id, &error)) << error;
+  cryptonote::account_base recipient;
+  recipient.generate();
+  cryptonote::assets::asset_transaction_payload payload;
+  EXPECT_FALSE(cryptonote::assets::create_issuance_transaction_payload(
+    issuance, recipient.get_keys().m_account_address, false,
+    crypto::null_hash, payload, &error));
+  EXPECT_EQ("issuance transaction requires a non-zero carrier hash", error);
+}
+
+TEST(asset_wire, constructs_spendable_transfer_and_burn_with_preserved_ring_pool)
+{
+  constexpr size_t real = 5;
+  crypto::hash asset_id{};
+  asset_id.data[0] = 0x71;
+  crypto::hash carrier{};
+  carrier.data[0] = 0x72;
+  const uint64_t input_amount = 10;
+  const rct::key spend_secret = rct::skGen();
+  const rct::key input_mask = rct::skGen();
+  std::vector<cryptonote::assets::asset_ring_member> ring(
+    cryptonote::assets::CONFIDENTIAL_ASSET_RING_SIZE);
+  for (size_t index = 0; index < ring.size(); ++index)
+  {
+    ring[index].asset_id = asset_id;
+    ring[index].output_id.data[0] = static_cast<unsigned char>(index + 1);
+    rct::key ignored{};
+    rct::skpkGen(ignored, ring[index].public_output.dest);
+    rct::skpkGen(ignored, ring[index].public_output.mask);
+  }
+  rct::scalarmultBase(ring[real].public_output.dest, spend_secret);
+  ring[real].public_output.mask = rct::commit(input_amount, input_mask);
+
+  cryptonote::account_base recipient;
+  recipient.generate();
+  cryptonote::account_base change;
+  change.generate();
+  std::vector<cryptonote::assets::asset_transfer_destination> destinations{
+    {recipient.get_keys().m_account_address, false, 7},
+    {change.get_keys().m_account_address, false, 3}};
+  cryptonote::assets::asset_transaction_payload transfer;
+  std::string error;
+  ASSERT_TRUE(cryptonote::assets::create_asset_transfer_transaction_payload(
+    cryptonote::TESTNET, asset_id, ring, real, spend_secret, input_amount,
+    input_mask, destinations, 0, carrier, transfer, &error)) << error;
+  ASSERT_EQ(16u, transfer.balances.front().outputs.size());
+  EXPECT_TRUE(transfer.balances.front().burns.empty());
+  ASSERT_EQ(1u, transfer.ownership_proofs.size());
+
+  cryptonote::assets::decoded_asset_recipient decoded;
+  ASSERT_TRUE(cryptonote::assets::decode_asset_recipient_data(
+    transfer.output_recipients.front()[0],
+    recipient.get_keys().m_account_address.m_spend_public_key,
+    recipient.get_keys().m_view_secret_key, 0,
+    transfer.balances.front().outputs[0], decoded, &error)) << error;
+  EXPECT_EQ(7u, decoded.amount);
+
+  destinations.resize(1);
+  cryptonote::assets::asset_transaction_payload burn;
+  ASSERT_TRUE(cryptonote::assets::create_asset_transfer_transaction_payload(
+    cryptonote::TESTNET, asset_id, ring, real, spend_secret, input_amount,
+    input_mask, destinations, 3, carrier, burn, &error)) << error;
+  EXPECT_EQ(15u, burn.balances.front().outputs.size());
+  EXPECT_EQ(1u, burn.balances.front().burns.size());
+  EXPECT_EQ(transfer.ownership_proofs.front().key_image,
+    burn.ownership_proofs.front().key_image);
+}
+
+TEST(asset_wire, attaches_constructed_issuance_to_native_prefix_before_signing)
+{
+  crypto::public_key issuer_public{};
+  crypto::secret_key issuer_secret{};
+  crypto::generate_keys(issuer_public, issuer_secret);
+  cryptonote::assets::issuance_descriptor descriptor;
+  descriptor.network = cryptonote::TESTNET;
+  descriptor.type = cryptonote::assets::asset_class::non_fungible;
+  descriptor.atomic_supply = 1;
+  descriptor.metadata_hash.data[0] = 0x91;
+  cryptonote::assets::issuance_payload issuance;
+  crypto::hash asset_id{};
+  std::string error;
+  ASSERT_TRUE(cryptonote::assets::create_issuance_payload(
+    descriptor, issuer_secret, boost::none, issuance, asset_id, &error)) << error;
+  cryptonote::account_base recipient;
+  recipient.generate();
+
+  cryptonote::transaction tx;
+  tx.version = 2;
+  crypto::public_key tx_public{};
+  crypto::secret_key tx_secret{};
+  crypto::generate_keys(tx_public, tx_secret);
+  ASSERT_TRUE(cryptonote::add_tx_pub_key_to_extra(tx, tx_public));
+  crypto::hash carrier_before{};
+  ASSERT_TRUE(cryptonote::get_transaction_asset_carrier_hash(
+    tx, carrier_before, &error)) << error;
+
+  cryptonote::assets::asset_transaction_payload attached;
+  ASSERT_TRUE(cryptonote::assets::attach_issuance_to_native_transaction(
+    tx, issuance, recipient.get_keys().m_account_address, false,
+    attached, &error)) << error;
+  EXPECT_EQ(carrier_before, attached.carrier_prefix_hash);
+  crypto::hash carrier_after{};
+  ASSERT_TRUE(cryptonote::get_transaction_asset_carrier_hash(
+    tx, carrier_after, &error)) << error;
+  EXPECT_EQ(carrier_before, carrier_after);
+
+  boost::optional<cryptonote::assets::asset_transaction_payload> parsed;
+  ASSERT_TRUE(cryptonote::assets::parse_native_asset_transaction(
+    tx, HF_VERSION_MONZERO_ASSETS, cryptonote::TESTNET, parsed, &error)) << error;
+  ASSERT_TRUE(parsed);
+  ASSERT_TRUE(parsed->issuance);
+  crypto::hash parsed_id{};
+  ASSERT_TRUE(cryptonote::assets::derive_asset_id(
+    parsed->issuance->descriptor, parsed_id, &error)) << error;
+  EXPECT_EQ(asset_id, parsed_id);
+  EXPECT_FALSE(cryptonote::assets::attach_issuance_to_native_transaction(
+    tx, issuance, recipient.get_keys().m_account_address, false,
+    attached, &error));
+  EXPECT_EQ("native transaction already contains an asset envelope", error);
+}
+
 TEST(asset_wire, rejects_every_truncation_trailing_bytes_and_noncanonical_counts)
 {
   const auto payload = make_payload();
@@ -101,9 +298,13 @@ TEST(asset_wire, rejects_every_truncation_trailing_bytes_and_noncanonical_counts
   EXPECT_FALSE(cryptonote::assets::decode_asset_transaction_payload(
     trailing, decoded, &error));
   auto unsupported = encoded;
-  unsupported[0] = 2;
+  unsupported[0] = cryptonote::assets::ASSET_TRANSACTION_WIRE_VERSION + 1;
   EXPECT_FALSE(cryptonote::assets::decode_asset_transaction_payload(
     unsupported, decoded, &error));
+  auto obsolete = encoded;
+  obsolete[0] = 1;
+  EXPECT_FALSE(cryptonote::assets::decode_asset_transaction_payload(
+    obsolete, decoded, &error));
   auto excessive = payload;
   excessive.balances.resize(cryptonote::assets::MAX_ASSET_BALANCE_GROUPS + 1,
     payload.balances.front());
@@ -171,21 +372,15 @@ TEST(asset_wire, fixed_wire_vector_has_stable_size_and_digest)
     payload, encoded, &error)) << error;
   ASSERT_EQ(589u, encoded.size());
   const crypto::hash digest = crypto::cn_fast_hash(encoded.data(), encoded.size());
-  ASSERT_EQ("35006295aa9f7fe02efc24d0ba9dd10bc1c498b3f1466fad35fb677a4bea3994",
+  ASSERT_EQ("130a808631ad221e009ec3b22e4ef00eb20e8afec48a41b820251962867d1f2b",
     epee::string_tools::pod_to_hex(digest));
 }
 
-TEST(asset_wire, rejects_noncanonical_recipient_encryption)
+TEST(asset_wire, rejects_invalid_recipient_public_key)
 {
   auto payload = make_payload();
-  payload.output_recipients.front().front().encrypted_amount.mask.bytes[0] = 1;
-  std::vector<uint8_t> encoded;
-  std::string error;
-  EXPECT_FALSE(cryptonote::assets::encode_asset_transaction_payload(
-    payload, encoded, &error));
-
-  payload = make_payload();
   payload.output_recipients.front().front().tx_public_key = crypto::public_key{};
+  std::string error;
   EXPECT_FALSE(cryptonote::assets::verify_asset_transaction_payload(payload, {},
     cryptonote::TESTNET, payload.carrier_prefix_hash, &error));
 }

@@ -52,6 +52,7 @@ using namespace epee;
 #include "wallet_rpc_helpers.h"
 #include "wallet2.h"
 #include "wallet_args.h"
+#include "cryptonote_basic/asset_wire.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "net/parse.h"
 #include "rpc/core_rpc_server_commands_defs.h"
@@ -2318,6 +2319,112 @@ bool wallet2::spends_one_of_ours(const cryptonote::transaction &tx) const
   return false;
 }
 //----------------------------------------------------------------------------------------------------
+void wallet2::scan_asset_outputs(const crypto::hash &txid,
+  const cryptonote::transaction &tx, uint64_t height,
+  uint8_t block_version, bool pool)
+{
+  // Pool transactions are deliberately excluded: only confirmed outputs are
+  // persisted, so a dropped pool transaction cannot create a phantom balance.
+  if (pool || block_version < HF_VERSION_MONZERO_ASSETS)
+    return;
+
+  boost::optional<cryptonote::assets::asset_transaction_payload> payload;
+  std::string error;
+  if (!cryptonote::assets::parse_native_asset_transaction(tx, block_version,
+        m_nettype, payload, &error))
+  {
+    MWARNING("Skipping malformed asset envelope in " << txid << ": " << error);
+    return;
+  }
+  if (!payload)
+    return;
+
+  const cryptonote::account_keys &keys = m_account.get_keys();
+  for (const auto &proof : payload->ownership_proofs)
+  {
+    const auto owned = std::find_if(m_asset_transfers.begin(),
+      m_asset_transfers.end(), [&proof](const asset_transfer_details &td) {
+        return td.m_key_image_known && td.m_key_image == proof.key_image;
+      });
+    if (owned != m_asset_transfers.end())
+    {
+      owned->m_spent = true;
+      owned->m_spent_height = height;
+      MINFO("Spent asset " << owned->m_asset_id << " amount "
+        << owned->m_amount << " in transaction " << txid);
+    }
+  }
+
+  uint32_t global_output_index = 0;
+  for (size_t group_index = 0; group_index < payload->balances.size(); ++group_index)
+  {
+    const auto &balance = payload->balances[group_index];
+    const auto &recipients = payload->output_recipients[group_index];
+    for (size_t output_index = 0; output_index < balance.outputs.size();
+         ++output_index, ++global_output_index)
+    {
+      const auto &recipient = recipients[output_index];
+      for (const auto &subaddress : m_subaddresses)
+      {
+        cryptonote::assets::decoded_asset_recipient decoded;
+        if (!cryptonote::assets::decode_asset_recipient_data(recipient,
+              subaddress.first, keys.m_view_secret_key, global_output_index,
+              balance.outputs[output_index], decoded, nullptr))
+          continue;
+        // Zero-value outputs seed and preserve the same-asset anonymity set;
+        // they are decoys, not wallet balance or spend candidates.
+        if (decoded.amount == 0)
+          break;
+
+        cryptonote::assets::confidential_asset_output output{
+          recipient.destination, balance.outputs[output_index]};
+        crypto::hash output_id{};
+        if (!cryptonote::assets::derive_asset_output_id(m_nettype,
+              payload->carrier_prefix_hash, balance.asset_id,
+              global_output_index, output, output_id, &error))
+        {
+          MWARNING("Could not derive owned asset output id in " << txid << ": " << error);
+          break;
+        }
+        const auto existing = std::find_if(m_asset_transfers.begin(),
+          m_asset_transfers.end(), [&output_id](const asset_transfer_details &td) {
+            return td.m_output_id == output_id;
+          });
+        if (existing == m_asset_transfers.end())
+        {
+          asset_transfer_details details;
+          details.m_asset_id = balance.asset_id;
+          details.m_output_id = output_id;
+          details.m_txid = txid;
+          details.m_block_height = height;
+          details.m_output_index = global_output_index;
+          details.m_amount = decoded.amount;
+          details.m_mask = decoded.mask;
+          details.m_subaddr_index = subaddress.second;
+          if (!m_watch_only && !m_multisig && !m_background_syncing)
+          {
+            crypto::key_derivation derivation{};
+            cryptonote::keypair ephemeral{};
+            if (crypto::generate_key_derivation(recipient.tx_public_key,
+                  keys.m_view_secret_key, derivation)
+                && cryptonote::generate_key_image_helper_precomp(keys,
+                  rct::rct2pk(recipient.destination), derivation,
+                  global_output_index, subaddress.second, ephemeral,
+                  details.m_key_image, m_account.get_device()))
+              details.m_key_image_known = true;
+            else
+              MWARNING("Could not derive key image for owned asset output " << output_id);
+          }
+          m_asset_transfers.push_back(std::move(details));
+          MINFO("Received asset " << balance.asset_id << " amount "
+            << decoded.amount << " in transaction " << txid);
+        }
+        break;
+      }
+    }
+  }
+}
+//----------------------------------------------------------------------------------------------------
 void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote::transaction& tx, const std::vector<uint64_t> &o_indices, uint64_t height, uint8_t block_version, uint64_t ts, bool miner_tx, bool pool, bool double_spend_seen, const tx_cache_data &tx_cache_data, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache, bool ignore_callbacks)
 {
   PERF_TIMER(process_new_transaction);
@@ -2325,6 +2432,8 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
   // (that is, the prunable stuff may or may not be included)
   if (!miner_tx && !pool)
     process_unconfirmed(txid, tx, height);
+
+  scan_asset_outputs(txid, tx, height, block_version, pool);
 
   // per receiving subaddress index
   std::unordered_map<cryptonote::subaddress_index, uint64_t> tx_money_got_in_outs;
@@ -4383,6 +4492,17 @@ wallet2::detached_blockchain_data wallet2::detach_blockchain(uint64_t height, st
   LOG_PRINT_L0("Detaching blockchain on height " << height);
   detached_blockchain_data dbd;
 
+  for (asset_transfer_details &td : m_asset_transfers)
+    if (td.m_spent && td.m_spent_height >= height)
+    {
+      td.m_spent = false;
+      td.m_spent_height = 0;
+    }
+  m_asset_transfers.erase(std::remove_if(m_asset_transfers.begin(),
+    m_asset_transfers.end(), [height](const asset_transfer_details &td) {
+      return td.m_block_height >= height;
+    }), m_asset_transfers.end());
+
   size_t transfers_detached = 0;
 
   for (size_t i = 0; i < m_transfers.size(); ++i)
@@ -4509,6 +4629,7 @@ bool wallet2::clear()
 {
   m_blockchain.clear();
   m_transfers.clear();
+  m_asset_transfers.clear();
   m_key_images.clear();
   m_pub_keys.clear();
   m_unconfirmed_txs.clear();
@@ -4534,6 +4655,7 @@ void wallet2::clear_soft(bool keep_key_images)
 {
   m_blockchain.clear();
   m_transfers.clear();
+  m_asset_transfers.clear();
   if (!keep_key_images)
     m_key_images.clear();
   m_pub_keys.clear();
@@ -10051,7 +10173,8 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
 
 void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t fake_outputs_count,
   std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, std::unordered_set<crypto::public_key> &valid_public_keys_cache,
-  uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, const rct::RCTConfig &rct_config, bool use_view_tags)
+  uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, const rct::RCTConfig &rct_config, bool use_view_tags,
+  const cryptonote::tx_prefix_finalizer& finalize_prefix)
 {
   using namespace cryptonote;
   // throw if attempting a transaction with no destinations
@@ -10266,7 +10389,7 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
   }
   else {
     // make a normal tx
-    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, tx_key, additional_tx_keys, true, rct_config, use_view_tags);
+    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, tx_key, additional_tx_keys, true, rct_config, use_view_tags, finalize_prefix);
     LOG_PRINT_L2("constructed tx, r="<<r);
     THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sources, dsts, m_nettype);
   }
@@ -11020,7 +11143,7 @@ bool wallet2::light_wallet_key_image_is_ours(const crypto::key_image& key_image,
 // This system allows for sending (almost) the entire balance, since it does
 // not generate spurious change in all txes, thus decreasing the instantaneous
 // usable balance.
-std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, const unique_index_container& subtract_fee_from_outputs)
+std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, const unique_index_container& subtract_fee_from_outputs, const cryptonote::tx_prefix_finalizer& finalize_prefix)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -11548,7 +11671,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
       auto tx_dsts = tx.get_adjusted_dsts(needed_fee);
       if (use_rct)
         transfer_selected_rct(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, needed_fee, extra,
-          test_tx, test_ptx, rct_config, use_view_tags);
+          test_tx, test_ptx, rct_config, use_view_tags, finalize_prefix);
       else
         transfer_selected(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, needed_fee, extra,
           detail::digit_split_strategy, tx_dust_policy(::config::DEFAULT_DUST_THRESHOLD), test_tx, test_ptx, use_view_tags);
@@ -11592,7 +11715,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
 
           if (use_rct)
             transfer_selected_rct(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, needed_fee, extra,
-              test_tx, test_ptx, rct_config, use_view_tags);
+              test_tx, test_ptx, rct_config, use_view_tags, finalize_prefix);
           else
             transfer_selected(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, needed_fee, extra,
               detail::digit_split_strategy, tx_dust_policy(::config::DEFAULT_DUST_THRESHOLD), test_tx, test_ptx, use_view_tags);
@@ -11672,7 +11795,8 @@ skip_tx:
                             test_tx,                    /* OUT   cryptonote::transaction& tx, */
                             test_ptx,                   /* OUT   cryptonote::transaction& tx, */
                             rct_config,
-                            use_view_tags);             /* const bool use_view_tags */
+                            use_view_tags,
+                            finalize_prefix);           /* pre-signing extension hook */
     } else {
       transfer_selected(tx_dsts,
                         tx.selected_transfers,
@@ -15168,6 +15292,112 @@ crypto::public_key wallet2::get_multisig_signer_public_key() const
   return signer;
 }
 //----------------------------------------------------------------------------------------------------
+bool wallet2::create_asset_issuance(
+  cryptonote::assets::issuance_descriptor descriptor,
+  cryptonote::assets::issuance_payload& payload,
+  crypto::hash& asset_id,
+  std::string* error) const
+{
+  const auto fail = [error](const char* message) {
+    if (error)
+      *error = message;
+    return false;
+  };
+  if (m_background_syncing || m_is_background_wallet)
+    return fail("background wallets cannot authorize asset issuance");
+  if (m_watch_only)
+    return fail("watch-only wallets cannot authorize asset issuance");
+  if (m_multisig)
+    return fail("multisig asset issuance is not implemented");
+  if (key_on_device())
+    return fail("hardware-wallet asset issuance is not implemented");
+  if (descriptor.network != m_nettype)
+    return fail("asset issuance network does not match the wallet network");
+
+  const crypto::secret_key& spend_secret = get_account().get_keys().m_spend_secret_key;
+  const boost::optional<crypto::secret_key> collection_controller =
+    descriptor.collection_id == crypto::null_hash
+      ? boost::optional<crypto::secret_key>{}
+      : boost::optional<crypto::secret_key>{spend_secret};
+  return cryptonote::assets::create_issuance_payload(
+    std::move(descriptor), spend_secret, collection_controller, payload, asset_id, error);
+}
+//----------------------------------------------------------------------------------------------------
+bool wallet2::create_asset_issuance_transaction(
+  cryptonote::assets::issuance_descriptor descriptor,
+  const cryptonote::account_public_address& asset_recipient,
+  bool asset_recipient_is_subaddress,
+  size_t fake_outs_count,
+  uint32_t priority,
+  uint32_t subaddr_account,
+  std::set<uint32_t> subaddr_indices,
+  pending_tx& ptx,
+  crypto::hash& asset_id,
+  std::string* error)
+{
+  const auto fail = [error](const std::string& message) {
+    if (error)
+      *error = message;
+    return false;
+  };
+  if (m_light_wallet)
+    return fail("light wallets cannot verify asset hard-fork activation");
+  try
+  {
+    if (!use_fork_rules(HF_VERSION_MONZERO_ASSETS, 0))
+      return fail("asset issuance is not active at the daemon's current hard fork");
+  }
+  catch (const std::exception& e)
+  {
+    return fail(std::string("cannot determine asset activation from daemon: ") + e.what());
+  }
+
+  cryptonote::assets::issuance_payload issuance;
+  if (!create_asset_issuance(std::move(descriptor), issuance, asset_id, error))
+    return false;
+
+  std::string attach_error;
+  const cryptonote::tx_prefix_finalizer finalizer =
+    [&](cryptonote::transaction& tx) {
+      cryptonote::assets::asset_transaction_payload attached;
+      return cryptonote::assets::attach_issuance_to_native_transaction(
+        tx, issuance, asset_recipient, asset_recipient_is_subaddress,
+        attached, &attach_error);
+    };
+
+  try
+  {
+    const cryptonote::subaddress_index self_index{subaddr_account, 0};
+    std::vector<cryptonote::tx_destination_entry> native_destinations{
+      {1, get_subaddress(self_index), subaddr_account != 0}};
+    std::vector<pending_tx> transactions = create_transactions_2(
+      std::move(native_destinations), fake_outs_count, priority, {},
+      subaddr_account, std::move(subaddr_indices), {}, finalizer);
+    if (transactions.size() != 1)
+      return fail("asset issuance must fit in exactly one native transaction");
+
+    boost::optional<cryptonote::assets::asset_transaction_payload> parsed;
+    std::string parse_error;
+    if (!cryptonote::assets::parse_native_asset_transaction(
+          transactions.front().tx, HF_VERSION_MONZERO_ASSETS, m_nettype,
+          parsed, &parse_error) || !parsed || !parsed->issuance)
+      return fail("constructed issuance transaction failed verification: " + parse_error);
+    crypto::hash parsed_id{};
+    if (!cryptonote::assets::derive_asset_id(
+          parsed->issuance->descriptor, parsed_id, &parse_error) || parsed_id != asset_id)
+      return fail("constructed issuance transaction has the wrong asset id");
+
+    ptx = std::move(transactions.front());
+    return true;
+  }
+  catch (const std::exception& e)
+  {
+    if (!attach_error.empty())
+      return fail("failed to attach asset issuance: " + attach_error);
+    return fail(std::string("failed to construct asset issuance transaction: ") + e.what());
+  }
+}
+//----------------------------------------------------------------------------------------------------
 crypto::public_key wallet2::get_multisig_signing_public_key(const crypto::secret_key &msk) const
 {
   CHECK_AND_ASSERT_THROW_MES(m_multisig, "Wallet is not multisig");
@@ -15603,7 +15833,7 @@ std::string wallet2::make_uri(const std::string &address, const std::string &pay
     return std::string();
   }
 
-  std::string uri = "monero:" + address;
+  std::string uri = "monzero:" + address;
   unsigned int n_fields = 0;
 
   if (!payment_id.empty())
@@ -15632,13 +15862,13 @@ std::string wallet2::make_uri(const std::string &address, const std::string &pay
 //----------------------------------------------------------------------------------------------------
 bool wallet2::parse_uri(const std::string &uri, std::string &address, std::string &payment_id, uint64_t &amount, std::string &tx_description, std::string &recipient_name, std::vector<std::string> &unknown_parameters, std::string &error)
 {
-  if (uri.substr(0, 7) != "monero:")
+  if (uri.substr(0, 8) != "monzero:")
   {
-    error = std::string("URI has wrong scheme (expected \"monero:\"): ") + uri;
+    error = std::string("URI has wrong scheme (expected \"monzero:\"): ") + uri;
     return false;
   }
 
-  std::string remainder = uri.substr(7);
+  std::string remainder = uri.substr(8);
   const char *ptr = strchr(remainder.c_str(), '?');
   address = ptr ? remainder.substr(0, ptr-remainder.c_str()) : remainder;
 

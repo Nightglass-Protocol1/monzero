@@ -132,8 +132,10 @@ namespace assets
       return fail(error, "NFT and edition metadata must have a content hash");
     if (descriptor.metadata_reference.size() > MAX_METADATA_REFERENCE_BYTES)
       return fail(error, "metadata reference is too long");
-    if (std::find(descriptor.metadata_reference.begin(), descriptor.metadata_reference.end(), '\0') != descriptor.metadata_reference.end())
-      return fail(error, "metadata reference contains a NUL byte");
+    if (std::any_of(descriptor.metadata_reference.begin(), descriptor.metadata_reference.end(), [](unsigned char c) {
+          return c < 0x20 || c == 0x7f;
+        }))
+      return fail(error, "metadata reference contains an ASCII control byte");
     return true;
   }
 
@@ -278,6 +280,59 @@ namespace assets
       return false;
     if (!crypto::check_signature(message, collection_controller, signature))
       return fail(error, "invalid collection membership signature");
+    return true;
+  }
+
+  bool create_issuance_payload(
+    issuance_descriptor descriptor,
+    const crypto::secret_key& issuer_secret,
+    const boost::optional<crypto::secret_key>& collection_controller_secret,
+    issuance_payload& payload,
+    crypto::hash& asset_id,
+    std::string* error)
+  {
+    crypto::public_key issuer_public{};
+    if (!crypto::secret_key_to_public_key(issuer_secret, issuer_public))
+      return fail(error, "invalid asset issuer secret key");
+    descriptor.issuer_key = issuer_public;
+    if (descriptor.issuance_nonce == crypto::null_hash)
+      descriptor.issuance_nonce = crypto::rand<crypto::hash>();
+
+    if (!validate_issuance_descriptor(descriptor, error)
+        || !derive_asset_id(descriptor, asset_id, error))
+      return false;
+
+    const bool claims_collection = descriptor.collection_id != crypto::null_hash;
+    if (claims_collection != static_cast<bool>(collection_controller_secret))
+      return fail(error, claims_collection
+        ? "collection controller secret key is required"
+        : "collection controller secret key is only valid for a collection member");
+
+    issuance_payload created;
+    created.descriptor = std::move(descriptor);
+    crypto::hash issuance_message{};
+    if (!derive_issuance_authorization_hash(created.descriptor, issuance_message, error))
+      return false;
+    crypto::generate_signature(issuance_message, issuer_public, issuer_secret, created.issuer_signature);
+
+    if (collection_controller_secret)
+    {
+      crypto::public_key collection_controller{};
+      if (!crypto::secret_key_to_public_key(*collection_controller_secret, collection_controller))
+        return fail(error, "invalid collection controller secret key");
+      crypto::hash membership_message{};
+      if (!derive_collection_membership_hash(created.descriptor.collection_id, asset_id, membership_message, error))
+        return false;
+      crypto::signature signature{};
+      crypto::generate_signature(membership_message, collection_controller,
+        *collection_controller_secret, signature);
+      created.collection_signature = signature;
+    }
+
+    std::vector<uint8_t> canonical;
+    if (!encode_issuance_payload(created, canonical, error))
+      return false;
+    payload = std::move(created);
     return true;
   }
 

@@ -57,6 +57,41 @@ try {
             if (empty($result['txs']) && empty($result['txs_as_json'])) respond(['error' => 'Transaction not found'], 404);
             respond($result);
 
+        case 'assets':
+            $offset = max(0, (int)($input['offset'] ?? 0));
+            $count = min(100, max(1, (int)($input['count'] ?? 25)));
+            try {
+                $assets = jsonRpc('get_assets', ['offset' => $offset, 'count' => $count]);
+                respond(['supported' => true] + $assets);
+            } catch (Throwable) {
+                respond(['supported' => false, 'active' => false, 'total' => 0, 'assets' => []]);
+            }
+
+        case 'asset':
+            $assetId = strtolower((string)($input['asset_id'] ?? ''));
+            if (!validHash($assetId)) respond(['error' => 'Valid asset ID required'], 400);
+            $assets = jsonRpc('get_assets', ['offset' => 0, 'count' => 1000]);
+            $match = null;
+            foreach (($assets['assets'] ?? []) as $asset) {
+                if (hash_equals($assetId, strtolower((string)($asset['asset_id'] ?? '')))) {
+                    $match = $asset;
+                    break;
+                }
+            }
+            if ($match === null) respond(['error' => 'Asset not found'], 404);
+            $outputs = jsonRpc('get_asset_outputs', [
+                'asset_id' => $assetId,
+                'offset' => 0,
+                'count' => 100,
+            ]);
+            respond([
+                'supported' => true,
+                'active' => (bool)($assets['active'] ?? false),
+                'asset' => $match,
+                'outputs' => $outputs['outputs'] ?? [],
+                'output_total' => $outputs['total'] ?? count($outputs['outputs'] ?? []),
+            ]);
+
         case 'pool':
             respond(rpc('/get_transaction_pool', []));
 

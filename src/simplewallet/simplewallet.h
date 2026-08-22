@@ -52,9 +52,6 @@
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "wallet.simplewallet"
-// Hardcode Monero's donation address (see #1447)
-constexpr const char MONERO_DONATION_ADDR[] = "888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H";
-
 /*!
  * \namespace cryptonote
  * \brief Holds cryptonote related classes and helpers.
@@ -219,6 +216,9 @@ namespace cryptonote
     bool set_default_priority(const std::vector<std::string> &args);
     bool sign(const std::vector<std::string> &args);
     bool verify(const std::vector<std::string> &args);
+    bool asset_create(const std::vector<std::string> &args);
+    bool asset_issue(const std::vector<std::string> &args);
+    bool asset_inspect(const std::vector<std::string> &args);
     bool export_key_images(const std::vector<std::string> &args);
     bool import_key_images(const std::vector<std::string> &args);
     bool hw_key_images_sync(const std::vector<std::string> &args);

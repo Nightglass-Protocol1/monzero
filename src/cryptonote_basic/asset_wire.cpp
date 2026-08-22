@@ -4,7 +4,9 @@
 #include <limits>
 
 #include "cryptonote_format_utils.h"
+#include "ringct/bulletproofs_plus.h"
 #include "ringct/rctOps.h"
+#include "ringct/rctSigs.h"
 
 namespace cryptonote
 {
@@ -145,11 +147,6 @@ bool validate_asset_transaction_payload_shape(const asset_transaction_payload& p
       return fail(error, "asset balance group exceeds canonical limits");
     if (payload.output_recipients[group].size() != balance.outputs.size())
       return fail(error, "asset output recipient count does not match commitments");
-    const rct::key zero = rct::zero();
-    for (const asset_recipient_data& recipient : payload.output_recipients[group])
-      if (std::memcmp(recipient.encrypted_amount.mask.bytes, zero.bytes,
-            sizeof(zero.bytes)) != 0)
-        return fail(error, "asset output uses a noncanonical encrypted mask");
     total_inputs += balance.pseudo_inputs.size();
     total_destinations += balance.outputs.size() + balance.burns.size();
     if (total_inputs > MAX_ASSET_TOTAL_INPUTS
@@ -355,6 +352,248 @@ bool verify_asset_transaction_payload(const asset_transaction_payload& payload,
   return verify_confidential_asset_transaction_with_ownership(
     payload.balances, payload.ownership_proofs, known_assets, descriptor,
     expected_network, expected_carrier_prefix_hash, error);
+}
+
+bool create_issuance_transaction_payload(const issuance_payload& issuance,
+  const account_public_address& recipient, bool is_subaddress,
+  const crypto::hash& carrier_prefix_hash, asset_transaction_payload& payload,
+  std::string* error)
+{
+  if (carrier_prefix_hash == crypto::null_hash)
+    return fail(error, "issuance transaction requires a non-zero carrier hash");
+  std::vector<uint8_t> canonical_issuance;
+  if (!encode_issuance_payload(issuance, canonical_issuance, error))
+    return false;
+  crypto::hash asset_id{};
+  if (!derive_asset_id(issuance.descriptor, asset_id, error))
+    return false;
+
+  confidential_asset_balance balance;
+  balance.asset_id = asset_id;
+  balance.pseudo_inputs.push_back(
+    {asset_id, rct::commit(issuance.descriptor.atomic_supply, rct::zero())});
+  // A same-asset CLSAG ring cannot be formed from a singleton NFT issuance.
+  // Seed the fixed 16-member anonymity set at issuance: one funded output and
+  // 15 zero-valued blinded outputs. Their scalar masks sum to zero, preserving
+  // the fixed-supply pseudo input without weakening amount confidentiality.
+  std::vector<uint64_t> amounts(CONFIDENTIAL_ASSET_RING_SIZE, 0);
+  amounts.front() = issuance.descriptor.atomic_supply;
+  rct::keyV masks(CONFIDENTIAL_ASSET_RING_SIZE);
+  rct::key mask_sum = rct::zero();
+  for (size_t index = 0; index + 1 < masks.size(); ++index)
+  {
+    masks[index] = rct::skGen();
+    sc_add(mask_sum.bytes, mask_sum.bytes, masks[index].bytes);
+  }
+  sc_sub(masks.back().bytes, rct::zero().bytes, mask_sum.bytes);
+
+  std::vector<asset_recipient_data> recipients;
+  recipients.reserve(CONFIDENTIAL_ASSET_RING_SIZE);
+  balance.outputs.reserve(CONFIDENTIAL_ASSET_RING_SIZE);
+  for (size_t index = 0; index < CONFIDENTIAL_ASSET_RING_SIZE; ++index)
+  {
+    crypto::public_key ignored{};
+    crypto::secret_key tx_secret{};
+    crypto::generate_keys(ignored, tx_secret);
+    asset_recipient_data recipient_data{};
+    rct::key output_commitment{};
+    if (!make_asset_recipient_data_with_mask(recipient, is_subaddress,
+          tx_secret, index, amounts[index], masks[index], recipient_data,
+          output_commitment, error))
+      return false;
+    recipients.push_back(recipient_data);
+    balance.outputs.push_back(output_commitment);
+  }
+  try
+  {
+    balance.range_proofs.push_back(rct::bulletproof_plus_PROVE(amounts, masks));
+  }
+  catch (const std::exception& e)
+  {
+    return fail(error, std::string{"failed to construct issuance range proof: "} + e.what());
+  }
+
+  asset_transaction_payload created;
+  created.network = issuance.descriptor.network;
+  created.carrier_prefix_hash = carrier_prefix_hash;
+  created.issuance = issuance;
+  created.balances.push_back(std::move(balance));
+  created.output_recipients.push_back(std::move(recipients));
+  if (!verify_asset_transaction_payload(created, {}, created.network,
+        carrier_prefix_hash, error))
+    return false;
+  payload = std::move(created);
+  return true;
+}
+
+bool create_asset_transfer_transaction_payload(network_type network,
+  const crypto::hash& asset_id, const std::vector<asset_ring_member>& ring,
+  size_t real_output_index, const rct::key& input_spend_secret,
+  uint64_t input_amount, const rct::key& input_mask,
+  const std::vector<asset_transfer_destination>& destinations,
+  uint64_t burn_amount, const crypto::hash& carrier_prefix_hash,
+  asset_transaction_payload& payload, std::string* error)
+{
+  if (network != MAINNET && network != TESTNET && network != STAGENET)
+    return fail(error, "asset transfer requires a public network");
+  if (asset_id == crypto::null_hash || carrier_prefix_hash == crypto::null_hash)
+    return fail(error, "asset transfer has a zero asset or carrier id");
+  if (ring.size() != CONFIDENTIAL_ASSET_RING_SIZE
+      || real_output_index >= ring.size())
+    return fail(error, "asset transfer requires a complete 16-member ring");
+  if (destinations.empty() || destinations.size() > MAX_CONFIDENTIAL_ASSET_OUTPUTS)
+    return fail(error, "asset transfer has an invalid destination count");
+  if (sc_check(input_spend_secret.bytes) != 0 || sc_check(input_mask.bytes) != 0)
+    return fail(error, "asset transfer input contains an invalid secret scalar");
+
+  uint64_t destination_total = 0;
+  for (const auto &destination : destinations)
+  {
+    if (destination.amount > std::numeric_limits<uint64_t>::max() - destination_total)
+      return fail(error, "asset transfer destination amount overflows");
+    destination_total += destination.amount;
+  }
+  if (burn_amount > std::numeric_limits<uint64_t>::max() - destination_total
+      || destination_total + burn_amount != input_amount)
+    return fail(error, "asset transfer amounts do not consume the input exactly");
+
+  rct::key input_public{};
+  if (!rct::equalKeys(ring[real_output_index].public_output.mask,
+        rct::commit(input_amount, input_mask)))
+    return fail(error, "asset transfer opening does not match the real ring member");
+  rct::scalarmultBase(input_public, input_spend_secret);
+  if (!rct::equalKeys(ring[real_output_index].public_output.dest, input_public))
+    return fail(error, "asset transfer spend secret does not match the real ring member");
+  for (const auto &member : ring)
+    if (member.asset_id != asset_id)
+      return fail(error, "asset transfer ring crosses asset domains");
+
+  const size_t burn_outputs = burn_amount == 0 ? 0 : 1;
+  const size_t output_count = MAX_CONFIDENTIAL_ASSET_OUTPUTS - burn_outputs;
+  if (destinations.size() > output_count)
+    return fail(error, "asset transfer has too many recipients for its burn");
+  std::vector<asset_transfer_destination> padded = destinations;
+  while (padded.size() < output_count)
+  {
+    auto zero = destinations.back();
+    zero.amount = 0;
+    padded.push_back(zero);
+  }
+
+  const rct::key pseudo_mask = rct::skGen();
+  const size_t commitment_count = output_count + burn_outputs;
+  rct::keyV masks(commitment_count);
+  rct::key mask_sum = rct::zero();
+  for (size_t index = 0; index + 1 < masks.size(); ++index)
+  {
+    masks[index] = rct::skGen();
+    sc_add(mask_sum.bytes, mask_sum.bytes, masks[index].bytes);
+  }
+  sc_sub(masks.back().bytes, pseudo_mask.bytes, mask_sum.bytes);
+
+  confidential_asset_balance balance;
+  balance.asset_id = asset_id;
+  balance.pseudo_inputs.push_back({asset_id, rct::commit(input_amount, pseudo_mask)});
+  std::vector<asset_recipient_data> recipients;
+  std::vector<uint64_t> proof_amounts;
+  proof_amounts.reserve(commitment_count);
+  for (size_t index = 0; index < padded.size(); ++index)
+  {
+    crypto::public_key ignored{};
+    crypto::secret_key tx_secret{};
+    crypto::generate_keys(ignored, tx_secret);
+    asset_recipient_data recipient_data{};
+    rct::key commitment{};
+    if (!make_asset_recipient_data_with_mask(padded[index].address,
+          padded[index].is_subaddress, tx_secret, index, padded[index].amount,
+          masks[index], recipient_data, commitment, error))
+      return false;
+    recipients.push_back(recipient_data);
+    balance.outputs.push_back(commitment);
+    proof_amounts.push_back(padded[index].amount);
+  }
+  if (burn_outputs)
+  {
+    balance.burns.push_back(rct::commit(burn_amount, masks.back()));
+    proof_amounts.push_back(burn_amount);
+  }
+  try
+  {
+    balance.range_proofs.push_back(rct::bulletproof_plus_PROVE(proof_amounts, masks));
+  }
+  catch (const std::exception& e)
+  {
+    return fail(error, std::string{"failed to construct asset range proof: "} + e.what());
+  }
+
+  asset_ownership_proof ownership;
+  ownership.asset_id = asset_id;
+  ownership.pseudo_input = balance.pseudo_inputs.front().commitment;
+  ownership.ring = ring;
+  rct::key message{};
+  if (!derive_asset_ownership_message(ownership, network,
+        carrier_prefix_hash, message, error))
+    return false;
+  rct::ctkeyV public_ring;
+  public_ring.reserve(ring.size());
+  for (const auto &member : ring)
+    public_ring.push_back(member.public_output);
+  try
+  {
+    const rct::ctkey input_secret{input_spend_secret, input_mask};
+    ownership.signature = rct::proveRctCLSAGSimple(message, public_ring,
+      input_secret, pseudo_mask, ownership.pseudo_input, real_output_index,
+      hw::get_device("default"));
+  }
+  catch (const std::exception& e)
+  {
+    return fail(error, std::string{"failed to construct asset ownership proof: "} + e.what());
+  }
+  std::memcpy(&ownership.key_image, &ownership.signature.I,
+    sizeof(ownership.key_image));
+
+  asset_transaction_payload created;
+  created.network = network;
+  created.carrier_prefix_hash = carrier_prefix_hash;
+  created.balances.push_back(std::move(balance));
+  created.output_recipients.push_back(std::move(recipients));
+  created.ownership_proofs.push_back(std::move(ownership));
+  if (!verify_asset_transaction_payload(created, {asset_id}, network,
+        carrier_prefix_hash, error))
+    return false;
+  payload = std::move(created);
+  return true;
+}
+
+bool attach_issuance_to_native_transaction(transaction& tx,
+  const issuance_payload& issuance, const account_public_address& recipient,
+  bool is_subaddress, asset_transaction_payload& payload, std::string* error)
+{
+  std::vector<uint8_t> existing;
+  bool found = false;
+  if (!get_monzero_asset_tx_extra(tx.extra, existing, found, error))
+    return false;
+  if (found)
+    return fail(error, "native transaction already contains an asset envelope");
+
+  crypto::hash carrier{};
+  if (!get_transaction_asset_carrier_hash(tx, carrier, error))
+    return false;
+  asset_transaction_payload created;
+  if (!create_issuance_transaction_payload(issuance, recipient, is_subaddress,
+        carrier, created, error))
+    return false;
+  std::vector<uint8_t> encoded;
+  if (!encode_asset_transaction_payload(created, encoded, error)
+      || !add_monzero_asset_tx_extra(tx.extra, encoded, error))
+    return false;
+
+  boost::optional<asset_transaction_payload> parsed;
+  if (!parse_native_asset_transaction(tx, HF_VERSION_MONZERO_ASSETS,
+        issuance.descriptor.network, parsed, error) || !parsed)
+    return fail(error, "attached issuance envelope did not round trip");
+  payload = std::move(created);
+  return true;
 }
 
 bool derive_asset_output_id(network_type network,

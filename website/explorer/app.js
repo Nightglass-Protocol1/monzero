@@ -93,7 +93,11 @@ async function showBlock(value) {
 
 async function tryTransaction(value, originalError) {
   if (!/^[0-9a-f]{64}$/i.test(value)) return showError(originalError.message);
-  try { await showTransaction(value); } catch { showError('No block or transaction matched this hash.'); }
+  try { await showTransaction(value); }
+  catch {
+    try { await showAsset(value); }
+    catch { showError('No block, transaction, or asset matched this hash.'); }
+  }
 }
 
 async function showTransaction(hash) {
@@ -118,6 +122,56 @@ async function showTransaction(hash) {
   </div><details class="raw" open><summary>Decoded transaction JSON</summary><pre>${escapeHtml(JSON.stringify(decoded, null, 2))}</pre></details>`;
 }
 
+const assetClasses = {1:'Fungible token', 2:'NFT', 3:'Collection', 4:'Edition'};
+const zeroHash = /^0{64}$/;
+function assetAmount(value, decimals = 0) {
+  try {
+    const places = Math.max(0, Math.min(255, Number(decimals) || 0));
+    const raw = BigInt(value || 0);
+    if (!places) return raw.toString();
+    const scale = 10n ** BigInt(places);
+    const fraction = (raw % scale).toString().padStart(places, '0').replace(/0+$/, '');
+    return `${raw / scale}${fraction ? `.${fraction}` : ''}`;
+  } catch { return String(value ?? '—'); }
+}
+
+async function showAssets() {
+  loading('Loading asset registry…');
+  try {
+    const result = await api('assets', {offset:0, count:100});
+    headerTitle('Authenticated registry', 'Assets & NFTs');
+    const assets = result.assets || [];
+    view.innerHTML = `${result.supported === false ? '<div class="notice"><strong>Asset RPC upgrade pending</strong><p>The public explorer node does not expose the authenticated asset registry yet.</p></div>' : result.active ? '' : '<div class="notice"><strong>Assets are inactive</strong><p>The connected network has not activated the asset hard fork. Entries shown here are authenticated development-state records, not transferable production assets.</p></div>'}
+      ${assets.length ? `<div class="table-wrap"><table><thead><tr><th>Asset</th><th>Class</th><th>Supply</th><th>Issued at</th><th>Metadata trust</th></tr></thead><tbody>${assets.map((asset) => `
+        <tr><td><a class="link hash" href="#/asset/${escapeHtml(asset.asset_id)}">${shortHash(asset.asset_id, 16)}</a></td><td>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</td><td>${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</td><td><a class="link" href="#/block/${asset.height}">#${number.format(asset.height || 0)}</a></td><td>${asset.collection_id ? '<span class="trust verified">Controller-authorized member</span>' : '<span class="trust">Issuer-signed descriptor</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No registered assets</strong><p>No authenticated issuance records are present on this network.</p></div>'}
+      <p class="registry-note">Showing ${number.format(assets.length)} of ${number.format(result.total || 0)} records. External metadata is never trusted solely because its reference appears on-chain.</p>`;
+  } catch (error) { showError(error.message); }
+}
+
+async function showAsset(assetId) {
+  loading('Loading asset…');
+  const result = await api('asset', {asset_id:assetId});
+  const asset = result.asset || {};
+  const collectionAuthorized = Boolean(asset.collection_id);
+  const hasMetadataHash = asset.metadata_content_hash && !zeroHash.test(asset.metadata_content_hash);
+  headerTitle(assetClasses[asset.asset_class] || 'Asset', `<span class="truncate" title="${escapeHtml(asset.asset_id)}">${escapeHtml(shortHash(asset.asset_id, 16))}</span>`);
+  view.innerHTML = `${result.active ? '' : '<div class="notice"><strong>Inactive network feature</strong><p>This record is displayed for verification and development. The connected network does not currently permit active asset transactions.</p></div>'}
+    <div class="detail-grid">
+      ${datum('Asset ID', `<code>${escapeHtml(asset.asset_id)}</code>`)}
+      ${datum('Class', `<strong>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</strong>`)}
+      ${datum('Fixed supply', `<strong class="big">${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</strong>`)}
+      ${datum('Display decimals', `<strong>${number.format(asset.display_decimals || 0)}</strong>`)}
+      ${datum('Issuance height', `<a class="link" href="#/block/${asset.height}">#${number.format(asset.height || 0)}</a>`)}
+      ${datum('Issuer key', `<code>${escapeHtml(asset.issuer_key)}</code>`)}
+      ${datum('Collection authority', collectionAuthorized ? `<span class="trust verified">Controller-authorized</span><a class="link hash" href="#/asset/${escapeHtml(asset.collection_id)}">${escapeHtml(shortHash(asset.collection_id, 16))}</a>` : '<span class="trust">Standalone issuance</span>')}
+      ${datum('Metadata content hash', hasMetadataHash ? `<code>${escapeHtml(asset.metadata_content_hash)}</code>` : '<strong>Not committed</strong>')}
+      ${datum('External metadata reference', asset.metadata_reference ? `<code>${escapeHtml(asset.metadata_reference)}</code><small class="warning">Untrusted until downloaded content matches the signed hash.</small>` : '<strong>None</strong>')}
+      ${datum('Known outputs', `<strong>${number.format(result.output_total || 0)}</strong>`)}
+    </div>
+    <h3 class="subheading">Confidential outputs</h3>
+    ${(result.outputs || []).length ? `<div class="table-wrap"><table><thead><tr><th>Output ID</th><th>Height</th><th>Index</th><th>Commitment</th></tr></thead><tbody>${result.outputs.map((output) => `<tr><td><code>${escapeHtml(shortHash(output.output_id, 14))}</code></td><td><a class="link" href="#/block/${output.height}">#${number.format(output.height || 0)}</a></td><td>${number.format(output.output_index || 0)}</td><td><code>${escapeHtml(shortHash(output.commitment, 14))}</code></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No live outputs</strong><p>No unspent confidential outputs are recorded for this asset.</p></div>'}`;
+}
+
 function datum(label, value) { return `<div class="datum"><span>${escapeHtml(label)}</span>${value}</div>`; }
 function setOffline() { $('#node-dot').className = 'offline'; $('#node-label').textContent = 'Node unavailable'; }
 
@@ -125,6 +179,10 @@ async function route() {
   const route = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (location.hash) content.scrollIntoView({behavior:'smooth', block:'start'});
   if (!route.length) return showBlocks();
+  if (route[0] === 'assets') return showAssets();
+  if (route[0] === 'asset' && route[1]) {
+    try { return await showAsset(route[1]); } catch (error) { return showError(error.message); }
+  }
   if (route[0] === 'block' && route[1]) return showBlock(route[1]);
   if (route[0] === 'tx' && route[1]) {
     try { return await showTransaction(route[1]); } catch (error) { return showError(error.message); }

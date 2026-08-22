@@ -17,8 +17,10 @@ Open `http://127.0.0.1:8080` for the website and
 
 Copy this directory's contents to `/var/www/monzero`, install
 `nginx-monzero.conf` as `/etc/nginx/sites-available/monzero`, enable the site,
+set the `fastcgi_pass` socket to the PHP-FPM listener installed on the host,
 test Nginx, and reload it. The included Nginx route proxies only the homepage's
-`/get_info` request to the restricted local RPC service.
+`/api/node-info/` request to the restricted local RPC service. PHP-FPM serves
+the allowlisted explorer proxy and opt-in miner statistics endpoint.
 
 On IONOS web hosting, upload the complete contents of this directory to the
 domain's assigned document root. PHP must be enabled so `/explorer/api.php` can

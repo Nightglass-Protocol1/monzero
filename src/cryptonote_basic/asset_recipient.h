@@ -38,6 +38,19 @@ namespace assets
     rct::key& commitment,
     std::string* error = nullptr);
 
+  // Variant for transaction builders that coordinate masks across every
+  // input and output to satisfy commitment conservation.
+  bool make_asset_recipient_data_with_mask(
+    const account_public_address& recipient,
+    bool is_subaddress,
+    const crypto::secret_key& tx_secret_key,
+    size_t output_index,
+    uint64_t amount,
+    const rct::key& mask,
+    asset_recipient_data& output,
+    rct::key& commitment,
+    std::string* error = nullptr);
+
   // Returns true only when the output belongs to the supplied public spend
   // key and view secret key and its decoded opening matches the commitment.
   bool decode_asset_recipient_data(

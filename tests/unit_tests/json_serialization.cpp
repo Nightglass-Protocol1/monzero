@@ -9,6 +9,7 @@
 #include "byte_stream.h"
 #include "crypto/hash.h"
 #include "cryptonote_basic/account.h"
+#include "cryptonote_basic/asset_wire.h"
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_core/cryptonote_tx_utils.h"
@@ -32,13 +33,14 @@ namespace test
         return tx;
     }
 
-    cryptonote::transaction
-    make_transaction(
+    static cryptonote::transaction
+    make_transaction_with_finalizer(
         cryptonote::account_keys const& from,
         std::vector<cryptonote::transaction> const& sources,
         std::vector<cryptonote::account_public_address> const& destinations,
         bool rct,
-        bool bulletproof)
+        bool bulletproof,
+        const cryptonote::tx_prefix_finalizer& finalize_prefix)
     {
         std::uint64_t source_amount = 0;
         std::vector<cryptonote::tx_source_entry> actual_sources;
@@ -78,10 +80,22 @@ namespace test
         std::unordered_map<crypto::public_key, cryptonote::subaddress_index> subaddresses;
         subaddresses[from.m_account_address.m_spend_public_key] = {0,0};
 
-        if (!cryptonote::construct_tx_and_get_tx_key(from, subaddresses, actual_sources, to, boost::none, {}, tx, tx_key, extra_keys, rct, { bulletproof ? rct::RangeProofBulletproof : rct::RangeProofBorromean, bulletproof ? 2 : 0 }))
+        if (!cryptonote::construct_tx_and_get_tx_key(from, subaddresses, actual_sources, to, boost::none, {}, tx, tx_key, extra_keys, rct, { bulletproof ? rct::RangeProofBulletproof : rct::RangeProofBorromean, bulletproof ? 2 : 0 }, false, finalize_prefix))
             throw std::runtime_error{"transaction construction error"};
 
         return tx;
+    }
+
+    cryptonote::transaction
+    make_transaction(
+        cryptonote::account_keys const& from,
+        std::vector<cryptonote::transaction> const& sources,
+        std::vector<cryptonote::account_public_address> const& destinations,
+        bool rct,
+        bool bulletproof)
+    {
+        return make_transaction_with_finalizer(
+          from, sources, destinations, rct, bulletproof, {});
     }
 }
 
@@ -108,6 +122,70 @@ namespace
       return out;
     }
 } // anonymous
+
+TEST(TransactionConstruction, PrefixFinalizerAttachesAssetBeforeNativeSignature)
+{
+    cryptonote::account_base sender, recipient;
+    sender.generate();
+    recipient.generate();
+    const auto miner = test::make_miner_transaction(sender.get_keys().m_account_address);
+
+    cryptonote::assets::issuance_descriptor descriptor;
+    descriptor.network = cryptonote::TESTNET;
+    descriptor.type = cryptonote::assets::asset_class::non_fungible;
+    descriptor.atomic_supply = 1;
+    descriptor.metadata_hash.data[0] = 0x42;
+    cryptonote::assets::issuance_payload issuance;
+    crypto::hash asset_id{};
+    std::string error;
+    ASSERT_TRUE(cryptonote::assets::create_issuance_payload(
+      descriptor, sender.get_keys().m_spend_secret_key, boost::none,
+      issuance, asset_id, &error)) << error;
+
+    bool called = false;
+    const auto finalize = [&](cryptonote::transaction& tx) {
+      called = true;
+      EXPECT_FALSE(tx.vin.empty());
+      EXPECT_FALSE(tx.vout.empty());
+      cryptonote::assets::asset_transaction_payload attached;
+      return cryptonote::assets::attach_issuance_to_native_transaction(
+        tx, issuance, recipient.get_keys().m_account_address, false,
+        attached, &error);
+    };
+    const auto tx = test::make_transaction_with_finalizer(sender.get_keys(), {miner},
+      {recipient.get_keys().m_account_address}, false, false, finalize);
+    ASSERT_TRUE(called);
+
+    boost::optional<cryptonote::assets::asset_transaction_payload> parsed;
+    ASSERT_TRUE(cryptonote::assets::parse_native_asset_transaction(
+      tx, HF_VERSION_MONZERO_ASSETS, cryptonote::TESTNET, parsed, &error)) << error;
+    ASSERT_TRUE(parsed);
+    EXPECT_TRUE(parsed->issuance);
+    crypto::hash parsed_id{};
+    ASSERT_TRUE(cryptonote::assets::derive_asset_id(
+      parsed->issuance->descriptor, parsed_id, &error)) << error;
+    EXPECT_EQ(asset_id, parsed_id);
+    EXPECT_FALSE(tx.signatures.empty());
+}
+
+TEST(TransactionConstruction, PrefixFinalizerCanRejectBeforeSigning)
+{
+    cryptonote::account_base sender, recipient;
+    sender.generate();
+    recipient.generate();
+    const auto miner = test::make_miner_transaction(sender.get_keys().m_account_address);
+    bool called = false;
+    const auto reject = [&](cryptonote::transaction& tx) {
+      called = true;
+      EXPECT_FALSE(tx.vin.empty());
+      EXPECT_FALSE(tx.vout.empty());
+      EXPECT_TRUE(tx.signatures.empty());
+      return false;
+    };
+    EXPECT_THROW(test::make_transaction_with_finalizer(sender.get_keys(), {miner},
+      {recipient.get_keys().m_account_address}, false, false, reject), std::runtime_error);
+    EXPECT_TRUE(called);
+}
 
 TEST(JsonSerialization, VectorBytes)
 {

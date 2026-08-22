@@ -115,7 +115,7 @@ class TransferTest():
         res = daemon.get_info()
         height = res.height
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 100)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 100)
         for i in range(len(self.wallet)):
             self.wallet[i].refresh()
             res = self.wallet[i].get_height()
@@ -126,7 +126,7 @@ class TransferTest():
 
         print("Creating transfer to self")
 
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        dst = {'address': 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 'amount': 1000000000000}
         payment_id = '1234500000012345abcde00000abcdeff1234500000012345abcde00000abcde'
 
         start_balances = [0] * len(self.wallet)
@@ -200,7 +200,7 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        assert e.address == 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
         assert e.double_spend_seen == False
         assert not 'confirmations' in e or e.confirmations == 0
 
@@ -211,7 +211,7 @@ class TransferTest():
         assert res.unlocked_balance <= res.balance
         assert res.blocks_to_unlock == 59
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
         self.wallet[0].refresh()
@@ -231,7 +231,7 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        assert e.address == 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
         assert e.double_spend_seen == False
         assert e.confirmations == 1
 
@@ -249,10 +249,10 @@ class TransferTest():
         assert t.fee == fee
         assert t.note == ''
         assert len(t.destinations) == 1
-        assert t.destinations[0] == {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        assert t.destinations[0] == {'address': 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 'amount': 1000000000000}
         assert t.type == 'out'
         assert t.unlock_time == 0
-        assert t.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        assert t.address == 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
         assert t.double_spend_seen == False
         assert t.confirmations == 1
 
@@ -263,7 +263,7 @@ class TransferTest():
 
         print("Creating transfer to another, manual relay")
 
-        dst = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': 1000000000000}
+        dst = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount': 1000000000000}
         res = self.wallet[0].transfer([dst], ring_size = 16, get_tx_key = True, do_not_relay = True, get_tx_hex = True)
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
@@ -311,13 +311,13 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        assert e.address == 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
         assert e.double_spend_seen == False
         assert not 'confirmations' in e or e.confirmations == 0
         assert e.amount == amount
         assert e.fee == fee
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
         self.wallet[1].refresh()
@@ -336,7 +336,7 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        assert e.address == 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
         assert e.double_spend_seen == False
         assert e.confirmations == 1
         assert e.amount == amount
@@ -351,9 +351,9 @@ class TransferTest():
 
         self.wallet[0].refresh()
 
-        dst0 = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
-        dst1 = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': 1100000000000}
-        dst2 = {'address': '46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 'amount': 1200000000000}
+        dst0 = {'address': 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 'amount': 1000000000000}
+        dst1 = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount': 1100000000000}
+        dst2 = {'address': 'FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 'amount': 1200000000000}
         res = self.wallet[0].transfer([dst0, dst1, dst2], ring_size = 16, get_tx_key = True)
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
@@ -375,7 +375,7 @@ class TransferTest():
         assert res.unlocked_balance <= res.balance
         assert res.blocks_to_unlock == 59
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
         running_balances[1] += 1100000000000
@@ -397,7 +397,7 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        assert e.address == 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
         assert e.double_spend_seen == False
         assert e.confirmations == 1
 
@@ -425,7 +425,7 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        assert e.address == 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
         assert e.double_spend_seen == False
         assert e.confirmations == 1
         assert e.amount == 1100000000000
@@ -452,7 +452,7 @@ class TransferTest():
         assert e.unlock_time == 0
         assert e.subaddr_index.major == 0
         assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-        assert e.address == '46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK'
+        assert e.address == 'FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV'
         assert e.double_spend_seen == False
         assert e.confirmations == 1
         assert e.amount == 1200000000000
@@ -467,7 +467,7 @@ class TransferTest():
         self.wallet[0].refresh()
         res = self.wallet[0].get_balance()
         i_pid = '1111111122222222'
-        res = self.wallet[0].make_integrated_address(standard_address = '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', payment_id = i_pid)
+        res = self.wallet[0].make_integrated_address(standard_address = 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', payment_id = i_pid)
         i_address = res.integrated_address
         res = self.wallet[0].transfer([{'address': i_address, 'amount': 200000000}])
         assert len(res.tx_hash) == 32*2
@@ -489,7 +489,7 @@ class TransferTest():
         assert res.unlocked_balance <= res.balance
         assert res.blocks_to_unlock == 59
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
         running_balances[1] += 200000000
@@ -512,7 +512,7 @@ class TransferTest():
         assert res.unlocked_balance <= res.balance
         assert res.blocks_to_unlock == 8
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
 
@@ -601,7 +601,7 @@ class TransferTest():
             self.wallet[0].refresh()
             res = self.wallet[0].get_balance()
             unlocked_balance = res.unlocked_balance
-            res = self.wallet[0].sweep_all(address = '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', do_not_relay = True, get_tx_hex = True)
+            res = self.wallet[0].sweep_all(address = 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', do_not_relay = True, get_tx_hex = True)
             assert len(res.tx_hash_list) == 1
             assert len(res.tx_hash_list[0]) == 32*2
             txes[i][0] = res.tx_hash_list[0]
@@ -663,7 +663,7 @@ class TransferTest():
 
         print("Sending single output")
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         self.wallet[0].refresh()
         res = self.wallet[0].incoming_transfers(transfer_type = 'available')
         for t in res.transfers:
@@ -674,20 +674,20 @@ class TransferTest():
         assert res.transfers[index].amount > 0
         ki = res.transfers[index].key_image
         amount = res.transfers[index].amount
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 10) # ensure unlocked
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 10) # ensure unlocked
         self.wallet[0].refresh()
         res = self.wallet[0].get_balance()
         balance = res.balance
         res = daemon.is_key_image_spent([ki])
         assert len(res.spent_status) == 1
         assert res.spent_status[0] == 0
-        res = self.wallet[0].sweep_single('44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', key_image = ki)
+        res = self.wallet[0].sweep_single('FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', key_image = ki)
         assert len(res.tx_hash) == 64
         tx_hash = res.tx_hash
         res = daemon.is_key_image_spent([ki])
         assert len(res.spent_status) == 1
         assert res.spent_status[0] == 2
-        daemon.generateblocks('44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 1)
+        daemon.generateblocks('FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 1)
         res = daemon.is_key_image_spent([ki])
         assert len(res.spent_status) == 1
         assert res.spent_status[0] == 1
@@ -719,7 +719,7 @@ class TransferTest():
 
         print("Checking transaction destinations")
 
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        dst = {'address': 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 'amount': 1000000000000}
         res = self.wallet[0].transfer([dst])
         assert len(res.tx_hash) == 64
         tx_hash = res.tx_hash
@@ -730,13 +730,13 @@ class TransferTest():
             e = l[0]
             assert len(e.destinations) == 1
             assert e.destinations[0].amount == 1000000000000
-            assert e.destinations[0].address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+            assert e.destinations[0].address == 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
 
             if i == 0:
-                daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+                daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
                 self.wallet[0].refresh()
 
-        dst = {'address': '8AsN91rznfkBGTY8psSNkJBg9SZgxxGGRUhGwRptBhgr5XSQ1XzmA9m8QAnoxydecSh5aLJXdrgXwTDMMZ1AuXsN1EX5Mtm', 'amount': 1000000000000}
+        dst = {'address': 'Fs8Jn9XgkyYBGTY8psSNkJBg9SZgxxGGRUhGwRptBhgr5XSQ1XzmA9m8QAnoxydecSh5aLJXdrgXwTDMMZ1AuXsN1K5RWre', 'amount': 1000000000000}
         res = self.wallet[0].transfer([dst])
         assert len(res.tx_hash) == 64
         tx_hash = res.tx_hash
@@ -747,13 +747,13 @@ class TransferTest():
             e = l[0]
             assert len(e.destinations) == 1
             assert e.destinations[0].amount == 1000000000000
-            assert e.destinations[0].address == '8AsN91rznfkBGTY8psSNkJBg9SZgxxGGRUhGwRptBhgr5XSQ1XzmA9m8QAnoxydecSh5aLJXdrgXwTDMMZ1AuXsN1EX5Mtm'
+            assert e.destinations[0].address == 'Fs8Jn9XgkyYBGTY8psSNkJBg9SZgxxGGRUhGwRptBhgr5XSQ1XzmA9m8QAnoxydecSh5aLJXdrgXwTDMMZ1AuXsN1K5RWre'
 
             if i == 0:
-                daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+                daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
                 self.wallet[0].refresh()
 
-        dst = {'address': '4BxSHvcgTwu25WooY4BVmgdcKwZu5EksVZSZkDd6ooxSVVqQ4ubxXkhLF6hEqtw96i9cf3cVfLw8UWe95bdDKfRQeYtPwLm1Jiw7AKt2LY', 'amount': 1000000000000}
+        dst = {'address': 'FZeBEpJDp9525WooY4BVmgdcKwZu5EksVZSZkDd6ooxSVVqQ4ubxXkhLF6hEqtw96i9cf3cVfLw8UWe95bdDKfRQeYtPwLm1Jiw78tbAKG', 'amount': 1000000000000}
         res = self.wallet[0].transfer([dst])
         assert len(res.tx_hash) == 64
         tx_hash = res.tx_hash
@@ -764,10 +764,10 @@ class TransferTest():
             e = l[0]
             assert len(e.destinations) == 1
             assert e.destinations[0].amount == 1000000000000
-            assert e.destinations[0].address == '4BxSHvcgTwu25WooY4BVmgdcKwZu5EksVZSZkDd6ooxSVVqQ4ubxXkhLF6hEqtw96i9cf3cVfLw8UWe95bdDKfRQeYtPwLm1Jiw7AKt2LY'
+            assert e.destinations[0].address == 'FZeBEpJDp9525WooY4BVmgdcKwZu5EksVZSZkDd6ooxSVVqQ4ubxXkhLF6hEqtw96i9cf3cVfLw8UWe95bdDKfRQeYtPwLm1Jiw78tbAKG'
 
             if i == 0:
-                daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+                daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
                 self.wallet[0].refresh()
 
     def check_tx_notes(self):
@@ -892,7 +892,7 @@ class TransferTest():
         receiver_starting_balance = receiver_wallet.get_balance().balance
 
         # transfer from sender_wallet to receiver_wallet
-        dst = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': amount}
+        dst = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount': amount}
         res = sender_wallet.transfer([dst])
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
@@ -1111,7 +1111,7 @@ class TransferTest():
 
             # relay tx and generate block (not to us, to simplify balance change calculations)
             relay_res = self.wallet[0].relay_tx(tx_hex)
-            daemon.generateblocks('44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 1)
+            daemon.generateblocks('FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 1)
 
             # refresh and get balance again
             self.wallet[0].refresh()
@@ -1124,9 +1124,9 @@ class TransferTest():
             else:
                 assert balance_drop == dst_sum + tx_fee
 
-        dst1 = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': 1100000000001}
-        dst2 = {'address': '46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 'amount': 1200000000000}
-        dst3 = {'address': '46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 'amount': 1}
+        dst1 = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount': 1100000000001}
+        dst2 = {'address': 'FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 'amount': 1200000000000}
+        dst3 = {'address': 'FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 'amount': 1}
 
         inner_test_external_transfer([dst1, dst2], [0, 1])
         inner_test_external_transfer([dst1, dst2], [0])
@@ -1201,7 +1201,7 @@ class TransferTest():
         receiver_starting_balance = receiver_wallet.get_balance().balance
 
         # transfer from sender_wallet to receiver_wallet
-        dst = '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW'
+        dst = 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB'
         res = sender_wallet.sweep_single(dst, key_image = ki)
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
@@ -1216,7 +1216,7 @@ class TransferTest():
         sender_wallet.setup_background_sync(background_sync_type = reuse_password)
         sender_wallet.start_background_sync()
         # Mine block to an uninvolved wallet
-        daemon.generateblocks('46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 1)
+        daemon.generateblocks('FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 1)
         # sender should still be able to scan the transfer normally because we
         # spent an output that had a known key image
         sender_wallet.refresh()
@@ -1473,12 +1473,12 @@ class TransferTest():
             # Send tx and mine a block
             amount = 1000000000000
             assert sender_starting_balance > amount
-            dst = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': amount}
+            dst = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount': amount}
             res = sender_wallet.transfer([dst])
             assert len(res.tx_hash) == 32*2
             txid = res.tx_hash
 
-            daemon.generateblocks('46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 1)
+            daemon.generateblocks('FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 1)
 
             # Make sure the wallet can see the tx
             sender_wallet.refresh()
@@ -1496,7 +1496,7 @@ class TransferTest():
             daemon.pop_blocks(1)
             daemon.flush_txpool()
 
-            daemon.generateblocks('46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 1)
+            daemon.generateblocks('FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 1)
 
             # Make sure the wallet can no longer see the tx
             sender_wallet.refresh()
@@ -1519,7 +1519,7 @@ class TransferTest():
 
         # From wallet 1 to wallet 0 at subaddress (0, 999)
 
-        address_0_999 = '8BQKgTSSqJjP14AKnZUBwnXWj46MuNmLvHfPTpmry52DbfNjjHVvHUk4mczU8nj8yZ57zBhksTJ8kM5xKeJXw55kCMVqyG7' # this is the address for address 999 of the main account in the test wallet
+        address_0_999 = 'FsfGKb78ocXP14AKnZUBwnXWj46MuNmLvHfPTpmry52DbfNjjHVvHUk4mczU8nj8yZ57zBhksTJ8kM5xKeJXw55kCHoKCAt' # this is the address for address 999 of the main account in the test wallet
         try:  # assert address_1_999 is not in the current pubkey table
             self.wallet[0].get_address_index(address_0_999)
             assert False # address should not already be loaded
@@ -1536,7 +1536,7 @@ class TransferTest():
         self.wallet[1].refresh()
         assert self.wallet[1].get_balance().balance > dst['amount']
         self.wallet[1].transfer([dst])
-        daemon.generateblocks('46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 1)
+        daemon.generateblocks('FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 1)
         self.wallet[0].refresh()
 
         res = self.wallet[0].get_balance()
@@ -1560,7 +1560,7 @@ class TransferTest():
         print('Checking pool scanner')
 
         # Sync first wallet
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf', 1)
         self.wallet[0].refresh()
 
         # Open second wallet with same seed as first
@@ -1568,7 +1568,7 @@ class TransferTest():
         assert self.wallet[0].get_address().address == self.wallet[1].get_address().address
 
         # Send to another wallet, spending from first wallet
-        dst = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': 1000000000000}
+        dst = {'address': 'FS1LtxYqTVPRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUEgtLB', 'amount': 1000000000000}
         res = self.wallet[0].transfer([dst])
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
@@ -1599,14 +1599,14 @@ class TransferTest():
             assert e.unlock_time == 0
             assert e.subaddr_index.major == 0
             assert e.subaddr_indices == [{'major': 0, 'minor': 0}]
-            assert e.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+            assert e.address == 'FQLhxULkbyx4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJCEnHf'
             assert e.double_spend_seen == False
             assert not 'confirmations' in e or e.confirmations == 0
             assert e.amount == dst['amount']
             assert e.fee == fee
 
         # Mine a block to mine the tx and reset 2nd wallet
-        daemon.generateblocks('46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 1)
+        daemon.generateblocks('FUXojS8CGwqBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGiDbJV', 1)
         restore_wallet(self.wallet[1], seeds[1])
         self.wallet[1].refresh()
         self.wallet[0].refresh()

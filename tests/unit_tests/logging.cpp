@@ -222,6 +222,7 @@ TEST(logging, empty_configurations_throws)
 
 TEST(logging, deadlock)
 {
+  init();
   std::mutex inner_mutex;
 
   // 1. Thread 1 starts logger
@@ -270,4 +271,5 @@ TEST(logging, deadlock)
 
   t1.join();
   t2.join();
+  cleanup();
 }
