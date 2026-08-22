@@ -47,6 +47,15 @@ endif()
 
 SET(ZMQ_INCLUDE_PATH @prefix@/include)
 SET(ZMQ_LIB @prefix@/lib/libzmq.a)
+# The depends libzmq recipe disables these optional transports.  Prevent the
+# project's broad find_library probes from silently adding host installations.
+SET(PGM_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
+SET(NORM_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
+SET(GSSAPI_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
+SET(PROTOLIB_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
+SET(BSD_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
+SET(MD_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
+SET(PROTOKIT_LIBRARY "" CACHE FILEPATH "Disabled for depends libzmq" FORCE)
 
 SET(Boost_IGNORE_SYSTEM_PATH ON)
 SET(BOOST_ROOT @prefix@)
