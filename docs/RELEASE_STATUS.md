@@ -173,6 +173,14 @@ when they are outside the source repository.
   but its latest block is height 1022 with timestamp 1786833652 and the node
   reports zero peers and `synchronized: false`; public-network freshness and
   independent-node synchronization therefore remain unproven.
+- The prerelease homepage now publishes the exact packaged source commit and
+  links `/releases/genesis-pre5.json`. The live JSON is byte-for-byte identical
+  to the repository copy and binds both artifact names, sizes, SHA-256 hashes,
+  signing state, audit state, and reproducibility state. The prior homepage is
+  retained server-side as `index.html.before-release-metadata-20260822`, in
+  addition to the full pre5 rollback directory. Post-deployment checks confirm
+  that the explorer still returns valid JSON and both artifact endpoints retain
+  their expected MIME types and byte sizes.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
