@@ -27,6 +27,13 @@ wallet_version=$("$build_bin/monzero-wallet-cli" --version | head -n 1)
   echo "  wallet:   $wallet_version" >&2
   exit 1
 }
+if [[ -x "$build_bin/monzero-wallet-rpc" ]]; then
+  rpc_version=$("$build_bin/monzero-wallet-rpc" --version | head -n 1)
+  [[ $rpc_version == "$daemon_version" ]] || {
+    echo "Refusing to package wallet RPC with inconsistent version: $rpc_version" >&2
+    exit 1
+  }
+fi
 
 source_commit=$(git -C "$source_root" rev-parse HEAD)
 source_epoch=${SOURCE_DATE_EPOCH:-$(git -C "$source_root" show -s --format=%ct "$source_commit")}
