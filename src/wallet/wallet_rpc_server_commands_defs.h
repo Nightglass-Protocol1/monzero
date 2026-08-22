@@ -2806,5 +2806,150 @@ namespace wallet_rpc
     };
     typedef epee::misc_utils::struct_init<response_t> response;
   };
+
+  struct asset_transfer_entry
+  {
+    std::string asset_id;
+    std::string output_id;
+    std::string txid;
+    uint64_t block_height;
+    uint64_t amount;
+    uint32_t account_index;
+    uint32_t address_index;
+    bool key_image_known;
+    bool spent;
+    uint64_t spent_height;
+
+    BEGIN_KV_SERIALIZE_MAP()
+      KV_SERIALIZE(asset_id)
+      KV_SERIALIZE(output_id)
+      KV_SERIALIZE(txid)
+      KV_SERIALIZE(block_height)
+      KV_SERIALIZE(amount)
+      KV_SERIALIZE(account_index)
+      KV_SERIALIZE(address_index)
+      KV_SERIALIZE(key_image_known)
+      KV_SERIALIZE(spent)
+      KV_SERIALIZE(spent_height)
+    END_KV_SERIALIZE_MAP()
+  };
+
+  struct asset_transaction_response
+  {
+    std::string asset_id;
+    std::string tx_hash;
+    uint64_t fee;
+    uint64_t weight;
+    std::string tx_blob;
+    std::string tx_metadata;
+
+    BEGIN_KV_SERIALIZE_MAP()
+      KV_SERIALIZE(asset_id)
+      KV_SERIALIZE(tx_hash)
+      KV_SERIALIZE(fee)
+      KV_SERIALIZE(weight)
+      KV_SERIALIZE(tx_blob)
+      KV_SERIALIZE(tx_metadata)
+    END_KV_SERIALIZE_MAP()
+  };
+
+  struct COMMAND_RPC_CREATE_ASSET
+  {
+    struct request_t
+    {
+      std::string address;
+      std::string asset_type;
+      uint64_t atomic_supply;
+      uint32_t decimals;
+      std::string metadata_hash;
+      std::string metadata_reference;
+      std::string collection_id;
+      uint32_t account_index;
+      std::set<uint32_t> subaddr_indices;
+      uint32_t priority;
+      uint64_t ring_size;
+      bool do_not_relay;
+      bool get_tx_hex;
+      bool get_tx_metadata;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(address)
+        KV_SERIALIZE(asset_type)
+        KV_SERIALIZE(atomic_supply)
+        KV_SERIALIZE(decimals)
+        KV_SERIALIZE_OPT(metadata_hash, std::string())
+        KV_SERIALIZE_OPT(metadata_reference, std::string())
+        KV_SERIALIZE_OPT(collection_id, std::string())
+        KV_SERIALIZE_OPT(account_index, (uint32_t)0)
+        KV_SERIALIZE_OPT(subaddr_indices, std::set<uint32_t>())
+        KV_SERIALIZE_OPT(priority, (uint32_t)0)
+        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+        KV_SERIALIZE_OPT(do_not_relay, false)
+        KV_SERIALIZE_OPT(get_tx_hex, false)
+        KV_SERIALIZE_OPT(get_tx_metadata, false)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<request_t> request;
+    typedef asset_transaction_response response_t;
+    typedef epee::misc_utils::struct_init<response_t> response;
+  };
+
+  struct COMMAND_RPC_GET_ASSETS
+  {
+    struct request_t
+    {
+      std::string asset_id;
+      bool include_spent;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE_OPT(asset_id, std::string())
+        KV_SERIALIZE_OPT(include_spent, false)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<request_t> request;
+
+    struct response_t
+    {
+      std::vector<asset_transfer_entry> outputs;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(outputs)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<response_t> response;
+  };
+
+  struct COMMAND_RPC_TRANSFER_ASSET
+  {
+    struct request_t
+    {
+      std::string asset_id;
+      std::string address;
+      uint64_t amount;
+      uint64_t burn_amount;
+      uint32_t account_index;
+      std::set<uint32_t> subaddr_indices;
+      uint32_t priority;
+      uint64_t ring_size;
+      bool do_not_relay;
+      bool get_tx_hex;
+      bool get_tx_metadata;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(asset_id)
+        KV_SERIALIZE_OPT(address, std::string())
+        KV_SERIALIZE_OPT(amount, (uint64_t)0)
+        KV_SERIALIZE_OPT(burn_amount, (uint64_t)0)
+        KV_SERIALIZE_OPT(account_index, (uint32_t)0)
+        KV_SERIALIZE_OPT(subaddr_indices, std::set<uint32_t>())
+        KV_SERIALIZE_OPT(priority, (uint32_t)0)
+        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+        KV_SERIALIZE_OPT(do_not_relay, false)
+        KV_SERIALIZE_OPT(get_tx_hex, false)
+        KV_SERIALIZE_OPT(get_tx_metadata, false)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<request_t> request;
+    typedef asset_transaction_response response_t;
+    typedef epee::misc_utils::struct_init<response_t> response;
+  };
 }
 }

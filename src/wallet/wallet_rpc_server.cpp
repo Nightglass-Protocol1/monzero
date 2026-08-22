@@ -1291,6 +1291,200 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool wallet_rpc_server::on_create_asset(const wallet_rpc::COMMAND_RPC_CREATE_ASSET::request& req, wallet_rpc::COMMAND_RPC_CREATE_ASSET::response& res, epee::json_rpc::error& er, const connection_context *ctx)
+  {
+    if (m_restricted)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_DENIED;
+      er.message = "Command unavailable in restricted mode.";
+      return false;
+    }
+    if (!m_wallet) return not_open(er);
+
+    cryptonote::address_parse_info recipient{};
+    if (!cryptonote::get_account_address_from_str(recipient, m_wallet->nettype(), req.address)
+        || recipient.has_payment_id)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid asset recipient address; integrated addresses are not supported";
+      return false;
+    }
+    cryptonote::assets::issuance_descriptor descriptor;
+    descriptor.network = m_wallet->nettype();
+    if (req.asset_type == "fungible")
+      descriptor.type = cryptonote::assets::asset_class::fungible;
+    else if (req.asset_type == "nft")
+      descriptor.type = cryptonote::assets::asset_class::non_fungible;
+    else if (req.asset_type == "collection")
+      descriptor.type = cryptonote::assets::asset_class::collection;
+    else if (req.asset_type == "edition")
+      descriptor.type = cryptonote::assets::asset_class::edition;
+    else
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Unknown asset_type; expected fungible, nft, collection, or edition";
+      return false;
+    }
+    if (req.decimals > std::numeric_limits<uint8_t>::max())
+    {
+      er.code = WALLET_RPC_ERROR_CODE_ZERO_AMOUNT;
+      er.message = "Asset decimals exceed 255";
+      return false;
+    }
+    descriptor.atomic_supply = req.atomic_supply;
+    descriptor.display_decimals = static_cast<uint8_t>(req.decimals);
+    descriptor.metadata_reference = req.metadata_reference;
+    if (!req.metadata_hash.empty()
+        && !epee::string_tools::hex_to_pod(req.metadata_hash, descriptor.metadata_hash))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_BAD_HEX;
+      er.message = "metadata_hash must be a 32-byte hexadecimal value";
+      return false;
+    }
+    if (!req.collection_id.empty()
+        && !epee::string_tools::hex_to_pod(req.collection_id, descriptor.collection_id))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_BAD_HEX;
+      er.message = "collection_id must be a 32-byte hexadecimal value";
+      return false;
+    }
+
+    try
+    {
+      wallet2::pending_tx ptx;
+      crypto::hash asset_id{};
+      std::string error;
+      const size_t mixin = m_wallet->adjust_mixin(req.ring_size ? req.ring_size - 1 : 0);
+      const uint32_t priority = m_wallet->adjust_priority(req.priority);
+      if (!m_wallet->create_asset_issuance_transaction(descriptor, recipient.address,
+            recipient.is_subaddress, mixin, priority, req.account_index,
+            req.subaddr_indices, ptx, asset_id, &error))
+      {
+        er.code = WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR;
+        er.message = "Failed to create asset: " + error;
+        return false;
+      }
+      res.asset_id = epee::string_tools::pod_to_hex(asset_id);
+      res.tx_hash = epee::string_tools::pod_to_hex(cryptonote::get_transaction_hash(ptx.tx));
+      res.fee = ptx.fee;
+      res.weight = cryptonote::get_transaction_weight(ptx.tx);
+      if (req.get_tx_hex)
+        res.tx_blob = epee::string_tools::buff_to_hex_nodelimer(tx_to_blob(ptx.tx));
+      if (req.get_tx_metadata)
+        res.tx_metadata = ptx_to_string(ptx);
+      if (!req.do_not_relay)
+        m_wallet->commit_tx(ptx);
+      return true;
+    }
+    catch (...)
+    {
+      handle_rpc_exception(std::current_exception(), er, WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
+      return false;
+    }
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool wallet_rpc_server::on_get_assets(const wallet_rpc::COMMAND_RPC_GET_ASSETS::request& req, wallet_rpc::COMMAND_RPC_GET_ASSETS::response& res, epee::json_rpc::error& er, const connection_context *ctx)
+  {
+    if (!m_wallet) return not_open(er);
+    crypto::hash filter{};
+    const bool filtered = !req.asset_id.empty();
+    if (filtered && !epee::string_tools::hex_to_pod(req.asset_id, filter))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_BAD_HEX;
+      er.message = "asset_id must be a 32-byte hexadecimal value";
+      return false;
+    }
+    for (const auto &output : m_wallet->get_asset_transfers())
+    {
+      if ((filtered && output.m_asset_id != filter) || (!req.include_spent && output.m_spent))
+        continue;
+      wallet_rpc::asset_transfer_entry entry{};
+      entry.asset_id = epee::string_tools::pod_to_hex(output.m_asset_id);
+      entry.output_id = epee::string_tools::pod_to_hex(output.m_output_id);
+      entry.txid = epee::string_tools::pod_to_hex(output.m_txid);
+      entry.block_height = output.m_block_height;
+      entry.amount = output.m_amount;
+      entry.account_index = output.m_subaddr_index.major;
+      entry.address_index = output.m_subaddr_index.minor;
+      entry.key_image_known = output.m_key_image_known;
+      entry.spent = output.m_spent;
+      entry.spent_height = output.m_spent_height;
+      res.outputs.push_back(std::move(entry));
+    }
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool wallet_rpc_server::on_transfer_asset(const wallet_rpc::COMMAND_RPC_TRANSFER_ASSET::request& req, wallet_rpc::COMMAND_RPC_TRANSFER_ASSET::response& res, epee::json_rpc::error& er, const connection_context *ctx)
+  {
+    if (m_restricted)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_DENIED;
+      er.message = "Command unavailable in restricted mode.";
+      return false;
+    }
+    if (!m_wallet) return not_open(er);
+    crypto::hash asset_id{};
+    if (!epee::string_tools::hex_to_pod(req.asset_id, asset_id))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_BAD_HEX;
+      er.message = "asset_id must be a 32-byte hexadecimal value";
+      return false;
+    }
+    if (req.amount == 0 && req.burn_amount == 0)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_ZERO_AMOUNT;
+      er.message = "amount and burn_amount cannot both be zero";
+      return false;
+    }
+    cryptonote::address_parse_info recipient{};
+    if (req.amount != 0)
+    {
+      if (!cryptonote::get_account_address_from_str(recipient, m_wallet->nettype(), req.address)
+          || recipient.has_payment_id)
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+        er.message = "Invalid asset recipient address; integrated addresses are not supported";
+        return false;
+      }
+    }
+    try
+    {
+      if (req.amount == 0)
+      {
+        recipient.address = m_wallet->get_subaddress({req.account_index, 0});
+        recipient.is_subaddress = req.account_index != 0;
+      }
+      wallet2::pending_tx ptx;
+      std::string error;
+      const size_t mixin = m_wallet->adjust_mixin(req.ring_size ? req.ring_size - 1 : 0);
+      const uint32_t priority = m_wallet->adjust_priority(req.priority);
+      if (!m_wallet->create_asset_transfer_transaction(asset_id, recipient.address,
+            recipient.is_subaddress, req.amount, req.burn_amount, mixin, priority,
+            req.account_index, req.subaddr_indices, ptx, &error))
+      {
+        er.code = WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR;
+        er.message = "Failed to transfer asset: " + error;
+        return false;
+      }
+      res.asset_id = req.asset_id;
+      res.tx_hash = epee::string_tools::pod_to_hex(cryptonote::get_transaction_hash(ptx.tx));
+      res.fee = ptx.fee;
+      res.weight = cryptonote::get_transaction_weight(ptx.tx);
+      if (req.get_tx_hex)
+        res.tx_blob = epee::string_tools::buff_to_hex_nodelimer(tx_to_blob(ptx.tx));
+      if (req.get_tx_metadata)
+        res.tx_metadata = ptx_to_string(ptx);
+      if (!req.do_not_relay)
+        m_wallet->commit_tx(ptx);
+      return true;
+    }
+    catch (...)
+    {
+      handle_rpc_exception(std::current_exception(), er, WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
+      return false;
+    }
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::on_transfer_split(const wallet_rpc::COMMAND_RPC_TRANSFER_SPLIT::request& req, wallet_rpc::COMMAND_RPC_TRANSFER_SPLIT::response& res, epee::json_rpc::error& er, const connection_context *ctx)
   {
 

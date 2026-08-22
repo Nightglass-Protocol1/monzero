@@ -103,3 +103,29 @@ therefore needs one unspent asset output large enough for the transfer plus
 burn amount. Light, watch-only, background, multisig, and hardware wallets are
 not supported. These paths fail closed before HF17 activates and still require
 activated-chain restoration/reorg tests and independent cryptographic review.
+
+## Wallet RPC
+
+Automated software-wallet applications can use these JSON-RPC methods:
+
+```text
+create_asset
+get_assets
+transfer_asset
+```
+
+`create_asset` accepts the same descriptor fields as `asset_issue`, including
+`asset_type`, `atomic_supply`, `decimals`, metadata hash/reference, collection
+ID, recipient address, native account/priority/ring settings, and optional
+`do_not_relay`, `get_tx_hex`, and `get_tx_metadata` controls.
+
+`get_assets` returns confirmed wallet-owned outputs with raw atomic amount,
+asset/output/transaction IDs, subaddress indices, spend state, and heights. It
+can filter by asset ID and optionally include spent outputs.
+
+`transfer_asset` accepts one asset ID, a recipient and transfer amount, an
+optional explicit burn amount, native account/priority/ring settings, and the
+same non-relay/export controls. A burn-only request omits the recipient and
+sets `amount` to zero. Mutating asset methods are unavailable in restricted
+wallet RPC mode. Integrated addresses are rejected because asset envelopes do
+not use native payment IDs. All amounts are unsigned raw atomic units.

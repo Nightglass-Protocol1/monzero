@@ -43,6 +43,7 @@ class WalletTest():
     def run_test(self):
       self.reset()
       self.create()
+      self.assets_inactive()
       self.check_main_address()
       self.check_keys()
       self.create_subaddresses()
@@ -53,6 +54,21 @@ class WalletTest():
       self.languages()
       self.change_password()
       self.store()
+
+    def assets_inactive(self):
+        print('Checking activation-gated asset wallet RPC')
+        wallet = Wallet()
+        res = wallet.get_assets()
+        assert res.get('outputs', []) == [], res
+        address = wallet.get_address().address
+        try:
+            wallet.create_asset(address, 'nft', 1, 0, '11' * 32,
+                                'ipfs://inactive-functional-test', '',
+                                do_not_relay = True)
+            assert False, 'asset creation unexpectedly succeeded before HF17'
+        except AssertionError as e:
+            message = str(e)
+            assert 'assets are not active' in message or 'hard fork' in message, message
 
     def reset(self):
         print('Resetting blockchain')

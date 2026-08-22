@@ -35,6 +35,7 @@
 #include "storages/portable_storage.h"
 #include "storages/portable_storage_template_helper.h"
 #include "span.h"
+#include "wallet/wallet_rpc_server_commands_defs.h"
 
 TEST(epee_binary, two_keys)
 {
@@ -121,4 +122,47 @@ TEST(epee_binary, serialize_deserialize)
 
   EXPECT_TRUE(epee::serialization::load_t_from_json(o4, o4_json));
   EXPECT_TRUE(o4.params.test_value);
+}
+
+TEST(epee_binary, wallet_asset_rpc_requests_round_trip_and_default)
+{
+  tools::wallet_rpc::COMMAND_RPC_CREATE_ASSET::request create;
+  create.address = "asset-recipient";
+  create.asset_type = "nft";
+  create.atomic_supply = 1;
+  create.decimals = 0;
+  create.metadata_hash = std::string(64, '1');
+  create.metadata_reference = "ipfs://metadata";
+  create.collection_id = std::string(64, '2');
+  create.account_index = 3;
+  create.subaddr_indices = {4, 5};
+  create.priority = 2;
+  create.ring_size = 16;
+  create.do_not_relay = true;
+  create.get_tx_hex = true;
+  create.get_tx_metadata = true;
+  std::string json;
+  ASSERT_TRUE(epee::serialization::store_t_to_json(create, json));
+  tools::wallet_rpc::COMMAND_RPC_CREATE_ASSET::request decoded_create;
+  ASSERT_TRUE(epee::serialization::load_t_from_json(decoded_create, json));
+  EXPECT_EQ(create.address, decoded_create.address);
+  EXPECT_EQ(create.asset_type, decoded_create.asset_type);
+  EXPECT_EQ(create.atomic_supply, decoded_create.atomic_supply);
+  EXPECT_EQ(create.metadata_hash, decoded_create.metadata_hash);
+  EXPECT_EQ(create.subaddr_indices, decoded_create.subaddr_indices);
+  EXPECT_TRUE(decoded_create.do_not_relay);
+
+  tools::wallet_rpc::COMMAND_RPC_TRANSFER_ASSET::request transfer;
+  ASSERT_TRUE(epee::serialization::load_t_from_json(transfer,
+    "{\"asset_id\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\"}"));
+  EXPECT_EQ(0u, transfer.amount);
+  EXPECT_EQ(0u, transfer.burn_amount);
+  EXPECT_EQ(0u, transfer.account_index);
+  EXPECT_TRUE(transfer.subaddr_indices.empty());
+  EXPECT_FALSE(transfer.do_not_relay);
+
+  tools::wallet_rpc::COMMAND_RPC_GET_ASSETS::request holdings;
+  ASSERT_TRUE(epee::serialization::load_t_from_json(holdings, "{}"));
+  EXPECT_TRUE(holdings.asset_id.empty());
+  EXPECT_FALSE(holdings.include_spent);
 }

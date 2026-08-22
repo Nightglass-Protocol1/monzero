@@ -11,7 +11,7 @@ when they are outside the source repository.
 ## Verified in the current working tree
 
 - The complete CMake build succeeds with the configured local toolchain.
-- All 1,296 unit tests pass in one run with workspace-backed temporary storage,
+- All 1,297 unit tests pass in one run with workspace-backed temporary storage,
   including protected Monzero consensus vectors and
   the inactive asset, recipient-restoration, and persistent-state tests.
 - All 18 default RPC functional tests pass in one clean run. This covers wallet
@@ -75,6 +75,12 @@ when they are outside the source repository.
   an explicit burn, then verifies reorg rollback removes the detached change
   and restores the original output to unspent. An activated daemon fixture is
   still required to prove the complete RPC/relay/mining path.
+- Wallet RPC applications can now create fungible tokens, NFTs, collections,
+  and editions, enumerate confirmed holdings, and construct transfers or burns
+  through `create_asset`, `get_assets`, and `transfer_asset`. Mutating calls
+  reject restricted mode, integrated destinations, unsupported wallet modes,
+  and inactive HF17; non-relay raw transaction export is supported. The live
+  wallet functional test covers holdings and the inactive activation gate.
 - Website copies of the Genesis pre2 Linux and Windows archives are byte-for-
   byte identical to `dist/`; their outer SHA-256 files verify and all website
   download links resolve locally.

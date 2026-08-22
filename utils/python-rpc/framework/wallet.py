@@ -60,6 +60,47 @@ class Wallet(object):
         }
         return self.rpc.send_json_rpc_request(transfer)   
 
+    def create_asset(self, address, asset_type, atomic_supply, decimals,
+                     metadata_hash = '', metadata_reference = '', collection_id = '',
+                     account_index = 0, subaddr_indices = [], priority = 0,
+                     ring_size = 0, do_not_relay = False, get_tx_hex = False,
+                     get_tx_metadata = False):
+        return self.rpc.send_json_rpc_request({
+            'method': 'create_asset',
+            'params': {
+                'address': address, 'asset_type': asset_type,
+                'atomic_supply': atomic_supply, 'decimals': decimals,
+                'metadata_hash': metadata_hash,
+                'metadata_reference': metadata_reference,
+                'collection_id': collection_id, 'account_index': account_index,
+                'subaddr_indices': subaddr_indices, 'priority': priority,
+                'ring_size': ring_size, 'do_not_relay': do_not_relay,
+                'get_tx_hex': get_tx_hex, 'get_tx_metadata': get_tx_metadata,
+            }, 'jsonrpc': '2.0', 'id': '0'
+        })
+
+    def get_assets(self, asset_id = '', include_spent = False):
+        return self.rpc.send_json_rpc_request({
+            'method': 'get_assets',
+            'params': {'asset_id': asset_id, 'include_spent': include_spent},
+            'jsonrpc': '2.0', 'id': '0'
+        })
+
+    def transfer_asset(self, asset_id, address = '', amount = 0, burn_amount = 0,
+                       account_index = 0, subaddr_indices = [], priority = 0,
+                       ring_size = 0, do_not_relay = False, get_tx_hex = False,
+                       get_tx_metadata = False):
+        return self.rpc.send_json_rpc_request({
+            'method': 'transfer_asset',
+            'params': {
+                'asset_id': asset_id, 'address': address, 'amount': amount,
+                'burn_amount': burn_amount, 'account_index': account_index,
+                'subaddr_indices': subaddr_indices, 'priority': priority,
+                'ring_size': ring_size, 'do_not_relay': do_not_relay,
+                'get_tx_hex': get_tx_hex, 'get_tx_metadata': get_tx_metadata,
+            }, 'jsonrpc': '2.0', 'id': '0'
+        })
+
     def transfer_split(self, destinations, account_index = 0, subaddr_indices = [], priority = 0, ring_size = 0, unlock_time = 0, payment_id = '', get_tx_key = True, do_not_relay = False, get_tx_hex = False, get_tx_metadata = False):
         transfer = {
             "method": "transfer_split",
