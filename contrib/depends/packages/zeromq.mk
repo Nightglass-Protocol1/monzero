@@ -7,6 +7,7 @@ $(package)_patches=06aba27b04c5822cb88a69677382a0f053367143.patch
 
 define $(package)_set_vars
   $(package)_config_opts=--without-documentation --disable-shared --without-libsodium --disable-curve
+  $(package)_config_opts+=--without-libgssapi_krb5 --without-pgm --without-norm
   $(package)_config_opts_linux=--with-pic
   $(package)_config_opts_freebsd=--with-pic
   $(package)_cxxflags=-std=c++11
@@ -32,4 +33,3 @@ define $(package)_postprocess_cmds
   rm -rf bin share &&\
   rm lib/*.la
 endef
-
