@@ -20,6 +20,10 @@ when they are outside the source repository.
   sensitive wallet operations. The harness now launches Monzero executables,
   uses Monzero network address fixtures, and applies XMZ precision and genesis
   expectations.
+- A separate regtest-only HF17 scenario passes the complete live NFT lifecycle:
+  wallet RPC issuance, confirmed discovery, confidential transfer, explicit
+  burn, restoration from seed, and reorganisation rollback. The opt-in fixture
+  does not modify any public-network hard-fork schedule.
 - A disposable stagenet software wallet successfully creates and re-opens both
   fungible-token and NFT issuance artifacts through `monzero-wallet-cli`.
   Inspection rejects a tampered declared asset ID, and creation rejects an NFT
@@ -67,14 +71,15 @@ when they are outside the source repository.
   transfers and irreversible burns after authenticating the real ring member.
   `asset_transfer`, `asset_burn`, and `asset_list` expose submission and raw
   confirmed-balance workflows in the CLI; spend-restoration material is stored
-  in the versioned encrypted wallet cache. Activated-chain end-to-end coverage
-  and multi-input asset coin selection remain unfinished.
+  in the versioned encrypted wallet cache. Multi-input asset coin selection
+  remains unfinished.
 - A fresh software wallet reconstructed from the same account keys rediscovers
   the identical asset opening and ownership key image from confirmed chain
   data. The restoration test spends that output into confidential change with
   an explicit burn, then verifies reorg rollback removes the detached change
-  and restores the original output to unspent. An activated daemon fixture is
-  still required to prove the complete RPC/relay/mining path.
+  and restores the original output to unspent. The dedicated activated-daemon
+  scenario additionally proves the RPC, relay, mining, seed-restoration, and
+  competing-tip rollback path.
 - Wallet RPC applications can now create fungible tokens, NFTs, collections,
   and editions, enumerate confirmed holdings, and construct transfers or burns
   through `create_asset`, `get_assets`, and `transfer_asset`. Mutating calls
@@ -85,10 +90,13 @@ when they are outside the source repository.
   byte identical to `dist/`; their outer SHA-256 files verify and all website
   download links resolve locally.
 - Linux release, packaged launcher, and utility shell scripts pass `bash -n`.
-- A native Linux GUI build succeeds, its bundled daemon links successfully,
+- A native Linux GUI build succeeds against pinned core commit `488946b35`,
+  its bundled daemon links successfully,
   and the headless QML suite exits successfully without QML type/reference
   errors. The startup banner reports `0.18.5.1-release` and logs under
   `.monzero`. Upstream update and development-submodule modes fail closed.
+  Desktop metadata is renamed and validated, payment dispatch uses only the
+  `monzero:` scheme, and the unsafe inherited Windows installer is removed.
 - Two development Linux packages built from the same binaries are byte-for-
   byte identical and pass the normal package verifier. Strict verification
   correctly rejects them because they are dirty, dynamic, unstripped, and not
@@ -114,15 +122,15 @@ pre2.
   technical attribution.
 - Complete parser fuzzing and reproduce the passing core, GUI, functional, and
   website/explorer tests in CI and on clean supported systems.
-- Add the asset creation/inspection workflow to the GUI. The CLI can export and
+- Add the asset creation/inspection workflow to the desktop GUI. The CLI can export and
   validate canonical signed fungible, NFT, collection, and edition artifacts,
   and its direct issuance command becomes usable only after HF17 activation.
 - Complete multi-input asset coin selection, authenticated metadata retrieval,
   and richer ownership workflows for fungible tokens, NFTs, collections, and
-  editions. Prove transfers, burns, cache round trips, seed restoration, and
-  reorg handling against an activated-chain fixture. Direct fixed-supply
-  creation, confirmed owned-output discovery, and single-input spending are
-  wired, but the broader asset wallet is not yet complete.
+  editions. Direct fixed-supply creation, confirmed owned-output discovery,
+  single-input spending, burns, cache round trips, seed restoration, and reorg
+  handling are wired and covered, but the broader asset wallet is not yet
+  complete.
 - Finalize supported-platform, migration, rollback, upgrade, and known-
   limitation documentation for the chosen release candidate.
 - Produce a strict-verifier-compatible Linux candidate and an equivalent

@@ -85,7 +85,7 @@ consensus changes require explicit vector updates.
 
 ## Gate E: release engineering
 
-- [ ] Replace `docs/RELEASE_CHECKLIST.md` with a Monzero-specific checklist.
+- [x] Replace `docs/RELEASE_CHECKLIST.md` with a Monzero-specific checklist.
 - [ ] Produce reproducible Linux builds from a pinned environment.
 - [ ] Produce reproducible Windows builds from a pinned environment.
 - [ ] Publish source commit, build recipe, file sizes, and SHA-256 hashes.
