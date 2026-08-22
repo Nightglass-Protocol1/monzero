@@ -2856,11 +2856,15 @@ namespace cryptonote
       std::string asset_id;
       uint64_t offset;
       uint64_t count;
+      std::vector<uint64_t> indices;
+      std::vector<std::string> output_ids;
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE_PARENT(rpc_request_base)
         KV_SERIALIZE_OPT(asset_id, std::string())
         KV_SERIALIZE_OPT(offset, (uint64_t)0)
         KV_SERIALIZE_OPT(count, (uint64_t)100)
+        KV_SERIALIZE_OPT(indices, std::vector<uint64_t>())
+        KV_SERIALIZE_OPT(output_ids, std::vector<std::string>())
       END_KV_SERIALIZE_MAP()
     };
     typedef epee::misc_utils::struct_init<request_t> request;

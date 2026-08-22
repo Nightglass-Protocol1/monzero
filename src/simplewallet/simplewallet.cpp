@@ -241,6 +241,9 @@ namespace
   const char* USAGE_VERIFY("verify <filename> <address> <signature>");
   const char* USAGE_ASSET_CREATE("asset_create <fungible|nft|collection|edition> <atomic_supply> <decimals> <metadata_hash|none> <metadata_reference|none> <collection_id|none> <filename>");
   const char* USAGE_ASSET_ISSUE("asset_issue <address> <fungible|nft|collection|edition> <atomic_supply> <decimals> <metadata_hash|none> <metadata_reference|none> <collection_id|none>");
+  const char* USAGE_ASSET_TRANSFER("asset_transfer <asset_id> <address> <atomic_amount>");
+  const char* USAGE_ASSET_BURN("asset_burn <asset_id> <atomic_amount>");
+  const char* USAGE_ASSET_LIST("asset_list");
   const char* USAGE_ASSET_INSPECT("asset_inspect <filename>");
   const char* USAGE_EXPORT_KEY_IMAGES("export_key_images [all] <filename>");
   const char* USAGE_IMPORT_KEY_IMAGES("import_key_images <filename>");
@@ -3683,6 +3686,18 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_issue, _1),
                            tr(USAGE_ASSET_ISSUE),
                            tr("Create and submit a token or NFT issuance transaction after the asset hard fork activates."));
+  m_cmd_binder.set_handler("asset_transfer",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_transfer, _1),
+                           tr(USAGE_ASSET_TRANSFER),
+                           tr("Transfer a confirmed token or NFT output after the asset hard fork activates."));
+  m_cmd_binder.set_handler("asset_burn",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_burn, _1),
+                           tr(USAGE_ASSET_BURN),
+                           tr("Permanently burn a confirmed token or NFT amount after the asset hard fork activates."));
+  m_cmd_binder.set_handler("asset_list",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_list, _1),
+                           tr(USAGE_ASSET_LIST),
+                           tr("List confirmed asset outputs and unspent atomic balances known to this wallet."));
   m_cmd_binder.set_handler("asset_inspect",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::asset_inspect, _1),
                            tr(USAGE_ASSET_INSPECT),
@@ -10410,6 +10425,148 @@ bool simple_wallet::asset_issue(const std::vector<std::string> &args)
   transactions.push_back(std::move(ptx));
   commit_or_save(transactions, m_do_not_relay);
   success_msg_writer() << tr("Asset ID: ") << epee::string_tools::pod_to_hex(asset_id);
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::asset_transfer(const std::vector<std::string> &args)
+{
+  CHECK_IF_BACKGROUND_SYNCING("cannot transfer an asset");
+  if (args.size() != 3)
+  {
+    PRINT_USAGE(USAGE_ASSET_TRANSFER);
+    return true;
+  }
+  crypto::hash asset_id{};
+  uint64_t amount = 0;
+  cryptonote::address_parse_info recipient;
+  if (!epee::string_tools::hex_to_pod(args[0], asset_id))
+  {
+    fail_msg_writer() << tr("asset ID must be a 64-character hexadecimal hash");
+    return true;
+  }
+  if (!cryptonote::get_account_address_from_str_or_url(recipient, m_wallet->nettype(), args[1], oa_prompter))
+  {
+    fail_msg_writer() << tr("invalid asset recipient address");
+    return true;
+  }
+  if (!epee::string_tools::get_xtype_from_string(amount, args[2]) || amount == 0)
+  {
+    fail_msg_writer() << tr("asset amount must be a positive atomic-unit integer");
+    return true;
+  }
+
+  SCOPED_WALLET_UNLOCK();
+  tools::wallet2::pending_tx ptx;
+  std::string error;
+  if (!m_wallet->create_asset_transfer_transaction(asset_id, recipient.address,
+        recipient.is_subaddress, amount, 0, m_wallet->get_min_ring_size() - 1,
+        m_wallet->get_default_priority(), m_current_subaddress_account, {}, ptx, &error))
+  {
+    fail_msg_writer() << tr("failed to construct asset transfer transaction: ") << error;
+    return true;
+  }
+  std::ostringstream prompt;
+  prompt << tr("Asset ID: ") << args[0] << ENDL
+         << tr("Atomic amount: ") << amount << ENDL
+         << tr("Native transaction fee: ") << print_money(ptx.fee) << ENDL
+         << tr("Submit this asset transfer?");
+  const std::string accepted = input_line(prompt.str(), true);
+  if (std::cin.eof() || !command_line::is_yes(accepted))
+  {
+    fail_msg_writer() << tr("asset transfer cancelled");
+    return true;
+  }
+  std::vector<tools::wallet2::pending_tx> transactions;
+  transactions.push_back(std::move(ptx));
+  commit_or_save(transactions, m_do_not_relay);
+  success_msg_writer() << tr("Asset transfer submitted for asset ") << args[0];
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::asset_burn(const std::vector<std::string> &args)
+{
+  CHECK_IF_BACKGROUND_SYNCING("cannot burn an asset");
+  if (args.size() != 2)
+  {
+    PRINT_USAGE(USAGE_ASSET_BURN);
+    return true;
+  }
+  crypto::hash asset_id{};
+  uint64_t amount = 0;
+  if (!epee::string_tools::hex_to_pod(args[0], asset_id))
+  {
+    fail_msg_writer() << tr("asset ID must be a 64-character hexadecimal hash");
+    return true;
+  }
+  if (!epee::string_tools::get_xtype_from_string(amount, args[1]) || amount == 0)
+  {
+    fail_msg_writer() << tr("burn amount must be a positive atomic-unit integer");
+    return true;
+  }
+
+  SCOPED_WALLET_UNLOCK();
+  tools::wallet2::pending_tx ptx;
+  std::string error;
+  const cryptonote::account_public_address self = m_wallet->get_subaddress({m_current_subaddress_account, 0});
+  if (!m_wallet->create_asset_transfer_transaction(asset_id, self,
+        m_current_subaddress_account != 0, 0, amount, m_wallet->get_min_ring_size() - 1,
+        m_wallet->get_default_priority(), m_current_subaddress_account, {}, ptx, &error))
+  {
+    fail_msg_writer() << tr("failed to construct asset burn transaction: ") << error;
+    return true;
+  }
+  std::ostringstream prompt;
+  prompt << tr("Asset ID: ") << args[0] << ENDL
+         << tr("Atomic amount to destroy permanently: ") << amount << ENDL
+         << tr("Native transaction fee: ") << print_money(ptx.fee) << ENDL
+         << tr("THIS BURN CANNOT BE UNDONE. Submit it?");
+  const std::string accepted = input_line(prompt.str(), true);
+  if (std::cin.eof() || !command_line::is_yes(accepted))
+  {
+    fail_msg_writer() << tr("asset burn cancelled");
+    return true;
+  }
+  std::vector<tools::wallet2::pending_tx> transactions;
+  transactions.push_back(std::move(ptx));
+  commit_or_save(transactions, m_do_not_relay);
+  success_msg_writer() << tr("Asset burn submitted for asset ") << args[0];
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::asset_list(const std::vector<std::string> &args)
+{
+  if (!args.empty())
+  {
+    PRINT_USAGE(USAGE_ASSET_LIST);
+    return true;
+  }
+  struct totals { uint64_t amount = 0; size_t unspent = 0; size_t spent = 0; bool overflow = false; };
+  std::map<crypto::hash, totals> assets;
+  for (const auto &output : m_wallet->get_asset_transfers())
+  {
+    totals &total = assets[output.m_asset_id];
+    if (output.m_spent)
+      ++total.spent;
+    else
+    {
+      ++total.unspent;
+      if (output.m_amount > std::numeric_limits<uint64_t>::max() - total.amount)
+        total.overflow = true;
+      else if (!total.overflow)
+        total.amount += output.m_amount;
+    }
+  }
+  if (assets.empty())
+  {
+    success_msg_writer() << tr("No confirmed asset outputs are known to this wallet.");
+    return true;
+  }
+  for (const auto &entry : assets)
+    success_msg_writer() << epee::string_tools::pod_to_hex(entry.first)
+      << "  " << tr("unspent atomic amount: ")
+      << (entry.second.overflow ? tr("overflow") : std::to_string(entry.second.amount))
+      << "  " << tr("unspent outputs: ") << entry.second.unspent
+      << "  " << tr("spent outputs: ") << entry.second.spent;
   return true;
 }
 //----------------------------------------------------------------------------------------------------

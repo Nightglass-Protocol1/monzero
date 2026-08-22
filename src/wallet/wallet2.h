@@ -274,6 +274,8 @@ private:
       uint64_t m_amount = 0;
       rct::key m_mask{};
       cryptonote::subaddress_index m_subaddr_index{};
+      rct::key m_destination{};
+      crypto::public_key m_tx_public_key{};
       crypto::key_image m_key_image{};
       bool m_key_image_known = false;
       bool m_spent = false;
@@ -297,10 +299,15 @@ private:
           a & m_spent;
           a & m_spent_height;
         }
+        if (ver >= 2)
+        {
+          a & m_destination;
+          a & m_tx_public_key;
+        }
       }
 
       BEGIN_SERIALIZE_OBJECT()
-        VERSION_FIELD(1)
+        VERSION_FIELD(2)
         FIELD(m_asset_id)
         FIELD(m_output_id)
         FIELD(m_txid)
@@ -315,6 +322,10 @@ private:
         FIELD(m_key_image_known)
         FIELD(m_spent)
         VARINT_FIELD(m_spent_height)
+        if (version < 2)
+          return true;
+        FIELD(m_destination)
+        FIELD(m_tx_public_key)
       END_SERIALIZE()
     };
 
@@ -1721,6 +1732,18 @@ private:
       pending_tx& ptx,
       crypto::hash& asset_id,
       std::string* error = nullptr);
+    bool create_asset_transfer_transaction(
+      const crypto::hash& asset_id,
+      const cryptonote::account_public_address& recipient,
+      bool recipient_is_subaddress,
+      uint64_t transfer_amount,
+      uint64_t burn_amount,
+      size_t fake_outs_count,
+      uint32_t priority,
+      uint32_t subaddr_account,
+      std::set<uint32_t> subaddr_indices,
+      pending_tx& ptx,
+      std::string* error = nullptr);
 
     // Import/Export wallet data
     std::tuple<uint64_t, uint64_t, std::vector<tools::wallet2::exported_transfer_details>> export_outputs(bool all = false, uint32_t start = 0, uint32_t count = 0xffffffff) const;
@@ -2226,7 +2249,7 @@ private:
   };
 }
 BOOST_CLASS_VERSION(tools::wallet2, 32)
-BOOST_CLASS_VERSION(tools::wallet2::asset_transfer_details, 1)
+BOOST_CLASS_VERSION(tools::wallet2::asset_transfer_details, 2)
 BOOST_CLASS_VERSION(tools::wallet2::transfer_details, 12)
 BOOST_CLASS_VERSION(tools::wallet2::multisig_info, 1)
 BOOST_CLASS_VERSION(tools::wallet2::multisig_info::LR, 0)

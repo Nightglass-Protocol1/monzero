@@ -3459,7 +3459,9 @@ namespace cryptonote
     const connection_context *ctx)
   {
     RPC_TRACKER(get_asset_outputs);
-    if (req.count == 0 || req.count > 1000)
+    const bool selected = !req.indices.empty() || !req.output_ids.empty();
+    if ((!selected && (req.count == 0 || req.count > 1000))
+        || req.indices.size() + req.output_ids.size() > 1000)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
       error_resp.message = "Asset output result count must be between 1 and 1000";
@@ -3488,10 +3490,48 @@ namespace cryptonote
         return std::memcmp(&left.id, &right.id, sizeof(left.id)) < 0;
       });
       res.total = records.size();
-      const uint64_t end = std::min<uint64_t>(records.size(),
-        req.offset > std::numeric_limits<uint64_t>::max() - req.count
-          ? std::numeric_limits<uint64_t>::max() : req.offset + req.count);
-      for (uint64_t index = req.offset; index < end; ++index)
+      std::set<size_t> selected_indices;
+      if (selected)
+      {
+        for (uint64_t index : req.indices)
+        {
+          if (index >= records.size())
+          {
+            error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+            error_resp.message = "Asset output index is out of range";
+            return false;
+          }
+          selected_indices.insert(static_cast<size_t>(index));
+        }
+        for (const std::string &text : req.output_ids)
+        {
+          crypto::hash id{};
+          if (!epee::string_tools::hex_to_pod(text, id))
+          {
+            error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+            error_resp.message = "Asset output id must be a 32-byte hexadecimal value";
+            return false;
+          }
+          const auto found = std::find_if(records.begin(), records.end(),
+            [&id](const stored &record) { return record.id == id; });
+          if (found == records.end())
+          {
+            error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+            error_resp.message = "Requested asset output id was not found";
+            return false;
+          }
+          selected_indices.insert(static_cast<size_t>(found - records.begin()));
+        }
+      }
+      else
+      {
+        const uint64_t end = std::min<uint64_t>(records.size(),
+          req.offset > std::numeric_limits<uint64_t>::max() - req.count
+            ? std::numeric_limits<uint64_t>::max() : req.offset + req.count);
+        for (uint64_t index = req.offset; index < end; ++index)
+          selected_indices.insert(static_cast<size_t>(index));
+      }
+      for (size_t index : selected_indices)
       {
         const stored& record = records[index];
         COMMAND_RPC_GET_ASSET_OUTPUTS::entry entry{};

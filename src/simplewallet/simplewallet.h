@@ -218,6 +218,9 @@ namespace cryptonote
     bool verify(const std::vector<std::string> &args);
     bool asset_create(const std::vector<std::string> &args);
     bool asset_issue(const std::vector<std::string> &args);
+    bool asset_transfer(const std::vector<std::string> &args);
+    bool asset_burn(const std::vector<std::string> &args);
+    bool asset_list(const std::vector<std::string> &args);
     bool asset_inspect(const std::vector<std::string> &args);
     bool export_key_images(const std::vector<std::string> &args);
     bool import_key_images(const std::vector<std::string> &args);

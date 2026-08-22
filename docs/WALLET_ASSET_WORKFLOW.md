@@ -1,4 +1,4 @@
-# Offline asset issuance workflow
+# Wallet asset workflow
 
 Status: experimental and inactive
 
@@ -67,3 +67,39 @@ envelope, displays the permanent asset ID and fee, and asks for confirmation
 before relay. It refuses inactive daemons, light wallets, watch-only wallets,
 multisig wallets, and hardware wallets. With `--do-not-relay`, it uses the
 wallet's existing raw-transaction save path instead of submission.
+
+Each issuance creates a 16-output same-asset anonymity pool. The recipient's
+funded output is accompanied by zero-value blinded outputs so even a unique NFT
+has enough members for the fixed ownership ring.
+
+## View confirmed holdings
+
+After synchronizing the wallet, run:
+
+```text
+asset_list
+```
+
+The command groups confirmed outputs by asset ID and reports raw unspent atomic
+amounts plus spent/unspent output counts. It deliberately does not fetch or
+trust external metadata, so display precision and names are not applied.
+
+## Transfer or burn after activation
+
+```text
+asset_transfer <asset_id> <address> <atomic_amount>
+asset_burn <asset_id> <atomic_amount>
+```
+
+Both commands select a confirmed wallet-owned output, retrieve a bounded set of
+ring members by index/output ID, authenticate the real output against its
+wallet opening, construct a confidential transfer proof, and pay the native
+transaction fee from the wallet. Change returns to the active account. A burn
+permanently removes the requested amount and requires an explicit warning and
+confirmation before submission.
+
+The current constructor is intentionally limited to one asset input. A wallet
+therefore needs one unspent asset output large enough for the transfer plus
+burn amount. Light, watch-only, background, multisig, and hardware wallets are
+not supported. These paths fail closed before HF17 activates and still require
+activated-chain restoration/reorg tests and independent cryptographic review.

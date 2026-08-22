@@ -11,7 +11,7 @@ when they are outside the source repository.
 ## Verified in the current working tree
 
 - The complete CMake build succeeds with the configured local toolchain.
-- All 1,295 unit tests pass in one run with workspace-backed temporary storage,
+- All 1,296 unit tests pass in one run with workspace-backed temporary storage,
   including protected Monzero consensus vectors and
   the inactive asset, recipient-restoration, and persistent-state tests.
 - All 18 default RPC functional tests pass in one clean run. This covers wallet
@@ -63,6 +63,12 @@ when they are outside the source repository.
   rules. A verified single-input primitive now constructs confidential asset
   transfers and explicit burns, pads the successor anonymity pool, proves
   amount/mask conservation, and emits a stable-key-image CLSAG ownership proof.
+- The full software wallet can construct activation-gated single-input asset
+  transfers and irreversible burns after authenticating the real ring member.
+  `asset_transfer`, `asset_burn`, and `asset_list` expose submission and raw
+  confirmed-balance workflows in the CLI; spend-restoration material is stored
+  in the versioned encrypted wallet cache. Activated-chain end-to-end coverage
+  and multi-input asset coin selection remain unfinished.
 - Website copies of the Genesis pre2 Linux and Windows archives are byte-for-
   byte identical to `dist/`; their outer SHA-256 files verify and all website
   download links resolve locally.
@@ -99,12 +105,12 @@ pre2.
 - Add the asset creation/inspection workflow to the GUI. The CLI can export and
   validate canonical signed fungible, NFT, collection, and edition artifacts,
   and its direct issuance command becomes usable only after HF17 activation.
-- Complete wallet asset spend-state/key-image tracking, transfer and burn
-  construction, metadata retrieval, and ownership workflows for fungible
-  tokens, NFTs, collections, and editions. Prove cache round trips and seed
-  restoration against an activated-chain fixture. Direct fixed-supply creation
-  and confirmed owned-output discovery are wired, but the broader asset wallet
-  is not yet complete.
+- Complete multi-input asset coin selection, authenticated metadata retrieval,
+  and richer ownership workflows for fungible tokens, NFTs, collections, and
+  editions. Prove transfers, burns, cache round trips, seed restoration, and
+  reorg handling against an activated-chain fixture. Direct fixed-supply
+  creation, confirmed owned-output discovery, and single-input spending are
+  wired, but the broader asset wallet is not yet complete.
 - Finalize supported-platform, migration, rollback, upgrade, and known-
   limitation documentation for the chosen release candidate.
 - Produce a strict-verifier-compatible Linux candidate and an equivalent

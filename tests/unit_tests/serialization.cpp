@@ -796,6 +796,44 @@ TEST(Serialization, portability_wallet)
   }
 }
 
+TEST(Serialization, wallet_asset_transfer_details_round_trip)
+{
+  tools::wallet2::asset_transfer_details original;
+  original.m_asset_id.data[0] = 1;
+  original.m_output_id.data[0] = 2;
+  original.m_txid.data[0] = 3;
+  original.m_block_height = 44;
+  original.m_output_index = 5;
+  original.m_amount = 600;
+  original.m_mask = rct::skGen();
+  original.m_subaddr_index = {7, 8};
+  original.m_destination = rct::skGen();
+  original.m_tx_public_key.data[0] = 9;
+  original.m_key_image.data[0] = 10;
+  original.m_key_image_known = true;
+  original.m_spent = true;
+  original.m_spent_height = 55;
+
+  cryptonote::blobdata blob;
+  ASSERT_TRUE(serialization::dump_binary(original, blob));
+  tools::wallet2::asset_transfer_details restored;
+  ASSERT_TRUE(serialization::parse_binary(blob, restored));
+  EXPECT_EQ(original.m_asset_id, restored.m_asset_id);
+  EXPECT_EQ(original.m_output_id, restored.m_output_id);
+  EXPECT_EQ(original.m_txid, restored.m_txid);
+  EXPECT_EQ(original.m_block_height, restored.m_block_height);
+  EXPECT_EQ(original.m_output_index, restored.m_output_index);
+  EXPECT_EQ(original.m_amount, restored.m_amount);
+  EXPECT_EQ(original.m_mask, restored.m_mask);
+  EXPECT_EQ(original.m_subaddr_index, restored.m_subaddr_index);
+  EXPECT_EQ(original.m_destination, restored.m_destination);
+  EXPECT_EQ(original.m_tx_public_key, restored.m_tx_public_key);
+  EXPECT_EQ(original.m_key_image, restored.m_key_image);
+  EXPECT_EQ(original.m_key_image_known, restored.m_key_image_known);
+  EXPECT_EQ(original.m_spent, restored.m_spent);
+  EXPECT_EQ(original.m_spent_height, restored.m_spent_height);
+}
+
 #define OUTPUT_EXPORT_FILE_MAGIC "Monero output export\003"
 TEST(Serialization, portability_outputs)
 {
