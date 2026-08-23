@@ -371,6 +371,12 @@ when they are outside the source repository.
   address, scope, prohibited secret material, acknowledgement targets, and
   coordinated-disclosure process. Email is explicitly identified as lacking
   end-to-end encryption until a dedicated security OpenPGP key is published.
+  A TLS-authenticated self-delivery test succeeded; the received message was
+  signed with IONOS DKIM selector `s1-ionos` for `monzero.org`, and its
+  authentication results reported DKIM, SPF, and DMARC alignment passing. The
+  domain's DMARC policy remains monitoring-only (`p=none`); enforcement must
+  not be raised until normal mail flow is observed and the remaining
+  IONOS-recommended DKIM selector is published.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
