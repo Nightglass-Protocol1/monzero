@@ -256,6 +256,11 @@ when they are outside the source repository.
   Windows, and source SHA-256 hashes, and the downloaded source package passes
   full verification. The six replaced live files are retained at
   `/home/www/Monzero-backup-20260823T094426Z-source-status` for rollback.
+- Webspace deployment access now uses a dedicated ED25519 key with fingerprint
+  `SHA256:zBU44whbE/eHScuAlbue/zcFufKRL5kTmqGrT/IMeFQ`. It was appended without
+  replacing the existing operator key, and fresh key-only SSH and SFTP sessions
+  both succeed. The password disclosed during deployment is no longer required
+  and must be rotated.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
