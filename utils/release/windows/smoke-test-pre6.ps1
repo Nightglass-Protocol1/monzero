@@ -94,14 +94,27 @@ try {
         "--rpc-bind-ip=127.0.0.1", "--rpc-bind-port=$rpcPort",
         "--offline", "--no-igd", "--non-interactive"
     )
-    $daemon = Start-Process -FilePath $daemonPath -ArgumentList $arguments -PassThru `
-        -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+    # Start-Process on Windows PowerShell 5.1 can lose ExitCode when output is
+    # redirected. A background job owns the native process and returns
+    # $LASTEXITCODE as its only pipeline value after the process exits.
+    $daemonConfig = [pscustomobject]@{
+        Path = $daemonPath
+        Arguments = $arguments
+        StdoutLog = $stdoutLog
+        StderrLog = $stderrLog
+    }
+    $daemon = Start-Job -ArgumentList $daemonConfig -ScriptBlock {
+        param($config)
+        & $config.Path @($config.Arguments) 1> $config.StdoutLog 2> $config.StderrLog
+        [int]$LASTEXITCODE
+    }
 
     $info = $null
     $rpcUrl = "http://127.0.0.1:$rpcPort/get_info"
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
-        if ($daemon.HasExited) {
-            throw "monzerod.exe exited before RPC became ready (code $($daemon.ExitCode))"
+        if ($daemon.State -ne "Running") {
+            $earlyOutput = @(Receive-Job -Job $daemon -ErrorAction SilentlyContinue)
+            throw "monzerod.exe exited before RPC became ready (job state $($daemon.State), output: $earlyOutput)"
         }
         try {
             $info = Invoke-RestMethod -Method Post -Uri $rpcUrl -ContentType "application/json" `
@@ -117,11 +130,19 @@ try {
 
     Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:$rpcPort/stop_daemon" `
         -ContentType "application/json" -Body "{}" -TimeoutSec 5 | Out-Null
-    if (-not $daemon.WaitForExit(10000)) {
+    $completedJob = Wait-Job -Job $daemon -Timeout 10
+    if (-not $completedJob) {
         throw "monzerod.exe did not stop cleanly through RPC"
     }
-    if ($daemon.ExitCode -ne 0) {
-        throw "monzerod.exe exited with code $($daemon.ExitCode)"
+    $jobOutput = @(Receive-Job -Job $daemon)
+    if ($daemon.State -ne "Completed") {
+        throw "monzerod.exe job ended in unexpected state $($daemon.State)"
+    }
+    $daemonExitCode = 0
+    if ($jobOutput.Count -ne 1 -or
+        -not [int]::TryParse([string]$jobOutput[0], [ref]$daemonExitCode) -or
+        $daemonExitCode -ne 0) {
+        throw "monzerod.exe did not return a successful numeric exit code: $jobOutput"
     }
 
     $evidence = [ordered]@{
@@ -150,8 +171,11 @@ try {
     Write-Host "Native Windows smoke test passed"
     Write-Host "Evidence: $EvidencePath"
 } finally {
-    if ($daemon -and -not $daemon.HasExited) {
-        Stop-Process -Id $daemon.Id -Force -ErrorAction SilentlyContinue
+    if ($daemon) {
+        if ($daemon.State -eq "Running") {
+            Stop-Job -Job $daemon -ErrorAction SilentlyContinue
+        }
+        Remove-Job -Job $daemon -Force -ErrorAction SilentlyContinue
     }
     if ($passed) {
         Remove-Item -LiteralPath $workDir -Recurse -Force

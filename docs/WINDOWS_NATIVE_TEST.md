@@ -23,7 +23,7 @@ Expected values:
 
 ```text
 ZIP:    9d6fb20055a1e1e89625f8565af13be6f9140275de943c5a41a886d8aea87405
-SCRIPT: bee78516fed4560a3feba77ba97574eb180cbf90060111bfb1f4511fe673227c
+SCRIPT: 7fec2c0940b13e5b9e30cc40805ddd2bb62cf0034fb999f80d23426de9bc74ae
 ```
 
 Read the script before executing it. It creates a temporary directory,

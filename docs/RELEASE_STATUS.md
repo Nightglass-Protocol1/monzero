@@ -396,15 +396,20 @@ when they are outside the source repository.
   exact gzip type and size, loaded homepage/explorer assets, and received valid
   node-status JSON. The prior `.htaccess` is retained server-side as
   `.htaccess.before-https-20260823` for rollback.
-- A checksum-pinned PowerShell harness now prepares the outstanding native
-  Windows pre6 test without weakening it into Wine or cross-build evidence. It
+- A checksum-pinned PowerShell harness completed the native Windows pre6
+  command-line smoke test without weakening it into Wine or cross-build evidence. It
   verifies the exact public ZIP and every inner package hash, launches all
   three executables, creates a fresh offline daemon on random loopback ports,
   validates local RPC and mainnet identity, requests clean shutdown, and emits
-  machine-readable host and result evidence. PowerShell parsing passes, and a
-  non-Windows run fails closed at the native-platform guard. The harness itself
-  still requires execution by a clean native Windows tester before that release
-  gate can be checked.
+  machine-readable host and result evidence. On 2026-08-23, the exact published
+  archive passed on native 64-bit Windows 11 build 26200 under Windows
+  PowerShell 5.1: all three executables reported source revision `d4cac3627`,
+  the fresh offline mainnet daemon returned RPC status `OK` at height 1, and it
+  shut down cleanly through RPC. The retained evidence SHA-256 is
+  `8deaefa9e82be79e9dc5be7d77839708e6d47d384c29c16da169ff3bfc5de5e9`.
+  This closes the exact archive's native command-line launch/RPC gate, but does
+  not cover mining scripts, GUI behavior, wallet recovery, synchronization, or
+  independent reproduction.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -426,7 +431,7 @@ Windows system. Genesis pre6 replaces pre5's compatibility-limited Linux
 archive with matching pinned Linux and Windows builds that are reproducible
 across clean local build directories and pass the strict package gates. It is
 still not a production release because separately trusted reproduction,
-signing, a security audit, native clean-Windows testing, and the remaining
+signing, a security audit, broader independent clean-system testing, and the remaining
 network-readiness requirements have not been completed. None of these archives
 may be promoted as stable without satisfying the remaining external release
 gates.
