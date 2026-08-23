@@ -434,6 +434,28 @@ when they are outside the source repository.
   console. The retained JSON evidence has SHA-256
   `c89c3dbcd41bc5632d3a5a96c24b5f38718d7e0dcd63e901caf93cb43796d6a1`.
   This remains operator evidence, not independent reproduction or audit.
+- Genesis pre7 is deployed on `https://monzero.org` as an explicitly unsigned,
+  unaudited prerelease. The live metadata names source commit
+  `38914bf1347781dc6e0ead4a786e3607cc8ebeac`, and complete HTTPS downloads of
+  the Linux, Windows, and source archives reproduce the published SHA-256
+  digests and expected byte sizes. The public Windows network-smoke harness is
+  byte-identical to the tested script. HTTP security headers, download MIME
+  types, the homepage, explorer, and both POST-only status APIs were verified
+  after deployment. The preceding webspace state is retained at
+  `/home/www/Monzero-backup-20260823T1812Z-pre7` for rollback.
+- Both IONOS public nodes now run the exact pre7 Linux daemon from the published
+  archive and report `0.18.5.1-38914bf13`. The European deployment can be
+  rolled back from `/var/backups/monzero-pre7-20260823T1814Z`; the US deployment
+  can be rolled back from `/var/backups/monzero-pre7-20260823T1815Z`. Each
+  systemd service is active and synchronized at height 1,040 with canonical
+  top hash
+  `44029426d863f954745a73322dafdae3370299772e2990abd9721ea0b88067af`,
+  and the nodes maintain their bidirectional P2P relationship. Operator-local
+  readiness checks and the public website API agree that synchronization and
+  peer-count requirements pass but the latest block is more than three hours
+  old, so the freshness gate correctly fails and the website reports
+  `network_ready=false`. This is a live mining/network condition rather than a
+  daemon deployment failure.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
