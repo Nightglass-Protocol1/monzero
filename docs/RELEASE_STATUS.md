@@ -217,9 +217,8 @@ when they are outside the source repository.
   release-readiness gate. Local PHP and JavaScript syntax checks pass, and a
   live proxy smoke reports the current synchronized daemon as
   `network_ready: false` and `tip_fresh: false`. The homepage and explorer are
-  prepared to label this state “Network tip stale” instead of implying that a
-  synchronized process necessarily means a ready network. Deployment of this
-  cache-busted update remains pending authenticated webspace access.
+  deployed with the cache-busted “Network tip stale” state instead of implying
+  that a synchronized process necessarily means a ready network.
 - The VPS now separates its RPC surfaces: restricted public RPC remains on
   `0.0.0.0:6175`, while unrestricted operator RPC is bound only to
   `127.0.0.1:6177`. The on-host readiness gate confirms the local endpoint is
@@ -244,12 +243,19 @@ when they are outside the source repository.
   `a958217d92418d35f59fedb2734dbb1162562876ef0896f74a7d42e94789beca`;
   the source verifier passes over 4,703 archive entries and the release
   publication verifier binds its exact 21,182,274-byte size, digest, and source
-  commit alongside the two binary artifacts. The website download surface and
-  pre5 JSON are staged for this package, but public upload remains pending
-  authenticated IONOS webspace access.
-- The staged homepage no longer hard-codes “Public node online” in its hero
+  commit alongside the two binary artifacts. The source package, checksum,
+  download surface, and byte-identical pre5 JSON are deployed publicly.
+- The homepage no longer hard-codes “Public node online” in its hero
   banner. It uses a static experimental-prerelease label and delegates live
   readiness claims exclusively to the stale-tip-aware status panel.
+- The 2026-08-23 webspace deployment was performed from a hash-verified staging
+  directory, with HTML entry points replaced last. Public HTTPS checks confirm
+  the cache-busted homepage and explorer scripts, truthful stale-tip API state,
+  exact metadata equality, and the expected MIME types and byte sizes for all
+  three downloads. Complete public downloads reproduce the published Linux,
+  Windows, and source SHA-256 hashes, and the downloaded source package passes
+  full verification. The six replaced live files are retained at
+  `/home/www/Monzero-backup-20260823T094426Z-source-status` for rollback.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
