@@ -261,6 +261,17 @@ when they are outside the source repository.
   replacing the existing operator key, and fresh key-only SSH and SFTP sessions
   both succeed. The password disclosed during deployment is no longer required
   and must be rotated.
+- A locally mined block advanced the public network to height 1,024, removing
+  the stale-tip failure while preserving one-thread battery-aware background
+  mining. The local daemon and public node reported the same top hash,
+  `c621d3172dbbe1e941674a28df47f6ebb10b05dfe6381774c3cee3a3533e894e`.
+  The remaining live readiness failure is the single connected peer. The public
+  API, homepage, and explorer now apply the same minimum of two peers as the
+  server release gate: at height 1,024 the verified HTTPS response reported
+  `tip_fresh=true`, `peer_ready=false`, and `network_ready=false`, and both UIs
+  label the condition “Network under-peered”. The five replaced files can be
+  rolled back from
+  `/home/www/Monzero-backup-20260823T095331Z-peer-readiness`.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

@@ -47,6 +47,7 @@ function updateStats(info, latestHeader = null) {
     ? Math.floor(Date.now() / 1000 - latestHeader.timestamp)
     : null;
   const tipFresh = tipAgeSeconds !== null && tipAgeSeconds <= 900 && tipAgeSeconds >= -300;
+  const peerCount = (info.incoming_connections_count || 0) + (info.outgoing_connections_count || 0);
   if (info.status !== 'OK') {
     $('#node-label').textContent = info.status || 'Node unavailable';
     $('#node-dot').className = 'offline';
@@ -55,6 +56,9 @@ function updateStats(info, latestHeader = null) {
     $('#node-dot').className = 'offline';
   } else if (!tipFresh) {
     $('#node-label').textContent = 'Network tip stale';
+    $('#node-dot').className = 'offline';
+  } else if (peerCount < 2) {
+    $('#node-label').textContent = 'Network under-peered';
     $('#node-dot').className = 'offline';
   } else {
     $('#node-label').textContent = 'Node synchronized';

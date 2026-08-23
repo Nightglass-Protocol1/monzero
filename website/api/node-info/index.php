@@ -62,6 +62,7 @@ if ($response === false || $status !== 200 || !is_array($decoded)) {
 $peerCount = (int)($decoded['incoming_connections_count'] ?? 0)
     + (int)($decoded['outgoing_connections_count'] ?? 0);
 $decoded['connections_hidden'] = !empty($decoded['restricted']) && $peerCount === 0;
+$decoded['peer_ready'] = !$decoded['connections_hidden'] && $peerCount >= 2;
 
 $headerBody = json_encode([
     'jsonrpc' => '2.0',
@@ -82,7 +83,8 @@ $decoded['tip_age_seconds'] = $tipAge;
 $decoded['tip_fresh'] = $tipFresh;
 $decoded['network_ready'] = ($decoded['status'] ?? '') === 'OK'
     && ($decoded['synchronized'] ?? false) === true
-    && $tipFresh;
+    && $tipFresh
+    && $decoded['peer_ready'];
 if ($headerStatus !== 200 || !is_array($header)) {
     error_log('Monzero last-block status proxy failed: ' . $headerError);
 }
