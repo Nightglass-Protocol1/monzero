@@ -143,7 +143,7 @@ may hide peer information and is not sufficient evidence for this gate.
 - [ ] Release notes identify experimental and unaudited components
 - [ ] Source commit and signed hashes published
 - [ ] Node, miner, wallet, and service operators receive upgrade instructions
-- [ ] Security contact and disclosure process published
+- [x] Security contact and disclosure process published
 - [ ] Height, fork divergence, peers, RPC, CPU, memory, disk, and logs monitored
 - [ ] Post-release review performed after 24 hours and seven days
 

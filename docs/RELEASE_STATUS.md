@@ -365,6 +365,12 @@ when they are outside the source repository.
   three connections. This closes the two-public-peer operational gate; it does
   not satisfy the stronger production requirement for three independently
   administered seed nodes across at least two providers.
+- The dedicated `security@monzero.org` mailbox was authenticated successfully
+  over TLS against both the IONOS IMAP and SMTP services without sending a
+  message. `SECURITY.md` and the website now publish the private reporting
+  address, scope, prohibited secret material, acknowledgement targets, and
+  coordinated-disclosure process. Email is explicitly identified as lacking
+  end-to-end encryption until a dedicated security OpenPGP key is published.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -415,7 +421,6 @@ gates.
 ## External evidence required before production release
 
 - Release version/codename, supported platforms, and final source commit.
-- A working private security-reporting contact and published disclosure policy.
 - An offline release-signing key with a publicly verified fingerprint.
 - At least one independent reviewer and a second reproducible-build operator.
 - Three independently administered seed nodes across at least two providers

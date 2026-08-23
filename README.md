@@ -100,8 +100,9 @@ manifests. The current developer packages do not yet satisfy every strict
 release requirement. Do not describe them as production-ready.
 
 Security reports should not include private keys, wallet seeds, or sensitive
-transaction details in a public issue. A dedicated Monzero security contact
-and responsible-disclosure process must be published before production launch.
+transaction details in a public issue. Report vulnerabilities privately to
+[`security@monzero.org`](mailto:security@monzero.org) and follow the
+coordinated-disclosure process in [`SECURITY.md`](SECURITY.md).
 
 ## Contributing
 

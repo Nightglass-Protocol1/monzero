@@ -109,7 +109,7 @@ documented, investigated explanation for every difference.
       mechanism agreed before public launch.
 - [ ] State clearly that Monzero is independent from the Monero project.
 - [ ] Publish supported platforms, known limitations, and audit status.
-- [ ] Create security contact and responsible-disclosure instructions.
+- [x] Create security contact and responsible-disclosure instructions.
 - [ ] Remove inherited links that direct users to unrelated Monero services.
 
 Acceptance: a new operator can verify, install, run, back up, restore, and
