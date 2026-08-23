@@ -31,7 +31,7 @@ function showError(message = '') {
   view.replaceChildren(fragment);
 }
 
-function updateStats(info) {
+function updateStats(info, latestHeader = null) {
   chainInfo = info;
   $('#stat-height').textContent = number.format(info.height || 0);
   $('#stat-difficulty').textContent = number.format(info.difficulty || 0);
@@ -43,8 +43,23 @@ function updateStats(info) {
   $('#stat-connections').title = info.restricted
     ? 'Connection counts are intentionally hidden by the public restricted RPC.'
     : 'Current incoming and outgoing P2P connections.';
-  $('#node-label').textContent = info.status === 'OK' ? 'Node online' : info.status;
-  $('#node-dot').className = info.status === 'OK' ? 'online' : 'offline';
+  const tipAgeSeconds = latestHeader?.timestamp
+    ? Math.floor(Date.now() / 1000 - latestHeader.timestamp)
+    : null;
+  const tipFresh = tipAgeSeconds !== null && tipAgeSeconds <= 900 && tipAgeSeconds >= -300;
+  if (info.status !== 'OK') {
+    $('#node-label').textContent = info.status || 'Node unavailable';
+    $('#node-dot').className = 'offline';
+  } else if (info.synchronized !== true) {
+    $('#node-label').textContent = 'Node unsynchronized';
+    $('#node-dot').className = 'offline';
+  } else if (!tipFresh) {
+    $('#node-label').textContent = 'Network tip stale';
+    $('#node-dot').className = 'offline';
+  } else {
+    $('#node-label').textContent = 'Node synchronized';
+    $('#node-dot').className = 'online';
+  }
 }
 
 function headerTitle(kicker, title) {
@@ -56,7 +71,7 @@ async function showBlocks() {
   $('.section-title').innerHTML = `<div><p class="eyebrow">Live ledger</p><h2>Recent blocks</h2></div><button id="refresh" class="ghost" type="button">Refresh</button>`;
   try {
     const result = await api('blocks', {limit: 15});
-    updateStats(result.info);
+    updateStats(result.info, result.headers[0] || null);
     view.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Height</th><th>Age</th><th>Block hash</th><th>Transactions</th><th>Difficulty</th><th>Reward</th><th>Size</th></tr></thead><tbody>${result.headers.map((block) => `
       <tr><td><a class="link" href="#/block/${block.height}">${number.format(block.height)}</a></td><td class="muted">${age(block.timestamp)}</td><td><a class="link hash truncate" title="${block.hash}" href="#/block/${block.hash}">${shortHash(block.hash)}</a></td><td>${number.format(block.num_txes || 0)}</td><td class="muted">${number.format(block.difficulty || 0)}</td><td class="reward">${xmz(block.reward)}</td><td class="muted">${number.format(block.block_size || block.block_weight || 0)} B</td></tr>`).join('')}</tbody></table></div>`;
     $('#refresh').addEventListener('click', showBlocks);

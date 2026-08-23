@@ -205,6 +205,21 @@ when they are outside the source repository.
   no more than 900 seconds old, while the restored network has one peer and its
   latest block is approximately seven days old. This recovery establishes
   service availability, not production network readiness.
+- The final Genesis pre5 Windows archive was extracted read-only in a disposable
+  Ubuntu 20.04 container with Wine 5. The daemon, CLI wallet, and wallet RPC
+  executables each loaded, reported the manifest-bound `ab143bbaf` version, and
+  exited successfully for `--version`. A full daemon smoke under Wine could not
+  initialize LMDB on either the container overlay filesystem or tmpfs, returning
+  an I/O error before RPC startup. This is useful PE loader coverage but does
+  not satisfy the clean Windows system test requirement.
+- The website node-status API now obtains the latest block header and applies
+  the same 900-second tip-age and 300-second future-skew thresholds as the
+  release-readiness gate. Local PHP and JavaScript syntax checks pass, and a
+  live proxy smoke reports the current synchronized daemon as
+  `network_ready: false` and `tip_fresh: false`. The homepage and explorer are
+  prepared to label this state “Network tip stale” instead of implying that a
+  synchronized process necessarily means a ready network. Deployment of this
+  cache-busted update remains pending authenticated webspace access.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

@@ -103,6 +103,9 @@ async function updateNodeStatus() {
     } else if (info.synchronized !== true) {
       fields.state.textContent = 'Node unsynchronized';
       fields.dot.className = 'status-dot offline';
+    } else if (info.tip_fresh !== true) {
+      fields.state.textContent = 'Network tip stale';
+      fields.dot.className = 'status-dot offline';
     } else {
       fields.state.textContent = 'Node synchronized';
       fields.dot.className = 'status-dot online';
