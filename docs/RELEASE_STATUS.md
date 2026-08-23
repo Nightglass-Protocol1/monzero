@@ -272,6 +272,19 @@ when they are outside the source repository.
   label the condition “Network under-peered”. The five replaced files can be
   rolled back from
   `/home/www/Monzero-backup-20260823T095331Z-peer-readiness`.
+- Clean-system testing of the exact published pre5 Linux archive found that all
+  three executables require `GLIBC_2.42`; they fail at process loading on the
+  digest-pinned Ubuntu 24.04 image before `--version` can run. The strict Linux
+  verifier now enforces a default maximum requirement of `GLIBC_2.35`, and a
+  repeatable test runs the final archive in a network-isolated, read-only
+  container. Both gates correctly reject pre5. The public homepage and release
+  JSON disclose the `GLIBC 2.42+` limitation and Ubuntu 24.04 incompatibility;
+  the prior files are retained at
+  `/home/www/Monzero-backup-20260823T100042Z-linux-compatibility`. The rebuild
+  audit also found that the Linux depends set relied on an undeclared host zlib
+  development package. zlib 1.3.2 is now pinned by its official SHA-256 in the
+  depends graph. A new Linux candidate must be built and pass both gates before
+  replacing pre5.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -311,7 +324,7 @@ promoted without satisfying the remaining strict and external release gates.
 - Finalize supported-platform, migration, rollback, upgrade, and known-
   limitation documentation for the chosen release candidate.
 - Independently reproduce both strict-verifier-compatible pinned Linux and
-  Windows candidates on separate clean systems.
+Windows candidates on separate clean systems.
 
 ## External evidence required before production release
 

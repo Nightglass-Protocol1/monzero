@@ -90,6 +90,11 @@ if [[ ${RELEASE_STRICT:-0} == 1 ]]; then
     echo "Strict release verification requires readelf" >&2
     exit 1
   }
+  max_glibc=${MONZERO_MAX_GLIBC:-2.35}
+  [[ $max_glibc =~ ^[0-9]+\.[0-9]+$ ]] || {
+    echo "MONZERO_MAX_GLIBC must be a numeric major.minor version" >&2
+    exit 2
+  }
   for binary in "${release_binaries[@]}"; do
     mapfile -t needed < <(readelf -d "$binary" 2>/dev/null |
       sed -n 's/.*Shared library: \[\([^]]*\)\].*/\1/p')
@@ -102,6 +107,12 @@ if [[ ${RELEASE_STRICT:-0} == 1 ]]; then
           ;;
       esac
     done
+    required_glibc=$(readelf --version-info "$binary" 2>/dev/null |
+      grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sed 's/^GLIBC_//' | sort -Vu | tail -n 1)
+    if [[ -n $required_glibc && $(printf '%s\n%s\n' "$max_glibc" "$required_glibc" | sort -V | tail -n 1) != "$max_glibc" ]]; then
+      echo "Strict release verification rejects GLIBC_$required_glibc requirement in $(basename "$binary"); maximum supported is GLIBC_$max_glibc" >&2
+      exit 1
+    fi
   done
   grep -qx 'source_tree_dirty=false' "$root/BUILD-MANIFEST.txt" || {
     echo "Strict release verification rejects a dirty source manifest" >&2

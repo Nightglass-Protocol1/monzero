@@ -81,6 +81,13 @@ unverified build reproducibility, unexpected non-system runtime dependencies,
 debug information, and unstripped executables. Linux binaries may retain the
 minimal glibc-family dynamic dependencies permitted by the strict verifier;
 third-party dependencies must be linked into the candidate.
+Strict Linux verification also rejects symbol requirements newer than
+`GLIBC_2.35` by default. Override `MONZERO_MAX_GLIBC` only when a different
+documented compatibility floor has been explicitly approved. Run
+`utils/release/smoke-test-linux-package.sh` against the exact final archive in
+its digest-pinned, network-isolated Ubuntu 24.04 container before publication;
+an allowlisted library name alone does not prove that its symbol versions are
+portable.
 
 `BINARY_BUILD_REPRODUCIBILITY=verified` may be supplied to the packager only
 after an independent builder has reproduced the exact packaged binaries. The
