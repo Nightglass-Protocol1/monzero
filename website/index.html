@@ -165,29 +165,29 @@
     <section class="download section" id="download">
       <div class="download-card">
         <div>
-          <p class="eyebrow">Genesis pre6</p>
+          <p class="eyebrow">Genesis pre7</p>
           <h2>Download Monzero</h2>
           <p>Experimental command-line builds for Windows and Linux x86-64. Both include the node, command-line wallet, wallet RPC, checksums, release status, and upgrade guidance. The recursively complete source archive contains the exact pinned commit and submodules. The current Windows package does not include the graphical wallet.</p>
-          <p class="release-note">Unsigned and unaudited prerelease software. Two clean local builds produced byte-identical Linux and Windows packages. The Linux archive requires GLIBC 2.29 or newer and passed an isolated clean Ubuntu 24.04 launch test. The Windows archive passed a native Windows 11 command-line smoke test. Separately trusted reproduction, broader clean-system testing, code signing, and an external security audit are still required before a production release.</p>
-          <p class="release-metadata">Source commit <code>d4cac36271387af2b6589208bf2be74e10e5a01f</code> · <a href="releases/genesis-pre6.json">machine-readable release metadata</a></p>
+          <p class="release-note">Unsigned and unaudited prerelease software. Repeated local packaging produced byte-identical Linux, Windows, and source archives. The Linux archive requires GLIBC 2.29 or newer and passed an isolated clean Ubuntu 24.04 launch test. The exact Windows archive passed native Windows 11 checks, empty-directory network synchronization, mining start/stop, and clean console shutdown. Separately trusted reproduction, broader independent testing, code signing, and an external security audit are still required before a production release.</p>
+          <p class="release-metadata">Source commit <code>38914bf1347781dc6e0ead4a786e3607cc8ebeac</code> · <a href="releases/genesis-pre7.json">machine-readable release metadata</a></p>
         </div>
         <div class="download-action">
           <div class="release-download">
-            <a class="button primary wide" href="downloads/monzero-genesis-pre6-windows-x64.zip" download>Windows x64 <span>23 MB · ZIP</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre6-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
-            <code class="hash">9d6fb20055a1e1e89625f8565af13be6f9140275de943c5a41a886d8aea87405</code>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre6-windows-smoke.ps1" download>Native Windows smoke-test script</a>
-            <code class="hash">7fec2c0940b13e5b9e30cc40805ddd2bb62cf0034fb999f80d23426de9bc74ae</code>
+            <a class="button primary wide" href="downloads/monzero-genesis-pre7-windows-x64.zip" download>Windows x64 <span>26 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre7-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
+            <code class="hash">049b4db553d52f592e0a0b05956fbafbec1e37c2672de50d0cde2bfbdffce284</code>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre7-windows-network-smoke.ps1" download>Native Windows network and launcher test</a>
+            <code class="hash">190f5deb38fb3bc9b0b2022704f5854517286ef689b12d5d3cda0dcb0f3d6e16</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre6-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.29+ <span>26 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre6-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
-            <code class="hash">77b7299a7532093eec94411a59f6663451566a6964feecb742a17029eaa0ebaa</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre7-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.29+ <span>26 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre7-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
+            <code class="hash">83476fd3e57a6953003874cac2409916ca1cfaa9677144418de6e535561b789e</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre6-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre6-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
-            <code class="hash">9ebdf1bf68357fc784d6c92370eff94bc9b104ed1e668ae0110de5fcedf48104</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre7-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre7-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
+            <code class="hash">a60c776a70087a997e4c0501638f21fd193d53cb8d56f4704b122e1b1c9f62e6</code>
           </div>
           <p class="unsigned-note">Windows binaries and the optional smoke-test script are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; inspect the script and verify both checksums before running them.</p>
         </div>
@@ -203,7 +203,7 @@
         <details><summary>Why is my mining balance still zero?</summary><p>Monzero currently uses solo mining. You receive a coinbase reward only when your machine finds a block; simply hashing does not create a gradual balance. A found reward remains locked for 60 blocks.</p></details>
         <details><summary>Is Monzero the same network as Monero?</summary><p>No. Monzero is an independent experimental chain with a different genesis block, network ID, ports, address prefixes, ticker, and monetary policy.</p></details>
         <details><summary>Can I reuse my existing seed?</summary><p>No. Create a new wallet and seed exclusively for Monzero. Reusing keys across forks can seriously damage privacy.</p></details>
-        <details><summary>Is this a production release?</summary><p>Not yet. Genesis pre6 is experimental prerelease software. Its clean local builds are reproducible and its Windows command-line package passed a native smoke test, but the packages remain unsigned, lack separately trusted reproduction and broader independent clean-system testing, and the consensus and cryptographic changes have not received an independent audit.</p></details>
+        <details><summary>Is this a production release?</summary><p>Not yet. Genesis pre7 is experimental prerelease software. Its local packaging is deterministic and its exact Linux and Windows archives passed platform smoke tests, but the packages remain unsigned, lack separately trusted reproduction and broader independent clean-system testing, and the consensus and cryptographic changes have not received an independent audit.</p></details>
       </div>
     </section>
   </main>

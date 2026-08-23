@@ -410,6 +410,30 @@ when they are outside the source repository.
   This closes the exact archive's native command-line launch/RPC gate, but does
   not cover mining scripts, GUI behavior, wallet recovery, synchronization, or
   independent reproduction.
+- Genesis pre7 fixes the packaged Windows mining launcher pipeline at source
+  commit `38914bf1347781dc6e0ead4a786e3607cc8ebeac`. Two packages from each
+  platform were byte-for-byte identical: Linux SHA-256
+  `83476fd3e57a6953003874cac2409916ca1cfaa9677144418de6e535561b789e`,
+  Windows SHA-256
+  `049b4db553d52f592e0a0b05956fbafbec1e37c2672de50d0cde2bfbdffce284`,
+  and complete source SHA-256
+  `a60c776a70087a997e4c0501638f21fd193d53cb8d56f4704b122e1b1c9f62e6`.
+  The Linux binaries were rebuilt in the pinned dependency environment on a
+  controlled Ubuntu 20.04 userspace, require no glibc symbol newer than 2.29,
+  expose only the minimal glibc-family runtime dependencies, pass normal
+  package verification, and pass the digest-pinned isolated Ubuntu 24.04
+  launch smoke test. Strict verification stops only at the required external
+  independent-reproduction attestation.
+- The exact pre7 Windows ZIP passed a native Windows 11 build 26200 network
+  and launcher test under Windows PowerShell 5.1. All outer and inner hashes
+  matched; all three executables reported revision `38914bf13`; a fresh data
+  directory synchronized from height 1 to 1040 with canonical top hash
+  `44029426d863f954745a73322dafdae3370299772e2990abd9721ea0b88067af`;
+  the exact `start-mining.bat` and `stop-mining.bat` activated and stopped one
+  RandomX thread; and the exact node launcher shut down cleanly through its
+  console. The retained JSON evidence has SHA-256
+  `c89c3dbcd41bc5632d3a5a96c24b5f38718d7e0dcd63e901caf93cb43796d6a1`.
+  This remains operator evidence, not independent reproduction or audit.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -434,7 +458,10 @@ still not a production release because separately trusted reproduction,
 signing, a security audit, broader independent clean-system testing, and the remaining
 network-readiness requirements have not been completed. None of these archives
 may be promoted as stable without satisfying the remaining external release
-gates.
+gates. Genesis pre7 supersedes pre6 because the exact pre6 mining launcher had
+an invalid PowerShell pipeline escape. Pre7 corrects that launcher and passes
+the exact native network, mining, and shutdown workflow, but remains an
+unsigned, unaudited prerelease with the same external production gates.
 
 ## Repository work still required
 
