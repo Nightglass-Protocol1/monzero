@@ -483,7 +483,10 @@ when they are outside the source repository.
   `peer_ready=true`, `tip_fresh=true`, and `network_ready=true`. This proves
   the deployed pre7 topology can propagate a fresh tip; it is not evidence of
   sustained independent mining, and freshness will lapse again without
-  continuing hash power.
+  continuing hash power. The next timer-driven readiness cycles also passed on
+  US and EU at height 1,042 with three peers and tip ages of 300 and 319
+  seconds, proving the scheduled checks recovered from their earlier truthful
+  stale-tip failures without manual service intervention.
 - Both pre7 VPSs now run a second hardened five-minute systemd timer for
   operational health, separate from consensus/network readiness. It checks the
   service main process, loopback operator RPC identity and synchronization,
