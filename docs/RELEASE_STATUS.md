@@ -519,6 +519,21 @@ when they are outside the source repository.
   changed until the separately trusted release signature, independent binary
   reproduction attestation, resolved security/consensus audit, independent
   infrastructure, and observation-period evidence exist.
+- The website, explorer, security page, and Studio now share the GUI's Monzero
+  Nightshade palette and responsive dark-purple layout. The broken external
+  Studio hostname link was replaced by the deployed same-origin `/app/` route,
+  and its node card now calls the real stale-tip-aware `/api/node-info/`
+  endpoint. Studio's formerly disabled mock forms are a keyboard-accessible
+  local design workspace: token, NFT, collection, and swap inputs update an
+  inspectable preview and download an explicitly unsigned, non-submittable JSON
+  draft. Browser tests cover one-panel visibility, arrow-key tabs, live node
+  data, preview updates, and draft download. No wallet connection, secret-key
+  handling, transaction signing, or chain submission was added. The complete
+  Nightshade surface is deployed at `https://monzero.org`, including the new
+  working `/app/` route; every changed production file is byte-identical to the
+  repository copy, all four public routes return HTTP 200, and a live browser
+  run reports no severe console or CSP errors. The preceding files are retained
+  at `/home/www/Monzero-backup-20260823T1957Z-nightshade` for rollback.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

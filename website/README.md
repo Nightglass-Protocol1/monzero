@@ -1,7 +1,8 @@
 # Monzero website
 
 Website for `monzero.org`, including the PHP-backed block explorer at
-`/explorer/`. It contains no build-time dependencies.
+`/explorer/` and the local-draft asset workspace at `/app/`. It contains no
+build-time dependencies.
 
 ## Preview locally
 
@@ -11,7 +12,9 @@ php -S 127.0.0.1:8080
 ```
 
 Open `http://127.0.0.1:8080` for the website and
-`http://127.0.0.1:8080/explorer/` for the explorer.
+`http://127.0.0.1:8080/explorer/` for the explorer. Studio is available at
+`http://127.0.0.1:8080/app/`; it can preview and download unsigned JSON drafts
+but deliberately has no wallet connection, signing, or submission path.
 
 ## VPS deployment
 
