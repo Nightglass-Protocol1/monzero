@@ -29,3 +29,10 @@ Options -Indexes
 <FilesMatch "\.zip$">
   ForceType application/zip
 </FilesMatch>
+
+<FilesMatch "\.ps1$">
+  ForceType text/plain
+  <IfModule mod_headers.c>
+    Header set Content-Disposition "attachment"
+  </IfModule>
+</FilesMatch>

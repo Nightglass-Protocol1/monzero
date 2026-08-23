@@ -396,6 +396,15 @@ when they are outside the source repository.
   exact gzip type and size, loaded homepage/explorer assets, and received valid
   node-status JSON. The prior `.htaccess` is retained server-side as
   `.htaccess.before-https-20260823` for rollback.
+- A checksum-pinned PowerShell harness now prepares the outstanding native
+  Windows pre6 test without weakening it into Wine or cross-build evidence. It
+  verifies the exact public ZIP and every inner package hash, launches all
+  three executables, creates a fresh offline daemon on random loopback ports,
+  validates local RPC and mainnet identity, requests clean shutdown, and emits
+  machine-readable host and result evidence. PowerShell parsing passes, and a
+  non-Windows run fails closed at the native-platform guard. The harness itself
+  still requires execution by a clean native Windows tester before that release
+  gate can be checked.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
