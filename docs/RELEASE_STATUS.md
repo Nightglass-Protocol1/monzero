@@ -484,6 +484,16 @@ when they are outside the source repository.
   the deployed pre7 topology can propagate a fresh tip; it is not evidence of
   sustained independent mining, and freshness will lapse again without
   continuing hash power.
+- Both pre7 VPSs now run a second hardened five-minute systemd timer for
+  operational health, separate from consensus/network readiness. It checks the
+  service main process, loopback operator RPC identity and synchronization,
+  height and top-hash shape, resident memory, data-volume usage, and recent
+  daemon error-log visibility. Initial sandboxed runs passed at height 1,042:
+  EU used 287 MiB RSS and 3% disk; US used 285 MiB RSS and 3% disk, with no
+  error-level lines in either retained 200-line log window. A forced 1 MiB RSS
+  ceiling produced the required nonzero failure and diagnostic. These journal
+  checks improve host monitoring but do not provide an external alert receiver
+  or close the required 24-hour and seven-day observation periods.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
