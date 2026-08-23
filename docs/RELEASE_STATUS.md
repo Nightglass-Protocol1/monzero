@@ -352,7 +352,10 @@ when they are outside the source repository.
   `5b9646fa17a94650d8898783f255ef5d4c7ea28d96b50ffe134edcca1ca50156`,
   identical to the verified pre6 daemon deployed in Europe. Both nodes maintain
   priority connections to each other, and public DNS resolution plus inbound
-  P2P reachability were verified through the new hostname.
+  P2P reachability were verified through the new hostname. The repository's
+  hardened five-minute readiness timer is enabled on both VPSs; its first US
+  run completed successfully at height 1,040 with three peers and a 249-second
+  tip age.
 - After block 1,039 was mined with one temporary local CPU thread, the exact
   repository readiness gate passed independently against each VPS's
   operator-local RPC: both reported height 1,040, three P2P connections, and
