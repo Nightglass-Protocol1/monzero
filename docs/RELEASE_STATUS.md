@@ -302,6 +302,23 @@ when they are outside the source repository.
   reproduction by a separately trusted person, code signing, and an external
   security audit remain outstanding; pre6 therefore remains an explicitly
   unsigned and unaudited prerelease.
+- Genesis pre6 is published at `https://monzero.org` from source commit
+  `d4cac36271387af2b6589208bf2be74e10e5a01f`. The public Linux, Windows,
+  and recursively complete source archives have SHA-256 digests
+  `77b7299a7532093eec94411a59f6663451566a6964feecb742a17029eaa0ebaa`,
+  `9d6fb20055a1e1e89625f8565af13be6f9140275de943c5a41a886d8aea87405`,
+  and `9ebdf1bf68357fc784d6c92370eff94bc9b104ed1e668ae0110de5fcedf48104`
+  respectively. Full HTTPS downloads reproduce those hashes, the publication
+  verifier accepts the downloaded metadata and artifacts, and the server
+  returns the expected gzip and ZIP media types and exact byte sizes. The
+  pre6 website rollback is retained at
+  `/home/www/Monzero-backup-20260823T124259Z-pre6`.
+- Promotion of the pre6 daemon to the VPS remains pending. The server reaches
+  SSH and recognizes the installed automation public key, but rejects its
+  signature, so password automation was deliberately not used. External RPC
+  verification still reports mainnet status `OK` at height 1,024, but the tip
+  is stale and the node has only one peer. Consequently both the daemon upgrade
+  and the minimum-two-peer network-readiness gate remain incomplete.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
