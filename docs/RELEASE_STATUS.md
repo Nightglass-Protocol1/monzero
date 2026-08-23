@@ -286,6 +286,22 @@ when they are outside the source repository.
   depends graph. The first clean relink then exposed the same undeclared-host
   dependency for zstd; zstd 1.5.7 is now pinned as well. A new Linux candidate
   must be built and pass both gates before replacing pre5.
+- The Genesis pre6 candidate closes that Linux portability regression. Two
+  clean pinned-dependency Linux builds produced byte-identical daemon, wallet
+  CLI, and wallet RPC executables. Their packages are byte-identical, require
+  no non-system shared libraries, require at most `GLIBC_2.29`, pass strict
+  package verification, and start successfully from the exact final archive
+  in the digest-pinned, network-isolated, read-only Ubuntu 24.04 smoke-test
+  container.
+- Two clean MinGW builds of the matching Genesis pre6 commit produced
+  byte-identical daemon, wallet CLI, and wallet RPC executables and
+  byte-identical Windows ZIP archives. The final ZIP passes strict PE format,
+  embedded-version, manifest, checksum, and imported-DLL verification. Trezor
+  support and its pinned HIDAPI and libusb dependencies were enabled during
+  configuration. Native execution on a clean Windows host, independent
+  reproduction by a separately trusted person, code signing, and an external
+  security audit remain outstanding; pre6 therefore remains an explicitly
+  unsigned and unaudited prerelease.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -303,8 +319,14 @@ but still lacks independent reproduction and signing. Genesis pre5 aligns the
 pinned Linux and Windows command-line packages at the manifest source commit;
 both pass normal verification and deterministic same-machine packaging, but
 neither has been independently reproduced, signed, or tested on a clean
-Windows system. None of these archives is a production release or may be
-promoted without satisfying the remaining strict and external release gates.
+Windows system. Genesis pre6 replaces pre5's compatibility-limited Linux
+archive with matching pinned Linux and Windows builds that are reproducible
+across clean local build directories and pass the strict package gates. It is
+still not a production release because separately trusted reproduction,
+signing, a security audit, native clean-Windows testing, and the remaining
+network-readiness requirements have not been completed. None of these archives
+may be promoted as stable without satisfying the remaining external release
+gates.
 
 ## Repository work still required
 
