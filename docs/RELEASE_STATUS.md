@@ -434,6 +434,18 @@ when they are outside the source repository.
   console. The retained JSON evidence has SHA-256
   `c89c3dbcd41bc5632d3a5a96c24b5f38718d7e0dcd63e901caf93cb43796d6a1`.
   This remains operator evidence, not independent reproduction or audit.
+- A second native Windows harness exercised the exact pre7 wallet RPC from the
+  same published archive. It created a new deterministic software wallet,
+  exported its recovery seed only in process memory, closed it, restored a
+  second wallet from that seed, reproduced the identical Monzero address,
+  refreshed 1,039 blocks through the restricted public node, stored both
+  wallet states, and shut down the RPC cleanly. The successful harness removes
+  its temporary keys and diagnostic directory; the retained seed-free evidence
+  has SHA-256
+  `96efaa1f1091d3a529ff67b0c805f4496b45663e469fdce90456d092245528fb`.
+  This closes native creation and deterministic-restoration coverage for the
+  command-line package, but does not establish funded transfer history, GUI,
+  hardware-wallet, multisig, or offline-signing coverage on Windows.
 - Genesis pre7 is deployed on `https://monzero.org` as an explicitly unsigned,
   unaudited prerelease. The live metadata names source commit
   `38914bf1347781dc6e0ead4a786e3607cc8ebeac`, and complete HTTPS downloads of
