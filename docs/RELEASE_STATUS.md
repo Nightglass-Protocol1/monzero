@@ -343,6 +343,25 @@ when they are outside the source repository.
   was then restored to its prior battery-aware background mode. The website
   now reports `tip_fresh=true`; the exact pre6 readiness check fails solely
   because its single local peer is below the required minimum of two.
+- A second public Genesis pre6 node was deployed from a fresh Ubuntu 26.04
+  installation in the IONOS US region at `node2.monzero.org` (`67.217.247.219`).
+  It runs as the unprivileged `monzero` user under the same hardened systemd
+  unit as the European node, accepts key-only SSH administration, exposes only
+  P2P port 6174, and keeps unrestricted RPC on loopback port 6177. Its daemon
+  SHA-256 is
+  `5b9646fa17a94650d8898783f255ef5d4c7ea28d96b50ffe134edcca1ca50156`,
+  identical to the verified pre6 daemon deployed in Europe. Both nodes maintain
+  priority connections to each other, and public DNS resolution plus inbound
+  P2P reachability were verified through the new hostname.
+- After block 1,039 was mined with one temporary local CPU thread, the exact
+  repository readiness gate passed independently against each VPS's
+  operator-local RPC: both reported height 1,040, three P2P connections, and
+  tip ages of 34 and 36 seconds. The local miner was immediately returned to
+  its prior battery-aware background mode. The live website API then reported
+  `network_ready=true`, `peer_ready=true`, `tip_fresh=true`, height 1,040, and
+  three connections. This closes the two-public-peer operational gate; it does
+  not satisfy the stronger production requirement for three independently
+  administered seed nodes across at least two providers.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -388,7 +407,7 @@ gates.
 - Finalize supported-platform, migration, rollback, upgrade, and known-
   limitation documentation for the chosen release candidate.
 - Independently reproduce both strict-verifier-compatible pinned Linux and
-Windows candidates on separate clean systems.
+  Windows candidates on separate clean systems.
 
 ## External evidence required before production release
 
