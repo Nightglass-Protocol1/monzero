@@ -247,6 +247,9 @@ when they are outside the source repository.
   commit alongside the two binary artifacts. The website download surface and
   pre5 JSON are staged for this package, but public upload remains pending
   authenticated IONOS webspace access.
+- The staged homepage no longer hard-codes “Public node online” in its hero
+  banner. It uses a static experimental-prerelease label and delegates live
+  readiness claims exclusively to the stale-tip-aware status panel.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
