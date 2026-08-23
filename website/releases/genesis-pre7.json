@@ -24,7 +24,8 @@
       "compatibility": {
         "minimum_glibc": "2.29",
         "ubuntu_24_04": "verified"
-      }
+      },
+      "native_wallet_create_restore_refresh_test": "passed"
     },
     {
       "platform": "windows-x64",

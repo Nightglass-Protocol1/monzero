@@ -450,6 +450,19 @@ when they are outside the source repository.
   test without changing the artifact digest or overstating production status;
   their preceding versions are retained at
   `/home/www/Monzero-backup-20260823T1830Z-wallet-evidence`.
+- The exact pre7 Linux archive passed the corresponding native wallet-RPC
+  lifecycle on the release workstation after its full inner manifest was
+  verified. A fresh software wallet was created, its in-memory recovery seed
+  restored a second wallet with the identical address, 1,041 blocks were
+  refreshed through the restricted public node, both wallets were stored and
+  closed, and SIGTERM produced a clean RPC save and shutdown. Successful runs
+  erase the temporary wallet directory; retained seed-free evidence has
+  SHA-256
+  `74b22898b1da384b2eb96fdbb497c1c40d9b74602408f624a30992db1e7423f6`.
+  This complements, but does not replace, the digest-pinned clean Ubuntu 24.04
+  loader/startup test or independently operated clean-system testing. The live
+  homepage and release metadata now report this result; their prior state is
+  retained at `/home/www/Monzero-backup-20260823T1838Z-linux-wallet-evidence`.
 - Genesis pre7 is deployed on `https://monzero.org` as an explicitly unsigned,
   unaudited prerelease. The live metadata names source commit
   `38914bf1347781dc6e0ead4a786e3607cc8ebeac`, and complete HTTPS downloads of
