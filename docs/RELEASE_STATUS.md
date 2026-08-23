@@ -387,6 +387,15 @@ when they are outside the source repository.
   ceremony, backups, revocation, multi-channel fingerprint publication,
   metadata signing, verification, rotation, and compromise response. No
   production key has been generated on this development machine.
+- The webspace now redirects every plain-HTTP path and query to the same
+  canonical `https://monzero.org` URL with a permanent redirect. A conservative
+  one-day HSTS trial, same-origin Content Security Policy, restrictive browser
+  permissions policy, frame denial, MIME sniffing protection, and referrer
+  policy are active on pages, APIs, and release downloads. Post-deployment
+  checks followed the redirect without a loop, retained the release archive's
+  exact gzip type and size, loaded homepage/explorer assets, and received valid
+  node-status JSON. The prior `.htaccess` is retained server-side as
+  `.htaccess.before-https-20260823` for rollback.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
