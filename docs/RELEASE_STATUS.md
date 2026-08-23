@@ -313,12 +313,21 @@ when they are outside the source repository.
   returns the expected gzip and ZIP media types and exact byte sizes. The
   pre6 website rollback is retained at
   `/home/www/Monzero-backup-20260823T124259Z-pre6`.
-- Promotion of the pre6 daemon to the VPS remains pending. The server reaches
-  SSH and recognizes the installed automation public key, but rejects its
-  signature, so password automation was deliberately not used. External RPC
-  verification now reports mainnet status `OK` at height 1,025 with a fresh
-  tip, but the node has only one peer. Consequently the daemon upgrade and the
-  minimum-two-peer network-readiness gate remain incomplete.
+- Genesis pre6 is deployed on the VPS from the exact published Linux archive.
+  The archive hash and every internal package checksum were verified on-host
+  before installation. The prior binary, configuration, systemd unit,
+  operator-local RPC evidence, and a complete stopped-state chain database are
+  retained at `/var/backups/monzero-pre6-20260823T141935Z`, together with
+  tested rollback instructions. The deployed binary reports
+  `0.18.5.1-d4cac3627`, reopened the existing chain, synchronized at height
+  1,036, and remained enabled, active, correctly versioned, and synchronized
+  after a second systemd restart. Operator-local RPC, restricted public RPC,
+  and the website API agreed on top hash
+  `0d6fea8274daa1b6a14c91211bdbeb3bf08c0417e75fe7a0c744099f92195cbf`.
+  The deployment key uses key-only root SSH; password root SSH remains
+  disabled. The production readiness gate still fails solely on the live
+  network side because the public node has one peer rather than the required
+  minimum of two.
 - A second, isolated Genesis pre6 daemon was started locally from the published
   Linux build on alternate P2P, RPC, and ZMQ ports. It successfully handshook
   with the existing node, synchronized from genesis through all 1,025 blocks,
