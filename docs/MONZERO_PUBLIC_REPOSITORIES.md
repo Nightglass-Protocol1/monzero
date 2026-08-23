@@ -21,6 +21,9 @@ Before publishing a replacement forge:
 - keep human Gitian signing keys outside automated workflows.
 
 At least two independently administered builders should reproduce Linux and
-Windows artifacts before they are described as verified. Asset/NFT consensus
+Windows artifacts before they are described as verified. Each reproducer must
+follow `INDEPENDENT_REPRODUCTION.md` and sign the canonical byte-for-byte
+comparison evidence with an independently verified key. Same-host repeat
+builds do not satisfy this requirement. Asset/NFT consensus
 activation additionally remains subject to the review and public-testnet gates
 in `MONZERO_PHASE0_STABILIZATION.md`.

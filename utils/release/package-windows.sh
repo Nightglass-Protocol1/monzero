@@ -53,7 +53,7 @@ SOURCE_DATE_EPOCH=$source_epoch "$strip_tool" --strip-all "$package_dir"/*.exe
 for document in LICENSE README.md MONZERO_CHAIN_SPEC.md; do
   install -m 0644 "$source_root/$document" "$package_dir/$document"
 done
-for document in RELEASE_CHECKLIST.md RELEASE_STATUS.md UPGRADE.md; do
+for document in INDEPENDENT_REPRODUCTION.md RELEASE_CHECKLIST.md RELEASE_STATUS.md UPGRADE.md; do
   install -m 0644 "$source_root/docs/$document" "$package_dir/$document"
 done
 install -m 0644 "$source_root/utils/release/windows/README-WINDOWS.txt" "$package_dir/README-WINDOWS.txt"

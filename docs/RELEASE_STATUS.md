@@ -227,6 +227,17 @@ when they are outside the source repository.
   timer runs that gate every five minutes and records failures in the journal;
   its first deployed run reported exactly the known one-peer and stale-tip
   failures. Port 6177 is not permitted through the host firewall.
+- Independent reproduction now has a fail-closed evidence path. The package
+  comparator verifies all four reference/reproduced Linux and Windows inputs,
+  requires byte-for-byte equality and one clean source commit, and emits a
+  canonical attestation for the second builder to sign. Production publication
+  additionally requires that attestation to bind the exact metadata artifacts,
+  verifies it against an explicitly trusted reproducer fingerprint, and rejects
+  reuse of the release-signing key. Positive matching, valid mismatch,
+  missing-identity, overwrite-refusal, and throwaway two-key integration tests
+  pass. The integration test reaches and correctly stops at pre5's honest
+  `binary_build_reproducibility=unverified` manifest; same-host candidate pairs
+  remain determinism evidence only, not independent reproduction.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

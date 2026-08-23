@@ -129,6 +129,56 @@ if [[ $production == 1 ]]; then
   [[ $signer == "$fingerprint" ]] || {
     echo "Release metadata signature does not match MONZERO_RELEASE_FINGERPRINT" >&2; exit 1;
   }
+
+  reproducer_fingerprint=${MONZERO_REPRODUCER_FINGERPRINT:-}
+  [[ $reproducer_fingerprint =~ ^[0-9A-F]{40}$ ]] || {
+    echo "MONZERO_REPRODUCER_FINGERPRINT must be an exact 40-character uppercase fingerprint" >&2; exit 1;
+  }
+  [[ $reproducer_fingerprint != "$fingerprint" ]] || {
+    echo "The independent reproducer and release signer must use distinct keys" >&2; exit 1;
+  }
+  reproduction_attestation=${metadata%.json}.reproduction.json
+  reproduction_signature=$reproduction_attestation.asc
+  [[ -f $reproduction_attestation ]] || {
+    echo "Independent reproduction attestation is missing: $reproduction_attestation" >&2; exit 1;
+  }
+  [[ -f $reproduction_signature ]] || {
+    echo "Independent reproduction signature is missing: $reproduction_signature" >&2; exit 1;
+  }
+  reproducer_signer=$(gpg --status-fd 1 --verify \
+    "$reproduction_signature" "$reproduction_attestation" 2>/dev/null |
+    sed -n 's/^\[GNUPG:\] VALIDSIG \([0-9A-F]*\) .*/\1/p' | head -n 1)
+  [[ $reproducer_signer == "$reproducer_fingerprint" ]] || {
+    echo "Reproduction attestation signature does not match MONZERO_REPRODUCER_FINGERPRINT" >&2; exit 1;
+  }
+  python3 - "$metadata" "$reproduction_attestation" <<'PY'
+import json, pathlib, sys
+
+metadata = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+attestation = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+if attestation.get("schema_version") != 1 or attestation.get("project") != "Monzero":
+    raise SystemExit("Unsupported reproduction attestation schema or project")
+if attestation.get("result") != "byte-for-byte-match":
+    raise SystemExit("Reproduction attestation does not record a byte-for-byte match")
+if attestation.get("source_commit") != metadata.get("source_commit"):
+    raise SystemExit("Reproduction attestation source commit does not match release metadata")
+for field in ("reproducer", "build_environment", "compared_at"):
+    if not isinstance(attestation.get(field), str) or not attestation[field].strip():
+        raise SystemExit(f"Reproduction attestation field {field} is missing")
+expected = {
+    (artifact["platform"], artifact["filename"], artifact["sha256"])
+    for artifact in metadata["artifacts"]
+}
+actual_artifacts = attestation.get("artifacts")
+if not isinstance(actual_artifacts, list):
+    raise SystemExit("Reproduction attestation artifacts must be an array")
+actual = {
+    (artifact.get("platform"), artifact.get("filename"), artifact.get("sha256"))
+    for artifact in actual_artifacts if isinstance(artifact, dict)
+}
+if actual != expected or len(actual_artifacts) != len(expected):
+    raise SystemExit("Reproduction attestation does not bind the exact release artifacts")
+PY
 else
   [[ $production_ready == false && $channel == prerelease ]] || {
     echo "Non-production verification requires an explicitly marked prerelease" >&2; exit 1;

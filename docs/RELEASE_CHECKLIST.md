@@ -84,14 +84,18 @@ third-party dependencies must be linked into the candidate.
 `BINARY_BUILD_REPRODUCIBILITY=verified` may be supplied to the packager only
 after an independent builder has reproduced the exact packaged binaries. The
 default is `unverified`; setting the variable is an attestation input, not a
-reproducibility test.
+reproducibility test. Follow `INDEPENDENT_REPRODUCTION.md`; the independent
+builder must run `utils/release/compare-reproduced-packages.sh` and sign its
+canonical evidence with a separately trusted key.
 
 Before publication, run `utils/release/verify-publication.sh` against the
 machine-readable release metadata and final artifact directory. For a stable
-release, set `RELEASE_PRODUCTION=1` and `MONZERO_RELEASE_FINGERPRINT` to the
-exact trusted 40-character uppercase OpenPGP fingerprint. Production mode
-requires stable/production metadata, completed security audit and independent
-reproduction states, a detached `.json.asc` signature from that exact key, and
+release, set `RELEASE_PRODUCTION=1`, `MONZERO_RELEASE_FINGERPRINT`, and
+`MONZERO_REPRODUCER_FINGERPRINT` to the exact trusted 40-character uppercase
+OpenPGP fingerprints. Production mode requires stable/production metadata,
+completed security audit and independent reproduction states, a detached
+`.json.asc` release signature, a separately signed reproduction attestation
+that binds the exact artifacts, distinct release and reproducer keys, and
 strict verification of both Linux and Windows archives. The verifier never
 downloads or implicitly trusts a key.
 
