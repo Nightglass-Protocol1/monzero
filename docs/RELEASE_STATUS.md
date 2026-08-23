@@ -316,18 +316,24 @@ when they are outside the source repository.
 - Promotion of the pre6 daemon to the VPS remains pending. The server reaches
   SSH and recognizes the installed automation public key, but rejects its
   signature, so password automation was deliberately not used. External RPC
-  verification still reports mainnet status `OK` at height 1,024, but the tip
-  is stale and the node has only one peer. Consequently both the daemon upgrade
-  and the minimum-two-peer network-readiness gate remain incomplete.
+  verification now reports mainnet status `OK` at height 1,025 with a fresh
+  tip, but the node has only one peer. Consequently the daemon upgrade and the
+  minimum-two-peer network-readiness gate remain incomplete.
 - A second, isolated Genesis pre6 daemon was started locally from the published
   Linux build on alternate P2P, RPC, and ZMQ ports. It successfully handshook
-  with the existing node, synchronized from genesis through all 1,024 blocks,
+  with the existing node, synchronized from genesis through all 1,025 blocks,
   reported version `0.18.5.1-d4cac3627`, and matched the canonical top hash
-  `c621d3172dbbe1e941674a28df47f6ebb10b05dfe6381774c3cee3a3533e894e`.
+  `e4baa0aadf87c555f169ca9377b5a0e261a3963a88bfd8b6dd01d64dfe167f1c`.
   This supplies live-chain startup, handshake, import, and synchronization
   evidence for the exact pre6 code in addition to the offline clean-system
   smoke test. It does not satisfy the independent-public-peer gate because both
   local daemons share one public network origin.
+- One-thread mining temporarily ran in active mode to resolve the stale-tip
+  gate, found block 1,024, and propagated the new top hash to the existing
+  local node, the isolated pre6 node, the VPS, and the website API. The miner
+  was then restored to its prior battery-aware background mode. The website
+  now reports `tip_fresh=true`; the exact pre6 readiness check fails solely
+  because its single local peer is below the required minimum of two.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
