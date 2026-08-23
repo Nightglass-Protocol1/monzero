@@ -510,6 +510,15 @@ when they are outside the source repository.
   ceiling produced the required nonzero failure and diagnostic. These journal
   checks improve host monitoring but do not provide an external alert receiver
   or close the required 24-hour and seven-day observation periods.
+- After publishing the Linux and Windows wallet-lifecycle results, the normal
+  publication verifier again passed both exact binary artifacts and the
+  complete source package at commit
+  `38914bf1347781dc6e0ead4a786e3607cc8ebeac`. Its production mode correctly
+  fails closed at the first invariant because the truthful metadata remains
+  `production_ready=false` on the `prerelease` channel. That state must not be
+  changed until the separately trusted release signature, independent binary
+  reproduction attestation, resolved security/consensus audit, independent
+  infrastructure, and observation-period evidence exist.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
