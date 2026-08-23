@@ -534,6 +534,14 @@ when they are outside the source repository.
   repository copy, all four public routes return HTTP 200, and a live browser
   run reports no severe console or CSP errors. The preceding files are retained
   at `/home/www/Monzero-backup-20260823T1957Z-nightshade` for rollback.
+- Genesis pre7 now has canonical human-readable release notes that bind its
+  codename and exact source commit, define the qualified Linux x86-64 and
+  Windows x64 baselines, enumerate user-visible changes, and state unsupported
+  platforms and unresolved safety limitations. Future Linux and Windows
+  packages include `RELEASE_NOTES.md`; the immutable published pre7 archives
+  retain their original hashes and continue to verify under the historical
+  package contract. The website exposes an equivalent plain-text copy beside
+  the machine-readable metadata.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -579,8 +587,6 @@ unsigned, unaudited prerelease with the same external production gates.
   multi-input spending, burns, cache round trips, seed restoration, and reorg
   handling are wired and covered, but the broader asset wallet is not yet
   complete.
-- Finalize supported-platform, migration, rollback, upgrade, and known-
-  limitation documentation for the chosen release candidate.
 - Independently reproduce both strict-verifier-compatible pinned Linux and
   Windows candidates on separate clean systems.
 
