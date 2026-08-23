@@ -83,6 +83,6 @@ done
 
 archive="$output_dir/$package_name.zip"
 (cd "$work_dir" && TZ=UTC find "$package_name" -type f -printf '%p\n' | LC_ALL=C sort | zip -X -9 -q "$archive" -@)
-sha256sum "$archive" > "$archive.sha256"
+(cd "$output_dir" && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256")
 echo "$archive"
 echo "$archive.sha256"

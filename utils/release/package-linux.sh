@@ -119,7 +119,6 @@ tar --sort=name \
   --pax-option=delete=atime,delete=ctime \
   -C "$work_dir" -cf - "$package_name" \
   | gzip -n -9 > "$archive"
-sha256sum "$archive" > "$archive.sha256"
-
+(cd "$output_dir" && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256")
 echo "$archive"
 echo "$archive.sha256"
