@@ -43,7 +43,7 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
     esac
   done < <(x86_64-w64-mingw32-objdump -p "$root/$binary" | sed -n 's/^\s*DLL Name: //p')
 done
-grep -Fqx "binary_version=Monzero 'Fluorine Fermi' (v0.18.5.1-${source_short})" "$root/BUILD-MANIFEST.txt" || {
+grep -Fqx "binary_version=Monzero 'Genesis' (core v0.18.5.1-${source_short})" "$root/BUILD-MANIFEST.txt" || {
   echo "Binary version does not match manifest" >&2; exit 1;
 }
 

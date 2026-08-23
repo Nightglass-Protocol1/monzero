@@ -34,7 +34,7 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
     echo "Binary version does not match source commit: $binary" >&2; exit 1;
   }
 done
-binary_version="Monzero 'Fluorine Fermi' (v0.18.5.1-${source_short})"
+binary_version="Monzero 'Genesis' (core v0.18.5.1-${source_short})"
 
 package_name="monzero-${version}-windows-x64"
 mkdir -p "$output_dir"
