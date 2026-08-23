@@ -87,6 +87,9 @@ install -m 0644 "$source_root/docs/RELEASE_STATUS.md" "$package_dir/RELEASE_STAT
 install -m 0644 "$source_root/docs/UPGRADE.md" "$package_dir/UPGRADE.md"
 install -m 0644 "$source_root/utils/systemd/README.md" "$package_dir/README-SYSTEMD.md"
 install -m 0644 "$source_root/utils/systemd/monzerod.service" "$package_dir/monzerod.service"
+install -m 0644 "$source_root/utils/systemd/monzero-readiness.service" "$package_dir/monzero-readiness.service"
+install -m 0644 "$source_root/utils/systemd/monzero-readiness.timer" "$package_dir/monzero-readiness.timer"
+install -m 0755 "$source_root/utils/release/verify-network-readiness.sh" "$package_dir/verify-network-readiness.sh"
 
 {
   echo "package=$package_name"

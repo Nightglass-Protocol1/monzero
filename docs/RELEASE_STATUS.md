@@ -220,6 +220,13 @@ when they are outside the source repository.
   prepared to label this state “Network tip stale” instead of implying that a
   synchronized process necessarily means a ready network. Deployment of this
   cache-busted update remains pending authenticated webspace access.
+- The VPS now separates its RPC surfaces: restricted public RPC remains on
+  `0.0.0.0:6175`, while unrestricted operator RPC is bound only to
+  `127.0.0.1:6177`. The on-host readiness gate confirms the local endpoint is
+  unrestricted and the public endpoint is restricted. A hardened systemd
+  timer runs that gate every five minutes and records failures in the journal;
+  its first deployed run reported exactly the known one-peer and stale-tip
+  failures. Port 6177 is not permitted through the host firewall.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
