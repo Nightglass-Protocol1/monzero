@@ -283,8 +283,9 @@ when they are outside the source repository.
   `/home/www/Monzero-backup-20260823T100042Z-linux-compatibility`. The rebuild
   audit also found that the Linux depends set relied on an undeclared host zlib
   development package. zlib 1.3.2 is now pinned by its official SHA-256 in the
-  depends graph. A new Linux candidate must be built and pass both gates before
-  replacing pre5.
+  depends graph. The first clean relink then exposed the same undeclared-host
+  dependency for zstd; zstd 1.5.7 is now pinned as well. A new Linux candidate
+  must be built and pass both gates before replacing pre5.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
