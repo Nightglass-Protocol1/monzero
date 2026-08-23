@@ -542,6 +542,21 @@ when they are outside the source repository.
   retain their original hashes and continue to verify under the historical
   package contract. The website exposes an equivalent plain-text copy beside
   the machine-readable metadata.
+- Active CLI runtime defaults now create `monzero-wallet-cli.log`,
+  `monzero-wallet-rpc.log`, and `monzero-wallet-rpc.<port>.login`; daemon
+  recovery and disconnect messages name `monzerod`. Fish completions are
+  registered under the three Monzero executable names and document the actual
+  6174/6175/6176 mainnet, 16174/16175/16176 testnet, and
+  26174/26175/26176 stagenet ports. A focused source-level gate rejects
+  regressions on these release-facing surfaces while leaving required upstream
+  attribution and protocol citations intact.
+- The remaining core translation catalogs were audited against active source
+  call sites. Their inherited donation, executable, and wallet-lock strings
+  are dormant catalog entries with no matching runtime source message; active
+  user-facing C++ strings contain no inherited Monero service endpoint or
+  executable instruction. The retained `MoneroAsciiDataV1` wallet export magic,
+  research citations, protocol field names, and copyright notices are
+  compatibility or attribution identifiers and are intentionally unchanged.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
@@ -573,9 +588,6 @@ unsigned, unaudited prerelease with the same external production gates.
 
 ## Repository work still required
 
-- Audit remaining translations and secondary build utilities for user-facing
-  inherited branding while preserving protocol identifiers and upstream
-  technical attribution.
 - Complete parser fuzzing and reproduce the passing core, GUI, functional, and
   website/explorer tests in CI and on clean supported systems.
 - Add the asset creation/inspection workflow to the desktop GUI. The CLI can export and

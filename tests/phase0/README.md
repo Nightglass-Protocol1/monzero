@@ -29,6 +29,20 @@ This is a smoke test, not the complete consensus qualification suite.
 Double-spend, deeper/adversarial reorg, and adversarial asset tests remain
 required before activating a new protocol version.
 
+## User-facing branding gate
+
+Run the source-level release gate after changing executable names, runtime log
+defaults, network ports, or shell completions:
+
+```bash
+tests/phase0/test-user-facing-branding.sh
+```
+
+It rejects inherited executable names and ports on the active command-line
+surfaces it covers. Translation catalogs and technical documentation require
+separate contextual review because they intentionally preserve some upstream
+source strings, protocol terminology, citations, and attribution.
+
 ## Fast unit gate
 
 Run the ordinary unit tests with a validating resolver and keep the expensive

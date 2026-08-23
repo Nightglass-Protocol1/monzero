@@ -11204,7 +11204,7 @@ int main(int argc, char* argv[])
     desc_params,
     positional_options,
     [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },
-    "monero-wallet-cli.log"
+    "monzero-wallet-cli.log"
   );
 
   if (!vm)

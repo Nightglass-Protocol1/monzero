@@ -359,7 +359,7 @@ namespace tools
           string_encoding::base64_encode(rand_128bit.data(), rand_128bit.size())
         );
 
-        std::string temp = "monero-wallet-rpc." + bind_port + ".login";
+        std::string temp = "monzero-wallet-rpc." + bind_port + ".login";
         rpc_login_file = tools::private_file::drop_and_recreate(temp);
         if (!rpc_login_file.handle())
         {
@@ -5279,7 +5279,7 @@ int main(int argc, char** argv) {
     desc_params,
     po::positional_options_description(),
     [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },
-    "monero-wallet-rpc.log",
+    "monzero-wallet-rpc.log",
     true
   );
   if (!vm)
