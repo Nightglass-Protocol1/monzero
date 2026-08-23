@@ -1,7 +1,7 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-08-22
+Assessment date: 2026-08-23
 Candidate line: Genesis prerelease
 
 This file records evidence for the current release assessment. It complements
@@ -188,6 +188,23 @@ when they are outside the source repository.
   committed files byte-for-byte. Server-side pre-change copies are retained as
   `index.html.before-node-state-20260822` and
   `app.js.before-node-state-20260822`.
+- The public VPS was rebuilt from a fresh Ubuntu 26.04 image after its former
+  SSH host key material was exposed. Its new ED25519 host key was verified
+  through the provider console before deployment. Password and direct-root SSH
+  authentication are disabled, a dedicated unprivileged administrator key is
+  in use, and the host firewall permits only SSH plus Monzero P2P and restricted
+  RPC ports. The systemd service runs as the unprivileged `monzero` account.
+  The deployed daemon came from the published Genesis pre5 Linux archive; the
+  archive and every packaged file passed SHA-256 verification on the VPS, and
+  the daemon reports source revision `ab143bbaf`.
+- The recovered public node and an operator node both report height 1023, top
+  block hash `995a7d95b7c3ca12acacd6fd6dbadd00c0920d917d3bf67dd0f1464d021c530f`,
+  `synchronized: true`, and one P2P connection between them. Public P2P and
+  restricted RPC are reachable through `node.monzero.org`. The production
+  network-readiness gate still fails: it requires at least two peers and a tip
+  no more than 900 seconds old, while the restored network has one peer and its
+  latest block is approximately seven days old. This recovery establishes
+  service availability, not production network readiness.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
