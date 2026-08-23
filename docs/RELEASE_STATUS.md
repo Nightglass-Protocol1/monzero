@@ -238,6 +238,15 @@ when they are outside the source repository.
   pass. The integration test reaches and correctly stops at pre5's honest
   `binary_build_reproducibility=unverified` manifest; same-host candidate pairs
   remain determinism evidence only, not independent reproduction.
+- A deterministic Genesis pre5 source package now supplies the otherwise
+  unavailable public commit plus all six pinned recursive submodule revisions.
+  Two packaging runs are byte-for-byte identical at SHA-256
+  `a958217d92418d35f59fedb2734dbb1162562876ef0896f74a7d42e94789beca`;
+  the source verifier passes over 4,703 archive entries and the release
+  publication verifier binds its exact 21,182,274-byte size, digest, and source
+  commit alongside the two binary artifacts. The website download surface and
+  pre5 JSON are staged for this package, but public upload remains pending
+  authenticated IONOS webspace access.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

@@ -62,6 +62,7 @@ control, website download, and consensus release. Native amounts use XMZ.
 - [ ] A second builder checks reproducibility
 - [ ] Executable formats and required runtime libraries inspected
 - [ ] Archives contain only intended files
+- [ ] Deterministic source archive includes the exact commit and recursive pinned submodules
 - [ ] README and upgrade instructions included
 - [ ] SHA-256 manifest generated and verified
 - [ ] Release manifest signed with the Monzero release key
@@ -98,6 +99,12 @@ completed security audit and independent reproduction states, a detached
 that binds the exact artifacts, distinct release and reproducer keys, and
 strict verification of both Linux and Windows archives. The verifier never
 downloads or implicitly trusts a key.
+
+When no canonical public forge can provide the exact release commit, build the
+complete source archive twice with `utils/release/package-source.sh`, compare
+the archives byte for byte, and validate it with
+`utils/release/verify-source-package.sh`. Production metadata must bind exactly
+one verified source archive in addition to the Linux and Windows binaries.
 
 Gitian builds must be given the explicit Monzero source URL with `--url`.
 There is deliberately no implicit upstream fallback. During initial setup,

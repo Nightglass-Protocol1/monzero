@@ -10,6 +10,13 @@ release manifest. Recipients should verify those artifacts before building.
 The local bare repositories remain development backups, not public release
 channels.
 
+`utils/release/package-source.sh` creates that fallback archive from one exact
+commit and recursively overlays every pinned submodule commit. Two packaging
+runs must match byte for byte, and `utils/release/verify-source-package.sh`
+must pass before the artifact is added to release metadata. This source bundle
+is a distribution fallback, not a substitute for a maintained, reviewable
+public forge.
+
 Before publishing a replacement forge:
 
 - establish a project-owned organization with multifactor authentication and

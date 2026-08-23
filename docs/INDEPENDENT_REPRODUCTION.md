@@ -6,6 +6,13 @@ host, obtain the source independently, review the exact source commit and
 submodule revisions, and build both supported command-line packages with the
 pinned dependency environments.
 
+If the canonical public forge is unavailable, first verify the release-bound
+source archive with `utils/release/verify-source-package.sh`. Compare its
+`SOURCE-MANIFEST.txt` commit and recursive submodule hashes to the signed
+release metadata before building. Do not accept a source tree sent only through
+the same channel as the reference binaries without independently checking its
+published digest.
+
 The release operator supplies four candidate paths to the reproducer: the
 reference Linux and Windows packages plus the independently built Linux and
 Windows packages. On the reproducer's machine, run:
@@ -56,4 +63,3 @@ artifact hashes in the signed reproduction evidence, two distinct trusted
 keys, and strict verification of both packages. Same-host candidate A/B builds
 are useful determinism tests but are not independent evidence and must never be
 identified as such.
-

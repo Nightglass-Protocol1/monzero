@@ -58,12 +58,28 @@ if not isinstance(artifacts, list) or not artifacts:
 if len(artifacts) != 2:
     raise SystemExit("A Monzero publication must contain exactly two artifacts")
 
+source = data.get("source")
+if source is not None:
+    if not isinstance(source, dict):
+        raise SystemExit("source must be an object")
+    source_filename = source.get("filename")
+    source_size = source.get("size_bytes")
+    source_digest = source.get("sha256")
+    if not isinstance(source_filename, str) or pathlib.PurePosixPath(source_filename).name != source_filename:
+        raise SystemExit("Unsafe source artifact filename")
+    if not isinstance(source_size, int) or isinstance(source_size, bool) or source_size <= 0:
+        raise SystemExit("Invalid source artifact size")
+    if not isinstance(source_digest, str) or len(source_digest) != 64 or any(c not in "0123456789abcdef" for c in source_digest):
+        raise SystemExit("Invalid source artifact SHA-256")
+
 print("true" if data["production_ready"] else "false")
 print(data["channel"])
 print(commit)
 print(data["security_audit"])
 print(data["signing"])
 print(data["independent_reproducibility"])
+if source is not None:
+    print("\t".join(("source", "source", source_filename, str(source_size), source_digest)))
 seen_filenames = set()
 seen_platforms = set()
 for artifact in artifacts:
@@ -186,9 +202,9 @@ else
 fi
 
 artifact_count=0
+source_count=0
 for row in "${release_fields[@]:6}"; do
   IFS=$'\t' read -r marker platform filename expected_size expected_hash <<< "$row"
-  [[ $marker == artifact ]] || { echo "Malformed artifact validation record" >&2; exit 1; }
   artifact="$artifact_dir/$filename"
   [[ -f $artifact ]] || { echo "Published artifact is missing: $artifact" >&2; exit 1; }
   actual_size=$(stat -c %s "$artifact")
@@ -199,6 +215,19 @@ for row in "${release_fields[@]:6}"; do
   [[ $actual_hash == "$expected_hash" ]] || {
     echo "SHA-256 mismatch for $filename" >&2; exit 1;
   }
+
+  if [[ $marker == source ]]; then
+    ((source_count += 1))
+    [[ $source_count -eq 1 ]] || { echo "Multiple source artifacts are forbidden" >&2; exit 1; }
+    "$script_dir/verify-source-package.sh" "$artifact"
+    package_commit=$(tar -xOf "$artifact" --wildcards '*/SOURCE-MANIFEST.txt' |
+      sed -n 's/^source_commit=//p')
+    [[ $package_commit == "$source_commit" ]] || {
+      echo "Source commit mismatch in $filename" >&2; exit 1;
+    }
+    continue
+  fi
+  [[ $marker == artifact ]] || { echo "Malformed artifact validation record" >&2; exit 1; }
 
   case "$platform:$filename" in
     linux-x86_64:*.tar.gz)
@@ -230,4 +259,8 @@ done
 [[ $artifact_count -eq 2 ]] || {
   echo "A Monzero publication must contain exactly Linux and Windows artifacts" >&2; exit 1;
 }
-echo "Publication verification passed ($artifact_count artifacts, source $source_commit)"
+if [[ $production == 1 && $source_count -ne 1 ]]; then
+  echo "Production verification requires one verified source artifact" >&2
+  exit 1
+fi
+echo "Publication verification passed ($artifact_count binary artifacts, $source_count source package, commit $source_commit)"

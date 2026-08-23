@@ -9,6 +9,11 @@
   "security_audit": "not_completed",
   "signing": "unsigned",
   "independent_reproducibility": "unverified",
+  "source": {
+    "filename": "monzero-genesis-pre5-source.tar.gz",
+    "size_bytes": 21182274,
+    "sha256": "a958217d92418d35f59fedb2734dbb1162562876ef0896f74a7d42e94789beca"
+  },
   "artifacts": [
     {
       "platform": "linux-x86_64",
