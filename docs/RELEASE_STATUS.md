@@ -445,7 +445,11 @@ when they are outside the source repository.
   `96efaa1f1091d3a529ff67b0c805f4496b45663e469fdce90456d092245528fb`.
   This closes native creation and deterministic-restoration coverage for the
   command-line package, but does not establish funded transfer history, GUI,
-  hardware-wallet, multisig, or offline-signing coverage on Windows.
+  hardware-wallet, multisig, or offline-signing coverage on Windows. The live
+  homepage and byte-identical release metadata now identify this additional
+  test without changing the artifact digest or overstating production status;
+  their preceding versions are retained at
+  `/home/www/Monzero-backup-20260823T1830Z-wallet-evidence`.
 - Genesis pre7 is deployed on `https://monzero.org` as an explicitly unsigned,
   unaudited prerelease. The live metadata names source commit
   `38914bf1347781dc6e0ead4a786e3607cc8ebeac`, and complete HTTPS downloads of
@@ -468,6 +472,18 @@ when they are outside the source repository.
   old, so the freshness gate correctly fails and the website reports
   `network_ready=false`. This is a live mining/network condition rather than a
   daemon deployment failure.
+- One temporarily active local RandomX thread mined blocks 1,040 and 1,041,
+  after which the miner was restored to its prior one-thread, battery-aware
+  background policy. The local node and both pre7 public nodes converged at
+  height 1,042 with top hash
+  `76cbc51636b282da330878300504aa45ea90e28ab16245e430307521aabe1199`.
+  The exact packaged readiness gate then passed independently on both VPSs
+  with three peers and tip ages of 36 and 37 seconds. The public HTTPS API
+  independently reported `status=OK`, `synchronized=true`,
+  `peer_ready=true`, `tip_fresh=true`, and `network_ready=true`. This proves
+  the deployed pre7 topology can propagate a fresh tip; it is not evidence of
+  sustained independent mining, and freshness will lapse again without
+  continuing hash power.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

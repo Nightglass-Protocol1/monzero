@@ -31,7 +31,8 @@
       "filename": "monzero-genesis-pre7-windows-x64.zip",
       "size_bytes": 25748544,
       "sha256": "049b4db553d52f592e0a0b05956fbafbec1e37c2672de50d0cde2bfbdffce284",
-      "native_network_and_launcher_test": "passed"
+      "native_network_and_launcher_test": "passed",
+      "native_wallet_create_restore_refresh_test": "passed"
     }
   ]
 }
