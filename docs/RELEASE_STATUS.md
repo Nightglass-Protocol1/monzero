@@ -319,6 +319,15 @@ when they are outside the source repository.
   verification still reports mainnet status `OK` at height 1,024, but the tip
   is stale and the node has only one peer. Consequently both the daemon upgrade
   and the minimum-two-peer network-readiness gate remain incomplete.
+- A second, isolated Genesis pre6 daemon was started locally from the published
+  Linux build on alternate P2P, RPC, and ZMQ ports. It successfully handshook
+  with the existing node, synchronized from genesis through all 1,024 blocks,
+  reported version `0.18.5.1-d4cac3627`, and matched the canonical top hash
+  `c621d3172dbbe1e941674a28df47f6ebb10b05dfe6381774c3cee3a3533e894e`.
+  This supplies live-chain startup, handshake, import, and synchronization
+  evidence for the exact pre6 code in addition to the offline clean-system
+  smoke test. It does not satisfy the independent-public-peer gate because both
+  local daemons share one public network origin.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with
