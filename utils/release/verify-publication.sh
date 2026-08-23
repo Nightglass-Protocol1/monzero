@@ -141,7 +141,7 @@ if [[ $production == 1 ]]; then
   [[ -f $signature ]] || { echo "Detached release metadata signature is missing: $signature" >&2; exit 1; }
   command -v gpg >/dev/null || { echo "Production verification requires gpg" >&2; exit 1; }
   signer=$(gpg --status-fd 1 --verify "$signature" "$metadata" 2>/dev/null |
-    sed -n 's/^\[GNUPG:\] VALIDSIG \([0-9A-F]*\) .*/\1/p' | head -n 1)
+    awk -f "$script_dir/validsig-primary-fingerprint.awk")
   [[ $signer == "$fingerprint" ]] || {
     echo "Release metadata signature does not match MONZERO_RELEASE_FINGERPRINT" >&2; exit 1;
   }
@@ -163,7 +163,7 @@ if [[ $production == 1 ]]; then
   }
   reproducer_signer=$(gpg --status-fd 1 --verify \
     "$reproduction_signature" "$reproduction_attestation" 2>/dev/null |
-    sed -n 's/^\[GNUPG:\] VALIDSIG \([0-9A-F]*\) .*/\1/p' | head -n 1)
+    awk -f "$script_dir/validsig-primary-fingerprint.awk")
   [[ $reproducer_signer == "$reproducer_fingerprint" ]] || {
     echo "Reproduction attestation signature does not match MONZERO_REPRODUCER_FINGERPRINT" >&2; exit 1;
   }

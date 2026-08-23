@@ -377,6 +377,16 @@ when they are outside the source repository.
   domain's DMARC policy remains monitoring-only (`p=none`); enforcement must
   not be raised until normal mail flow is observed and the remaining
   IONOS-recommended DKIM selector is published.
+- The production publication verifier now resolves a valid signing-subkey
+  signature to its trusted primary OpenPGP fingerprint instead of incorrectly
+  requiring the rotating subkey fingerprint as the release identity. A real
+  disposable GnuPG integration test creates a certification-only Ed25519
+  primary key plus a distinct Ed25519 signing subkey, signs a payload, proves
+  the parser returns the primary fingerprint, and rejects missing or ambiguous
+  `VALIDSIG` evidence. `RELEASE_SIGNING.md` documents the matching offline key
+  ceremony, backups, revocation, multi-channel fingerprint publication,
+  metadata signing, verification, rotation, and compromise response. No
+  production key has been generated on this development machine.
 
 Live DNSSEC validity is an integration check because it depends on the build
 host exposing signatures and a usable trust anchor. Run the unit suite with

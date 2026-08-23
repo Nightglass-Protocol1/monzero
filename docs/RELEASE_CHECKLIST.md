@@ -107,6 +107,11 @@ that binds the exact artifacts, distinct release and reproducer keys, and
 strict verification of both Linux and Windows archives. The verifier never
 downloads or implicitly trusts a key.
 
+Create and operate the release key using the offline procedure in
+`RELEASE_SIGNING.md`. The trusted fingerprint is the certification-only primary
+key fingerprint even though the detached signature is made by its rotating
+signing subkey.
+
 When no canonical public forge can provide the exact release commit, build the
 complete source archive twice with `utils/release/package-source.sh`, compare
 the archives byte for byte, and validate it with
