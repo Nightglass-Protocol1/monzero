@@ -9,7 +9,7 @@ machine-readable release metadata published at `https://monzero.org`.
 
 | Package | Compatibility scope |
 | --- | --- |
-| Linux x86-64 CLI | glibc 2.29 or newer |
+| Linux x86-64 CLI | glibc 2.31 or newer |
 | Windows x64 CLI | 64-bit Windows command-line environment |
 | Complete source | Pinned repository commit and recursive submodule contents |
 
