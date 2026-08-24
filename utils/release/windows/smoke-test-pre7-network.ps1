@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$ArtifactPath = "$env:USERPROFILE\Downloads\monzero-genesis-pre7-windows-x64.zip",
-    [string]$EvidencePath = "$env:USERPROFILE\Documents\monzero-pre7-windows-network-evidence.json",
+    [string]$ArtifactPath = "$env:USERPROFILE\Downloads\monzero-genesis-pre8-windows-x64.zip",
+    [string]$EvidencePath = "$env:USERPROFILE\Documents\monzero-pre8-windows-network-evidence.json",
     [string]$MiningAddress = "FVtn1gEMEHA2FGvjJLYyrsEbWEtcheVujLSHfRgR6tA95V93io63jC1gKTQrfqS81oAvJee5EJ8CEQ2bkaHVSWfcS4ry354"
 )
 
@@ -10,8 +10,8 @@ $expectedHash = "049b4db553d52f592e0a0b05956fbafbec1e37c2672de50d0cde2bfbdffce28
 $expectedRevision = "38914bf13"
 $programDataDir = Join-Path $env:ProgramData "monzero"
 $stamp = [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssZ")
-$savedDataDir = "$programDataDir.before-pre7-test-$stamp"
-$testedDataDir = "$programDataDir.pre7-clean-sync-evidence-$stamp"
+$savedDataDir = "$programDataDir.before-pre8-test-$stamp"
+$testedDataDir = "$programDataDir.pre8-clean-sync-evidence-$stamp"
 $workDir = Join-Path $env:TEMP "MonzeroPre7Exact-$stamp"
 $nodeProcess = $null
 $originalMoved = $false
@@ -132,7 +132,7 @@ try {
     $evidence = [ordered]@{
         schema_version = 1
         project = "Monzero"
-        test = "Genesis pre7 exact native Windows network and launcher smoke"
+        test = "Genesis pre8 exact native Windows network and launcher smoke"
         tested_at_utc = [DateTime]::UtcNow.ToString("o")
         tester = "$env:USERNAME@$env:COMPUTERNAME"
         windows_version = [Environment]::OSVersion.VersionString
@@ -161,7 +161,7 @@ try {
     }
     $evidence | ConvertTo-Json -Depth 6 | Set-Content $EvidencePath -Encoding UTF8
     $passed = $true
-    Write-Host "Native Windows pre7 network and launcher smoke passed"
+    Write-Host "Native Windows pre8 network and launcher smoke passed"
     Write-Host "Evidence: $EvidencePath"
 } finally {
     if ($nodeProcess -and -not $nodeProcess.HasExited) {

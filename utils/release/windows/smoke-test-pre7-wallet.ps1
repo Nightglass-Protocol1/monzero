@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$ArtifactPath = "$env:USERPROFILE\Downloads\monzero-genesis-pre7-windows-x64.zip",
-    [string]$EvidencePath = "$env:USERPROFILE\Documents\monzero-pre7-windows-wallet-evidence.json",
+    [string]$ArtifactPath = "$env:USERPROFILE\Downloads\monzero-genesis-pre8-windows-x64.zip",
+    [string]$EvidencePath = "$env:USERPROFILE\Documents\monzero-pre8-windows-wallet-evidence.json",
     [int]$RpcPort = 6285,
     [string]$DaemonAddress = "node.monzero.org:6175"
 )
@@ -18,7 +18,7 @@ $passed = $false
 function Invoke-WalletRpc([string]$Method, [hashtable]$Params = @{}) {
     $request = @{
         jsonrpc = "2.0"
-        id = "pre7-wallet-smoke"
+        id = "pre8-wallet-smoke"
         method = $Method
         params = $Params
     } | ConvertTo-Json -Depth 8
@@ -77,7 +77,7 @@ try {
 
     Invoke-WalletRpc "create_wallet" @{
         filename = "native-created"
-        password = "pre7-temporary-test"
+        password = "pre8-temporary-test"
         language = "English"
     } | Out-Null
     $createdAddress = [string](Invoke-WalletRpc "get_address").address
@@ -90,7 +90,7 @@ try {
 
     Invoke-WalletRpc "restore_deterministic_wallet" @{
         filename = "native-restored"
-        password = "pre7-temporary-test"
+        password = "pre8-temporary-test"
         seed = $seed
         restore_height = 0
     } | Out-Null
@@ -107,7 +107,7 @@ try {
     $evidence = [ordered]@{
         schema_version = 1
         project = "Monzero"
-        test = "Genesis pre7 exact native Windows wallet lifecycle smoke"
+        test = "Genesis pre8 exact native Windows wallet lifecycle smoke"
         tested_at_utc = [DateTime]::UtcNow.ToString("o")
         tester = "$env:USERNAME@$env:COMPUTERNAME"
         windows_version = [Environment]::OSVersion.VersionString
@@ -131,7 +131,7 @@ try {
     }
     $evidence | ConvertTo-Json -Depth 6 | Set-Content $EvidencePath -Encoding UTF8
     $passed = $true
-    Write-Host "Native Windows pre7 wallet lifecycle smoke passed"
+    Write-Host "Native Windows pre8 wallet lifecycle smoke passed"
     Write-Host "Evidence: $EvidencePath"
 } finally {
     $seed = $null

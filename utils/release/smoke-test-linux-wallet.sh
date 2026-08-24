@@ -100,7 +100,7 @@ else:
     raise RuntimeError("Wallet RPC did not become ready")
 
 rpc("create_wallet", {
-    "filename": "native-created", "password": "pre7-temporary-test", "language": "English",
+    "filename": "native-created", "password": "temporary-release-test", "language": "English",
 })
 created_address = rpc("get_address")["address"]
 seed = rpc("query_key", {"key_type": "mnemonic"})["key"]
@@ -111,7 +111,7 @@ if not seed.strip():
 rpc("close_wallet")
 
 rpc("restore_deterministic_wallet", {
-    "filename": "native-restored", "password": "pre7-temporary-test",
+    "filename": "native-restored", "password": "temporary-release-test",
     "seed": seed, "restore_height": 0,
 })
 restored_address = rpc("get_address")["address"]
@@ -126,7 +126,7 @@ rpc("close_wallet")
 evidence = {
     "schema_version": 1,
     "project": "Monzero",
-    "test": "Genesis pre7 exact native Linux wallet lifecycle smoke",
+    "test": "Exact native Linux release-package wallet lifecycle smoke",
     "tested_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     "artifact_sha256": artifact_hash,
     "source_revision": revision,
@@ -146,7 +146,7 @@ evidence = {
     "result": "pass",
 }
 pathlib.Path(evidence_path).write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
-print(f"Native Linux pre7 wallet lifecycle smoke passed: {evidence_path}")
+print(f"Native Linux wallet lifecycle smoke passed: {evidence_path}")
 PY
 
 kill -TERM "$wallet_rpc_pid"
