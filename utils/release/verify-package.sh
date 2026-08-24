@@ -4,22 +4,15 @@ set -euo pipefail
 [[ $# -eq 1 ]] || { echo "Usage: $0 <monzero-linux.tar.gz>" >&2; exit 2; }
 archive=$(realpath "$1")
 [[ -f "$archive" ]] || { echo "Archive not found: $archive" >&2; exit 2; }
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/monzero-verify.XXXXXX")
 trap 'rm -rf -- "$work_dir"' EXIT
 
-# Screen the archive before extraction. GNU tar strips dangerous prefixes by
-# default, but a release verifier must reject them rather than silently alter
-# what it is verifying.
-mapfile -t archive_entries < <(tar -tzf "$archive")
-[[ ${#archive_entries[@]} -gt 0 ]] || { echo "Archive is empty" >&2; exit 1; }
-for entry in "${archive_entries[@]}"; do
-  [[ $entry != /* && $entry != ../* && $entry != */../* && $entry != */.. ]] || {
-    echo "Archive contains an unsafe path: $entry" >&2
-    exit 1
-  }
-done
-tar -xzf "$archive" -C "$work_dir"
+# Reject links and special files before extraction. A post-extraction symlink
+# check is too late if a later entry follows a link outside the work directory.
+python3 "$script_dir/validate-binary-archive.py" tar.gz "$archive"
+tar --no-same-owner --no-same-permissions -xzf "$archive" -C "$work_dir"
 
 mapfile -t roots < <(find "$work_dir" -mindepth 1 -maxdepth 1 -type d)
 [[ ${#roots[@]} -eq 1 ]] || { echo "Archive must contain exactly one root directory" >&2; exit 1; }

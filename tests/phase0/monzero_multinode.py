@@ -145,7 +145,9 @@ def main() -> int:
         if not binary.is_file():
             raise TestFailure(f"Required binary not found: {binary}")
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="monzero-phase0-"))
+    temporary_parent = build_dir / "test-tmp"
+    temporary_parent.mkdir(parents=True, exist_ok=True)
+    root = pathlib.Path(tempfile.mkdtemp(prefix="monzero-phase0-", dir=temporary_parent))
     processes: list[subprocess.Popen | None] = [None, None, None]
     wallet_process = None
     logs = []

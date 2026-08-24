@@ -19,6 +19,8 @@ version=$3
 [[ -x "$build_bin/monzerod" ]] || { echo "Missing executable: $build_bin/monzerod" >&2; exit 2; }
 [[ -x "$build_bin/monzero-wallet-cli" ]] || { echo "Missing executable: $build_bin/monzero-wallet-cli" >&2; exit 2; }
 
+source_commit=$(git -C "$source_root" rev-parse HEAD)
+source_short=${source_commit:0:9}
 daemon_version=$("$build_bin/monzerod" --version | head -n 1)
 wallet_version=$("$build_bin/monzero-wallet-cli" --version | head -n 1)
 [[ -n $daemon_version && $daemon_version == "$wallet_version" ]] || {
@@ -34,8 +36,14 @@ if [[ -x "$build_bin/monzero-wallet-rpc" ]]; then
     exit 1
   }
 fi
+for binary in monzerod monzero-wallet-cli monzero-wallet-rpc; do
+  [[ ! -x "$build_bin/$binary" ]] ||
+    strings "$build_bin/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || {
+      echo "Binary version does not match source commit: $binary" >&2
+      exit 1
+    }
+done
 
-source_commit=$(git -C "$source_root" rev-parse HEAD)
 source_epoch=${SOURCE_DATE_EPOCH:-$(git -C "$source_root" show -s --format=%ct "$source_commit")}
 [[ $source_epoch =~ ^[0-9]+$ ]] || { echo "SOURCE_DATE_EPOCH must be an integer" >&2; exit 2; }
 build_reproducibility=${BINARY_BUILD_REPRODUCIBILITY:-unverified}
@@ -81,6 +89,7 @@ install -m 0755 "$source_root/start-monzero-miner.sh" "$package_dir/start-monzer
 install -m 0755 "$source_root/stop-monzero-miner.sh" "$package_dir/stop-monzero-miner.sh"
 install -m 0644 "$source_root/LICENSE" "$package_dir/LICENSE"
 install -m 0644 "$source_root/README.md" "$package_dir/README.md"
+install -m 0644 "$source_root/WHITEPAPER.md" "$package_dir/WHITEPAPER.md"
 install -m 0644 "$source_root/MONZERO_CHAIN_SPEC.md" "$package_dir/MONZERO_CHAIN_SPEC.md"
 install -m 0644 "$source_root/docs/RELEASE_CHECKLIST.md" "$package_dir/RELEASE_CHECKLIST.md"
 install -m 0644 "$source_root/docs/RELEASE_STATUS.md" "$package_dir/RELEASE_STATUS.md"

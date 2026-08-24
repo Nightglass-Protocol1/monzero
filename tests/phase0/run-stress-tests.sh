@@ -14,6 +14,8 @@ if [[ ! -x "${unit_tests}" ]]; then
 fi
 
 export DNS_PUBLIC="${DNS_PUBLIC:-tcp://1.1.1.1}"
+export TMPDIR="${TMPDIR:-${build_dir}/test-tmp}"
+mkdir -p "${TMPDIR}"
 
 echo "Running the pruning-boundary concurrency stress test (timeout: ${timeout_seconds}s)"
 exec timeout --signal=INT --kill-after=30 "${timeout_seconds}" \

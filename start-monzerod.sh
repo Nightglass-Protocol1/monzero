@@ -2,15 +2,23 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-DAEMON_BIN="${MONZERO_DAEMON_BIN:-$PROJECT_DIR/build/bin/monzerod}"
-DATA_DIR="${MONZERO_DATA_DIR:-$HOME/.monzero-auto-test}"
-P2P_PORT="${MONZERO_P2P_PORT:-16174}"
-RPC_PORT="${MONZERO_RPC_PORT:-16175}"
-ZMQ_PORT="${MONZERO_ZMQ_PORT:-16176}"
+DAEMON_BIN="${MONZERO_DAEMON_BIN:-}"
+if [[ -z $DAEMON_BIN ]]; then
+  if [[ -x "$PROJECT_DIR/monzerod" ]]; then
+    DAEMON_BIN="$PROJECT_DIR/monzerod"
+  else
+    DAEMON_BIN="$PROJECT_DIR/build/bin/monzerod"
+  fi
+fi
+DATA_DIR="${MONZERO_DATA_DIR:-$HOME/.monzero}"
+P2P_PORT="${MONZERO_P2P_PORT:-6174}"
+RPC_PORT="${MONZERO_RPC_PORT:-6175}"
+ZMQ_PORT="${MONZERO_ZMQ_PORT:-6176}"
+PRIORITY_NODE="${MONZERO_PRIORITY_NODE:-node.monzero.org:6174}"
 
 if [[ ! -x "$DAEMON_BIN" ]]; then
   printf 'Error: daemon executable not found: %s\n' "$DAEMON_BIN" >&2
-  printf 'Build monzerod first, or set MONZERO_DAEMON_BIN.\n' >&2
+  printf 'Build monzerod first, use a release package, or set MONZERO_DAEMON_BIN.\n' >&2
   exit 1
 fi
 
@@ -42,7 +50,7 @@ printf '  Data: %s\n  P2P: %s\n  RPC: %s\n  ZMQ: %s\n' "$DATA_DIR" "$P2P_PORT" "
   --p2p-bind-port "$P2P_PORT" \
   --rpc-bind-port "$RPC_PORT" \
   --zmq-rpc-bind-port "$ZMQ_PORT" \
-  --add-priority-node 82.165.112.237:6174 \
+  --add-priority-node "$PRIORITY_NODE" \
   --no-igd
 
 for _ in {1..30}; do

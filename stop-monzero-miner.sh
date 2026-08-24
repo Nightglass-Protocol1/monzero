@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-RPC_PORT="${MONZERO_RPC_PORT:-16175}"
+RPC_PORT="${MONZERO_RPC_PORT:-6175}"
 RPC_URL="http://127.0.0.1:$RPC_PORT"
 
 response="$(curl --silent --show-error --fail --max-time 10 \

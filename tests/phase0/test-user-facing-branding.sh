@@ -43,11 +43,43 @@ check_absent \
 
 check_absent \
   "active runtime defaults contain inherited executable or file names" \
-  'monero-wallet-(cli|rpc)\.(log|login)|Please run monerod|monerod is now disconnected' \
+  'monero-wallet-(cli|rpc)\.(log|login)|bitmonero\.daemon|Please run monerod|monerod is now disconnected|with Monero address|WINDOWS_SERVICE_NAME = "Monero Daemon"' \
   src/simplewallet/simplewallet.cpp \
   src/wallet/wallet_rpc_server.cpp \
+  src/wallet/message_store.cpp \
   src/blockchain_db/lmdb/db_lmdb.cpp \
-  src/cryptonote_protocol/cryptonote_protocol_handler.inl
+  src/cryptonote_protocol/cryptonote_protocol_handler.inl \
+  src/daemon/command_line_args.h \
+  src/daemonizer/posix_fork.cpp
+
+check_absent \
+  "active wallet help contains the upstream ticker" \
+  '(^|[^[:alnum:]_])XMR([^[:alnum:]_]|$)' \
+  src/simplewallet/simplewallet.cpp
+
+for launcher in start-monzero-wallet-cli.sh start-monzero-miner.sh stop-monzero-miner.sh; do
+  grep -Fq 'MONZERO_RPC_PORT:-6175' "$launcher" || {
+    echo "User-facing branding gate failed: $launcher does not default to mainnet RPC port 6175" >&2
+    fail=true
+  }
+done
+
+grep -Fq 'MONZERO_P2P_PORT:-6174' start-monzerod.sh || {
+  echo "User-facing branding gate failed: node launcher does not default to mainnet P2P port 6174" >&2
+  fail=true
+}
+grep -Fq 'MONZERO_ZMQ_PORT:-6176' start-monzerod.sh || {
+  echo "User-facing branding gate failed: node launcher does not default to mainnet ZMQ port 6176" >&2
+  fail=true
+}
+if grep -Eq '^MINER_ADDRESS="\$\{MONZERO_MINER_ADDRESS:-[^}]+' start-monzero-miner.sh; then
+  echo "User-facing branding gate failed: mining launcher contains a default reward address" >&2
+  fail=true
+fi
+if grep -Eq 'Documents/Wallet|Wallet1' start-monzero-wallet-cli.sh; then
+  echo "User-facing branding gate failed: wallet launcher contains a developer-specific wallet path" >&2
+  fail=true
+fi
 
 if $fail; then
   exit 1

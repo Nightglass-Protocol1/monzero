@@ -14,6 +14,9 @@ if [[ ! -x "${core_tests}" ]]; then
   exit 1
 fi
 
+export TMPDIR="${TMPDIR:-${build_dir}/test-tmp}"
+mkdir -p "${TMPDIR}"
+
 echo "Running Monzero double-spend and key-image adversarial gate (timeout: ${timeout_seconds}s)"
 exec timeout --signal=INT --kill-after=30 "${timeout_seconds}" \
   "${core_tests}" \

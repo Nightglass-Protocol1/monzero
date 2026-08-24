@@ -4,6 +4,10 @@ Website for `monzero.org`, including the PHP-backed block explorer at
 `/explorer/` and the local-draft asset workspace at `/app/`. It contains no
 build-time dependencies.
 
+The homepage links to `/WHITEPAPER.md`. Deploy the repository-root
+`WHITEPAPER.md` at that exact document-root path whenever the site is updated;
+the packaged copies and public copy must come from the same reviewed source.
+
 ## Preview locally
 
 ```bash

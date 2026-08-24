@@ -15,6 +15,12 @@ fi
 # Keep external DNS behavior reproducible across developer and CI resolvers.
 export DNS_PUBLIC="${DNS_PUBLIC:-tcp://1.1.1.1}"
 
+# LMDB-backed tests reserve large sparse mappings. Some systems mount /tmp on
+# a small dedicated filesystem, so keep test databases beside the build by
+# default while still allowing callers to choose another TMPDIR.
+export TMPDIR="${TMPDIR:-${build_dir}/test-tmp}"
+mkdir -p "${TMPDIR}"
+
 # This pruning-boundary concurrency scenario creates about 9,600 blocks and is
 # kept in the separate stress gate. It is not a fast unit test.
 exec "${unit_tests}" \

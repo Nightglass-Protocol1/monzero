@@ -23,7 +23,8 @@ the recovered address and balance.
 
 Ports 26174-26205 must be available. All child processes are terminated on
 normal completion and on test failure. Pass `--keep-data` to retain temporary
-databases and logs for diagnosis.
+databases and logs for diagnosis. Temporary data defaults to `build/test-tmp`
+so LMDB mappings do not exhaust small dedicated `/tmp` filesystems.
 
 This is a smoke test, not the complete consensus qualification suite.
 Double-spend, deeper/adversarial reorg, and adversarial asset tests remain
@@ -43,6 +44,18 @@ surfaces it covers. Translation catalogs and technical documentation require
 separate contextual review because they intentionally preserve some upstream
 source strings, protocol terminology, citations, and attribution.
 
+## Release archive safety gate
+
+Run the malicious-archive regression test after changing binary package
+construction or verification:
+
+```bash
+tests/phase0/test-release-archive-safety.sh
+```
+
+It proves that normal tar and ZIP inputs pass pre-extraction validation while
+links, traversal paths, and duplicate entries fail closed.
+
 ## Fast unit gate
 
 Run the ordinary unit tests with a validating resolver and keep the expensive
@@ -55,6 +68,8 @@ tests/phase0/run-fast-unit-tests.sh build
 Override `DNS_PUBLIC` with another validating TCP resolver when required. The
 excluded `cryptonote_protocol_handler.race_condition` test must still pass in
 the scheduled stress gate; exclusion here is not a waiver.
+The shell test gates likewise default `TMPDIR` to `build/test-tmp`; set it
+explicitly if another test filesystem is preferred.
 
 ## Stress gate
 

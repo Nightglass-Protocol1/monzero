@@ -23,6 +23,9 @@ recovery seed with Monzero.
 The exact protected network parameters and genesis vectors are documented in
 [`MONZERO_CHAIN_SPEC.md`](MONZERO_CHAIN_SPEC.md) and
 [`config/monzero-consensus.json`](config/monzero-consensus.json).
+The protocol design, privacy model, monetary-policy equations, security
+assumptions, and current limitations are presented in
+[`WHITEPAPER.md`](WHITEPAPER.md).
 
 Monzero Assets is an inactive, pre-activation prototype. Hard-fork version 17
 is unscheduled, and no currently configured network accepts asset

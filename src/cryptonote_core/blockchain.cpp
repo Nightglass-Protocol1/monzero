@@ -88,8 +88,12 @@ DISABLE_VS_WARNINGS(4267)
 
 #define MERROR_VER(x) MCERROR("verify", x)
 
-// used to overestimate the block reward when estimating a per kB to use
-#define BLOCK_REWARD_OVERESTIMATE (10 * 1000000000000)
+// Conservative fallback for fee estimation if ordinary reward calculation
+// fails. Monzero's maximum base subsidy is its first two-minute-block reward.
+static_assert(DIFFICULTY_TARGET_V2 == 120,
+  "update the fee-estimation reward bound when the block target changes");
+constexpr uint64_t BLOCK_REWARD_OVERESTIMATE =
+  MONEY_SUPPLY >> (EMISSION_SPEED_FACTOR_PER_MINUTE - 1);
 
 //------------------------------------------------------------------
 Blockchain::Blockchain(tx_memory_pool& tx_pool) :

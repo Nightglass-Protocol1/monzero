@@ -4,16 +4,11 @@ set -euo pipefail
 [[ $# -eq 1 ]] || { echo "Usage: $0 <monzero-windows.zip>" >&2; exit 2; }
 archive=$(realpath "$1")
 [[ -f "$archive" ]] || { echo "Archive not found: $archive" >&2; exit 2; }
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/monzero-windows-verify.XXXXXX")
 trap 'rm -rf -- "$work_dir"' EXIT
 
-mapfile -t entries < <(zipinfo -1 "$archive")
-[[ ${#entries[@]} -gt 0 ]] || { echo "Archive is empty" >&2; exit 1; }
-for entry in "${entries[@]}"; do
-  [[ $entry != /* && $entry != ../* && $entry != */../* && $entry != */.. && $entry != *\\* ]] || {
-    echo "Archive contains an unsafe path: $entry" >&2; exit 1;
-  }
-done
+python3 "$script_dir/validate-binary-archive.py" zip "$archive"
 unzip -q "$archive" -d "$work_dir"
 mapfile -t roots < <(find "$work_dir" -mindepth 1 -maxdepth 1 -type d)
 [[ ${#roots[@]} -eq 1 ]] || { echo "Archive must contain exactly one root directory" >&2; exit 1; }
