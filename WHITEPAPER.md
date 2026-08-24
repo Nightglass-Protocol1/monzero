@@ -315,6 +315,14 @@ documented migration path. Cryptographic changes require specialist review.
 Network parameters and release claims should be verifiable from source and
 signed artifacts rather than trusted from a website alone.
 
+Release qualification regenerates and replays consensus fixtures against
+Monzero's own money supply, decimal precision, block target, and resulting
+coinbase denominations. The suite covers emission, integer-overflow rejection,
+RingCT, Bulletproofs, Bulletproofs+, CLSAG, pruning races, transaction
+propagation, node restart, and longer-chain reorganization. Passing these
+tests is evidence about the tested implementation and platform, not a proof of
+correctness or a substitute for independent cryptographic review.
+
 ## 11. Status and roadmap
 
 The current project is an unsigned, unaudited prerelease. Its immediate work is

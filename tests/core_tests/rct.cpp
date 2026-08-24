@@ -65,6 +65,31 @@ bool gen_rct_tx_validation_base::generate_with_full(std::vector<test_event_entry
     prev_block = blocks + n;
   }
 
+  // Coinbase denominations depend on the configured money supply and emission
+  // target. Select two denominations that really exist in all four blocks so
+  // this test remains valid for CryptoNote networks with different economics.
+  std::vector<uint64_t> common_miner_amounts;
+  for (const tx_out &candidate: blocks[0].miner_tx.vout)
+  {
+    bool present_in_every_block = candidate.amount != 0;
+    for (size_t m = 1; present_in_every_block && m < 4; ++m)
+      present_in_every_block = std::any_of(blocks[m].miner_tx.vout.begin(), blocks[m].miner_tx.vout.end(),
+        [&candidate](const tx_out &out) { return out.amount == candidate.amount; });
+    if (present_in_every_block)
+      common_miner_amounts.push_back(candidate.amount);
+  }
+  std::sort(common_miner_amounts.begin(), common_miner_amounts.end(), std::greater<uint64_t>());
+  common_miner_amounts.erase(std::unique(common_miner_amounts.begin(), common_miner_amounts.end()), common_miner_amounts.end());
+  CHECK_AND_ASSERT_MES(common_miner_amounts.size() >= 2, false, "Fewer than two common miner output amounts found");
+  const uint64_t rct_funding_amount = common_miner_amounts[0];
+  const uint64_t pre_rct_funding_amount = common_miner_amounts[1];
+  const uint64_t rct_output_amount = rct_funding_amount / 5;
+  CHECK_AND_ASSERT_MES(rct_output_amount > 0, false, "Common miner output is too small");
+  const uint64_t rct_funding_global_offset = std::count_if(blk_0.miner_tx.vout.begin(), blk_0.miner_tx.vout.end(),
+    [rct_funding_amount](const tx_out &out) { return out.amount == rct_funding_amount; });
+  const uint64_t pre_rct_funding_global_offset = std::count_if(blk_0.miner_tx.vout.begin(), blk_0.miner_tx.vout.end(),
+    [pre_rct_funding_amount](const tx_out &out) { return out.amount == pre_rct_funding_amount; });
+
   // rewind
   cryptonote::block blk_r, blk_last;
   {
@@ -95,28 +120,34 @@ bool gen_rct_tx_validation_base::generate_with_full(std::vector<test_event_entry
     sources.resize(1);
     tx_source_entry& src = sources.back();
 
-    const size_t index_in_tx = 5;
-    src.amount = 30000000000000;
+    size_t real_index_in_tx = 0;
+    src.amount = rct_funding_amount;
     for (int m = 0; m < 4; ++m) {
+      const auto output = std::find_if(blocks[m].miner_tx.vout.begin(), blocks[m].miner_tx.vout.end(),
+        [rct_funding_amount](const tx_out &out) { return out.amount == rct_funding_amount; });
+      CHECK_AND_ASSERT_MES(output != blocks[m].miner_tx.vout.end(), false, "Common miner output disappeared");
+      const size_t index_in_tx = std::distance(blocks[m].miner_tx.vout.begin(), output);
       crypto::public_key output_public_key;
-      cryptonote::get_output_public_key(blocks[m].miner_tx.vout[index_in_tx], output_public_key);
-      src.push_output(m, output_public_key, src.amount);
+      cryptonote::get_output_public_key(*output, output_public_key);
+      src.push_output(rct_funding_global_offset + m, output_public_key, src.amount);
+      if (m == static_cast<int>(n))
+        real_index_in_tx = index_in_tx;
     }
     src.real_out_tx_key = cryptonote::get_tx_pub_key_from_extra(blocks[n].miner_tx);
     src.real_output = n;
-    src.real_output_in_tx_index = index_in_tx;
+    src.real_output_in_tx_index = real_index_in_tx;
     src.mask = rct::identity();
     src.rct = false;
 
     //fill outputs entry
     tx_destination_entry td;
     td.addr = miner_accounts[n].get_keys().m_account_address;
-    td.amount = 7390000000000;
+    td.amount = rct_output_amount;
     std::vector<tx_destination_entry> destinations;
     destinations.push_back(td);
     destinations.push_back(td);
     destinations.push_back(td);
-    destinations.push_back(td); // 30 -> 7.39 * 4
+    destinations.push_back(td);
 
     crypto::secret_key tx_key;
     std::vector<crypto::secret_key> additional_tx_keys;
@@ -181,7 +212,7 @@ bool gen_rct_tx_validation_base::generate_with_full(std::vector<test_event_entry
     src.real_output = 0;
     if (out_idx[out_idx_idx]) {
       // rct
-      src.amount = 7390000000000;
+      src.amount = rct_output_amount;
       src.real_out_tx_key = get_tx_pub_key_from_extra(rct_txes[rct_idx/4]);
       src.real_output_in_tx_index = rct_idx&3;
       src.mask = rct_tx_masks[rct_idx];
@@ -200,13 +231,18 @@ bool gen_rct_tx_validation_base::generate_with_full(std::vector<test_event_entry
     else
     {
       // pre rct
-      src.amount = 5000000000000;
+      src.amount = pre_rct_funding_amount;
       src.real_out_tx_key = cryptonote::get_tx_pub_key_from_extra(blocks[pre_rct_idx].miner_tx);
-      src.real_output_in_tx_index = 4;
       src.mask = rct::identity();
       src.rct = false;
       for (int m = 0; m <= mixin; ++m) {
-        src.push_output(m, boost::get<txout_to_key>(blocks[pre_rct_idx].miner_tx.vout[4].target).key, src.amount);
+        const auto output = std::find_if(blocks[pre_rct_idx].miner_tx.vout.begin(), blocks[pre_rct_idx].miner_tx.vout.end(),
+          [pre_rct_funding_amount](const tx_out &out) { return out.amount == pre_rct_funding_amount; });
+        CHECK_AND_ASSERT_MES(output != blocks[pre_rct_idx].miner_tx.vout.end(), false, "Common miner output disappeared");
+        if (m == 0)
+          src.real_output_in_tx_index = std::distance(blocks[pre_rct_idx].miner_tx.vout.begin(), output);
+        src.push_output(pre_rct_funding_global_offset + pre_rct_idx,
+          boost::get<txout_to_key>(output->target).key, src.amount);
         ++pre_rct_idx;
       }
     }

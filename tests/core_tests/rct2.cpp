@@ -88,7 +88,19 @@ bool gen_rct2_tx_validation_base::generate_with(std::vector<test_event_entry>& e
   std::vector<transaction> rct_txes;
   cryptonote::block blk_txes;
   std::vector<crypto::hash> starting_rct_tx_hashes;
-  static const uint64_t input_amounts_available[] = {5000000000000, 30000000000000, 100000000000, 80000000000};
+  uint64_t input_amount_available = 0;
+  for (const tx_out &candidate: blocks[0].miner_tx.vout)
+  {
+    bool present_in_every_ring = candidate.amount != 0;
+    for (size_t m = 1; present_in_every_ring && m <= mixin; ++m)
+      present_in_every_ring = std::any_of(blocks[m].miner_tx.vout.begin(), blocks[m].miner_tx.vout.end(),
+        [&candidate](const tx_out &out) { return out.amount == candidate.amount; });
+    if (present_in_every_ring)
+      input_amount_available = std::max(input_amount_available, candidate.amount);
+  }
+  CHECK_AND_ASSERT_MES(input_amount_available != 0, false, "No common miner output amount found");
+  const uint64_t input_global_offset = std::count_if(blk_0.miner_tx.vout.begin(), blk_0.miner_tx.vout.end(),
+    [input_amount_available](const tx_out &out) { return out.amount == input_amount_available; });
   for (size_t n = 0; n < n_txes; ++n)
   {
     std::vector<tx_source_entry> sources;
@@ -96,8 +108,8 @@ bool gen_rct2_tx_validation_base::generate_with(std::vector<test_event_entry>& e
     sources.resize(1);
     tx_source_entry& src = sources.back();
 
-    const uint64_t needed_amount = input_amounts_available[n];
-    src.amount = input_amounts_available[n];
+    const uint64_t needed_amount = input_amount_available;
+    src.amount = needed_amount;
     size_t real_index_in_tx = 0;
     for (size_t m = 0; m <= mixin; ++m) {
       size_t index_in_tx = 0;
@@ -105,7 +117,7 @@ bool gen_rct2_tx_validation_base::generate_with(std::vector<test_event_entry>& e
         if (blocks[m].miner_tx.vout[i].amount == needed_amount)
           index_in_tx = i;
       CHECK_AND_ASSERT_MES(blocks[m].miner_tx.vout[index_in_tx].amount == needed_amount, false, "Expected amount not found");
-      src.push_output(m, boost::get<txout_to_key>(blocks[m].miner_tx.vout[index_in_tx].target).key, src.amount);
+      src.push_output(input_global_offset + m, boost::get<txout_to_key>(blocks[m].miner_tx.vout[index_in_tx].target).key, src.amount);
       if (m == n)
         real_index_in_tx = index_in_tx;
     }

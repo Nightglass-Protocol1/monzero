@@ -246,12 +246,19 @@ bool gen_block_reward::check_block_rewards(cryptonote::core& /*c*/, size_t /*ev_
 {
   DEFINE_TESTS_ERROR_CONTEXT("gen_block_reward_without_txs::check_block_rewards");
 
+  static_assert(DIFFICULTY_TARGET_V2 >= 60 && DIFFICULTY_TARGET_V2 % 60 == 0,
+    "The emission test requires a whole-minute target");
+  static_assert(EMISSION_SPEED_FACTOR_PER_MINUTE >= DIFFICULTY_TARGET_V2 / 60 - 1,
+    "The emission shift must remain non-negative");
+  constexpr unsigned int emission_shift =
+    EMISSION_SPEED_FACTOR_PER_MINUTE - (DIFFICULTY_TARGET_V2 / 60 - 1);
+
   std::array<uint64_t, 7> blk_rewards;
-  blk_rewards[0] = MONEY_SUPPLY >> EMISSION_SPEED_FACTOR_PER_MINUTE;
+  blk_rewards[0] = MONEY_SUPPLY >> emission_shift;
   uint64_t cumulative_reward = blk_rewards[0];
   for (size_t i = 1; i < blk_rewards.size(); ++i)
   {
-    blk_rewards[i] = (MONEY_SUPPLY - cumulative_reward) >> EMISSION_SPEED_FACTOR_PER_MINUTE;
+    blk_rewards[i] = (MONEY_SUPPLY - cumulative_reward) >> emission_shift;
     cumulative_reward += blk_rewards[i];
   }
 
