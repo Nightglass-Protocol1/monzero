@@ -1,12 +1,44 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-08-23
+Assessment date: 2026-08-24
 Candidate line: Genesis prerelease
 
 This file records evidence for the current release assessment. It complements
 `RELEASE_CHECKLIST.md`; unchecked requirements remain release blockers even
 when they are outside the source repository.
+
+## Genesis pre8 deployment evidence
+
+- Source revision `6ea49557542cfa45883adb3af229775159738e45` passed the
+  complete core replay: 175 tests run, 0 failures. The broader gate also
+  passed 1,297 unit tests, 16 adversarial core tests, the pruning race test,
+  and a three-node propagation, restart, reorganisation, transfer, and seed-
+  restoration scenario.
+- Strict verification passed for the Linux, Windows, and source packages.
+  The Linux package was rebuilt in the digest-pinned Ubuntu 20.04 environment
+  after rejecting a host-linked candidate; its highest imported GLIBC symbol
+  is 2.29 and the published conservative compatibility floor is GLIBC 2.31.
+- The exact Linux archive passed clean Ubuntu 24.04 daemon startup/shutdown
+  and wallet create, export, restore, and refresh testing. Evidence file
+  `pre8-linux-wallet-evidence-release.json` has SHA-256
+  `c3f32c43eaa7f3bab9b418b4f5c13b8923fdabf700c414d210027dc39870ec36`.
+  The Windows package passed strict structural verification, but native
+  execution was not repeated because the Windows test host was unavailable.
+- Both public nodes run `0.18.5.1-6ea495575`, report synchronized at height
+  1042, and share top hash
+  `76cbc51636b282da330878300504aa45ea90e28ab16245e430307521aabe1199`.
+  Rollback copies are `/var/backups/monzero-pre8-20260824T2204Z` on the US
+  node and `/var/backups/monzero-pre8-20260824T2205Z` on the EU node.
+- The atomic website deployment retains rollback directory
+  `/home/www/Monzero-backup-20260824T2206Z-pre8`. Complete post-deployment
+  HTTPS downloads reproduced the published SHA-256 values: Linux
+  `9adee89066046bb24f84dc1f2d739b8025a4ef6cb933a40754110088a384ed79`,
+  Windows `4745a650d0050767438b60d3b1676b8a7d75cb66431b03ce1a2173416ff91bbe`,
+  source `15b2e1bc4851dea2a275607cb78550cc77bedb9b78446f77e9877555fe7ccec9`,
+  and whitepaper
+  `c58ef76ec73004f2b947e3800f633260a847116fddc261a8882886831d780789`.
+  Genesis pre8 remains explicitly unsigned, unaudited, and a prerelease.
 
 ## Verified in the current working tree
 

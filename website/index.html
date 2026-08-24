@@ -192,31 +192,29 @@
     <section class="download section" id="download">
       <div class="download-card">
         <div>
-          <p class="eyebrow">Genesis pre7</p>
+          <p class="eyebrow">Genesis pre8</p>
           <h2>Download Monzero</h2>
           <p>Experimental command-line builds for Windows and Linux x86-64. Both include the node, command-line wallet, wallet RPC, checksums, <a href="WHITEPAPER.md">protocol whitepaper</a>, release status, and upgrade guidance. The recursively complete source archive contains the exact pinned commit and submodules. The current Windows package does not include the graphical wallet.</p>
-          <p class="release-note">Unsigned and unaudited prerelease software. Repeated local packaging produced byte-identical Linux, Windows, and source archives. The Linux archive requires GLIBC 2.29 or newer and passed an isolated clean Ubuntu 24.04 launch test plus a native create/export/restore/refresh wallet lifecycle. The exact Windows archive passed native Windows 11 checks, empty-directory network synchronization, mining start/stop, clean console shutdown, and the same wallet lifecycle. Separately trusted reproduction, broader independent testing, code signing, and an external security audit are still required before a production release.</p>
-          <p class="release-metadata">Source commit <code>38914bf1347781dc6e0ead4a786e3607cc8ebeac</code> · <a href="releases/genesis-pre7.json">machine-readable metadata</a> · <a href="releases/genesis-pre7-notes.txt">release notes and limitations</a></p>
+          <p class="release-note">Unsigned and unaudited prerelease software. The Linux archive requires GLIBC 2.31 or newer and passed strict verification, an isolated clean Ubuntu 24.04 launch test, and a native create/export/restore/refresh wallet lifecycle. The Windows archive passed strict structure, checksum, PE, dependency, and source-provenance verification, but the native Windows host was unavailable, so its pre8 network, launcher, and wallet lifecycle checks remain pending. Separately trusted reproduction, code signing, broader independent testing, and an external security audit are still required before a production release.</p>
+          <p class="release-metadata">Source commit <code>6ea49557542cfa45883adb3af229775159738e45</code> · <a href="releases/genesis-pre8.json">machine-readable metadata</a> · <a href="releases/genesis-pre8-notes.txt">release notes and limitations</a></p>
         </div>
         <div class="download-action">
           <div class="release-download">
-            <a class="button primary wide" href="downloads/monzero-genesis-pre7-windows-x64.zip" download>Windows x64 <span>26 MB · ZIP</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre7-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
-            <code class="hash">049b4db553d52f592e0a0b05956fbafbec1e37c2672de50d0cde2bfbdffce284</code>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre7-windows-network-smoke.ps1" download>Native Windows network and launcher test</a>
-            <code class="hash">190f5deb38fb3bc9b0b2022704f5854517286ef689b12d5d3cda0dcb0f3d6e16</code>
+            <a class="button primary wide" href="downloads/monzero-genesis-pre8-windows-x64.zip" download>Windows x64 <span>26 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre8-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
+            <code class="hash">4745a650d0050767438b60d3b1676b8a7d75cb66431b03ce1a2173416ff91bbe</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre7-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.29+ <span>26 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre7-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
-            <code class="hash">83476fd3e57a6953003874cac2409916ca1cfaa9677144418de6e535561b789e</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre8-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.31+ <span>26 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre8-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
+            <code class="hash">9adee89066046bb24f84dc1f2d739b8025a4ef6cb933a40754110088a384ed79</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre7-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre7-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
-            <code class="hash">a60c776a70087a997e4c0501638f21fd193d53cb8d56f4704b122e1b1c9f62e6</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre8-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre8-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
+            <code class="hash">15b2e1bc4851dea2a275607cb78550cc77bedb9b78446f77e9877555fe7ccec9</code>
           </div>
-          <p class="unsigned-note">Windows binaries and the optional smoke-test script are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; inspect the script and verify both checksums before running them.</p>
+          <p class="unsigned-note">Windows binaries are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; verify the published SHA-256 checksum before running them.</p>
         </div>
       </div>
     </section>
@@ -230,7 +228,7 @@
         <details><summary>Why is my mining balance still zero?</summary><p>Monzero currently uses solo mining. You receive a coinbase reward only when your machine finds a block; simply hashing does not create a gradual balance. A found reward remains locked for 60 blocks.</p></details>
         <details><summary>Is Monzero the same network as Monero?</summary><p>No. Monzero is an independent experimental chain with a different genesis block, network ID, ports, address prefixes, ticker, and monetary policy.</p></details>
         <details><summary>Can I reuse my existing seed?</summary><p>No. Create a new wallet and seed exclusively for Monzero. Reusing keys across forks can seriously damage privacy.</p></details>
-        <details><summary>Is this a production release?</summary><p>Not yet. Genesis pre7 is experimental prerelease software. Its local packaging is deterministic and its exact Linux and Windows archives passed platform smoke tests, but the packages remain unsigned, lack separately trusted reproduction and broader independent clean-system testing, and the consensus and cryptographic changes have not received an independent audit.</p></details>
+        <details><summary>Is this a production release?</summary><p>Not yet. Genesis pre8 is experimental prerelease software. Its exact archives pass strict local verification and the Linux archive passes clean-platform and wallet lifecycle tests, but the packages remain unsigned, the exact Windows archive still needs native retesting, separately trusted reproduction is absent, and the consensus and cryptographic changes have not received an independent audit.</p></details>
       </div>
     </section>
   </main>

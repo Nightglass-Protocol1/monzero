@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "project": "Monzero",
+  "release": "Genesis pre8",
+  "channel": "prerelease",
+  "production_ready": false,
+  "source_commit": "6ea49557542cfa45883adb3af229775159738e45",
+  "published_at": "2026-08-24T21:13:49Z",
+  "security_audit": "not_completed",
+  "signing": "unsigned",
+  "independent_reproducibility": "unverified",
+  "local_build_reproducibility": "not_repeated",
+  "source": {
+    "filename": "monzero-genesis-pre8-source.tar.gz",
+    "size_bytes": 21245142,
+    "sha256": "15b2e1bc4851dea2a275607cb78550cc77bedb9b78446f77e9877555fe7ccec9"
+  },
+  "artifacts": [
+    {
+      "platform": "linux-x86_64",
+      "filename": "monzero-genesis-pre8-linux-x86_64.tar.gz",
+      "size_bytes": 25837770,
+      "sha256": "9adee89066046bb24f84dc1f2d739b8025a4ef6cb933a40754110088a384ed79",
+      "compatibility": {
+        "minimum_glibc": "2.31",
+        "highest_imported_glibc_symbol": "2.29",
+        "ubuntu_24_04": "verified"
+      },
+      "clean_startup_shutdown_test": "passed",
+      "native_wallet_create_restore_refresh_test": "passed"
+    },
+    {
+      "platform": "windows-x64",
+      "filename": "monzero-genesis-pre8-windows-x64.zip",
+      "size_bytes": 25762582,
+      "sha256": "4745a650d0050767438b60d3b1676b8a7d75cb66431b03ce1a2173416ff91bbe",
+      "strict_archive_verification": "passed",
+      "native_network_and_launcher_test": "not_retested_for_pre8",
+      "native_wallet_create_restore_refresh_test": "not_retested_for_pre8"
+    }
+  ]
+}
