@@ -194,13 +194,18 @@
         <div>
           <p class="eyebrow">Genesis pre8</p>
           <h2>Download Monzero</h2>
-          <p>Experimental command-line builds for Windows and Linux x86-64. Both include the node, command-line wallet, wallet RPC, checksums, <a href="WHITEPAPER.md">protocol whitepaper</a>, release status, and upgrade guidance. The recursively complete source archive contains the exact pinned commit and submodules. The current Windows package does not include the graphical wallet.</p>
-          <p class="release-note">Unsigned and unaudited prerelease software. The Linux archive requires GLIBC 2.31 or newer and passed strict verification, an isolated clean Ubuntu 24.04 launch test, and a native create/export/restore/refresh wallet lifecycle. The Windows archive passed strict structure, checksum, PE, dependency, and source-provenance verification, but the native Windows host was unavailable, so its pre8 network, launcher, and wallet lifecycle checks remain pending. Separately trusted reproduction, code signing, broader independent testing, and an external security audit are still required before a production release.</p>
+          <p>Experimental Windows graphical wallet and command-line builds for Windows and Linux x86-64. Packages include the matching node, checksums, <a href="WHITEPAPER.md">protocol whitepaper</a>, release status, and upgrade guidance. The recursively complete source archive contains the exact pinned core commit and submodules.</p>
+          <p class="release-note">Unsigned and unaudited prerelease software. The Linux archive requires GLIBC 2.31 or newer and passed strict verification, an isolated clean Ubuntu 24.04 launch test, and a native create/export/restore/refresh wallet lifecycle. The Windows CLI and GUI archives passed checksum, PE, system-import, build-provenance, and internal-manifest checks, but the native Windows host was unavailable, so their pre8 startup, network, and wallet lifecycle checks remain pending. Separately trusted reproduction, code signing, broader independent testing, and an external security audit are still required before a production release.</p>
           <p class="release-metadata">Source commit <code>6ea49557542cfa45883adb3af229775159738e45</code> · <a href="releases/genesis-pre8.json">machine-readable metadata</a> · <a href="releases/genesis-pre8-notes.txt">release notes and limitations</a></p>
         </div>
         <div class="download-action">
           <div class="release-download">
-            <a class="button primary wide" href="downloads/monzero-genesis-pre8-windows-x64.zip" download>Windows x64 <span>26 MB · ZIP</span></a>
+            <a class="button primary wide" href="downloads/monzero-genesis-pre8-windows-gui-x64.zip" download>Windows graphical wallet <span>65 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre8-windows-gui-x64.zip.sha256" download>Windows GUI SHA-256 checksum</a>
+            <code class="hash">8ac7f4d1cdf6c920beec1198f2441efc7021b2930b404938e1a15067b1cb7bcc</code>
+          </div>
+          <div class="release-download">
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre8-windows-x64.zip" download>Windows command line <span>26 MB · ZIP</span></a>
             <a class="checksum-link" href="downloads/monzero-genesis-pre8-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
             <code class="hash">4745a650d0050767438b60d3b1676b8a7d75cb66431b03ce1a2173416ff91bbe</code>
           </div>
@@ -213,6 +218,11 @@
             <a class="button secondary wide" href="downloads/monzero-genesis-pre8-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
             <a class="checksum-link" href="downloads/monzero-genesis-pre8-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
             <code class="hash">15b2e1bc4851dea2a275607cb78550cc77bedb9b78446f77e9877555fe7ccec9</code>
+          </div>
+          <div class="release-download">
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre8-gui-source.tar.gz" download>Graphical-wallet source <span>33 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre8-gui-source.tar.gz.sha256" download>GUI source SHA-256 checksum</a>
+            <code class="hash">b7f0715b671d9eec55f2d9a8fadbe66296640ea8aa5c7bf2130c9e678983e58e</code>
           </div>
           <p class="unsigned-note">Windows binaries are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; verify the published SHA-256 checksum before running them.</p>
         </div>

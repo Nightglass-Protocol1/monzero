@@ -39,6 +39,15 @@ when they are outside the source repository.
   and whitepaper
   `c58ef76ec73004f2b947e3800f633260a847116fddc261a8882886831d780789`.
   Genesis pre8 remains explicitly unsigned, unaudited, and a prerelease.
+- A separate Windows GUI archive was cross-built from GUI revision
+  `e207630859d5709986af0752259a86e8a4c6c185` against the exact pre8 core
+  revision. Its static PE executable imports only Windows system DLLs and its
+  internal checksum manifest passes. The archive SHA-256 is
+  `8ac7f4d1cdf6c920beec1198f2441efc7021b2930b404938e1a15067b1cb7bcc`.
+  Native Windows GUI startup and wallet lifecycle testing remains pending
+  because the Windows test host was unavailable.
+  Corresponding recursively complete GUI source is published with SHA-256
+  `b7f0715b671d9eec55f2d9a8fadbe66296640ea8aa5c7bf2130c9e678983e58e`.
 
 ## Verified in the current working tree
 

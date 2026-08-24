@@ -34,9 +34,10 @@ domain's assigned document root. PHP must be enabled so `/explorer/api.php` can
 proxy the allowlisted, read-only requests to the restricted public node.
 
 `releases/genesis-pre8-notes.txt` is the human-readable companion to the
-machine-readable pre8 metadata. Keep its release identity, platform scope, and
-limitations aligned with `docs/RELEASE_NOTES.md` without changing published
-archive hashes.
+machine-readable pre8 metadata. It covers the CLI, source, and separately
+packaged Windows graphical-wallet archive. Keep its release identity,
+platform scope, and limitations aligned with `docs/RELEASE_NOTES.md` without
+changing published archive hashes.
 
 ## Anonymous miner statistics
 
