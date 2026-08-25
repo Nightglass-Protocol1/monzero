@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 const NODE_RPC = 'http://node.monzero.org:6175';
 const MAX_TIP_AGE_SECONDS = 900;
 const MAX_FUTURE_SKEW_SECONDS = 300;
+const GENESIS_HASH = '84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4';
 
 function nodeRequest(string $path, string $body): array
 {
@@ -74,9 +75,11 @@ $headerDecoded = is_string($headerResponse) ? json_decode($headerResponse, true)
 $header = is_array($headerDecoded) ? ($headerDecoded['result']['block_header'] ?? null) : null;
 $tipTimestamp = is_array($header) ? ($header['timestamp'] ?? null) : null;
 $tipAge = is_int($tipTimestamp) ? time() - $tipTimestamp : null;
-$tipFresh = is_int($tipAge)
+$genesisOnly = (int)($decoded['height'] ?? 0) === 1
+    && hash_equals(GENESIS_HASH, (string)($decoded['top_block_hash'] ?? ''));
+$tipFresh = $genesisOnly || (is_int($tipAge)
     && $tipAge <= MAX_TIP_AGE_SECONDS
-    && $tipAge >= -MAX_FUTURE_SKEW_SECONDS;
+    && $tipAge >= -MAX_FUTURE_SKEW_SECONDS);
 
 $decoded['tip_timestamp'] = $tipTimestamp;
 $decoded['tip_age_seconds'] = $tipAge;

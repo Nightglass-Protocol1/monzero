@@ -4,6 +4,33 @@ Status: not ready for production release
 Assessment date: 2026-08-25
 Candidate line: Genesis prerelease
 
+Genesis pre10 starts the fresh Monzero mainnet at network UUID
+`94834264-d0b2-41dd-b0f2-0ada675c7710`, genesis nonce `2271206363`, and
+genesis hash `84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4`.
+Both public nodes run the portable core build from commit `519654692657855445c0ab490380dd2465ea5c91`, are synchronized at height 1,
+and report that genesis hash as their common tip. Pre9 chain data was moved to
+timestamped backups before the coordinated reset. The EU rollback is
+`/var/backups/monzero-pre10-20260825T192921Z`; the US rollback is
+`/var/backups/monzero-pre10-20260825T192926Z`.
+
+The unsigned pre10 artifact SHA-256 values are Linux CLI
+`7eb3d2d0c527b58e2dc3854317d2abcf49bc42222206d522d36994007e7fbb2b`,
+Windows CLI `3e50890ab6b44eec27aac1fc73e5bc9101ad841499e50941f90a45c3f61662f2`,
+Windows GUI `04a8e59c9603d9e1c849e905eb6f9ed39f03787123ff742fb150af54b6aad659`,
+core source `97215f624eac4edae9b6ec33bf320fe71370e43a2fc6c6633335c818f3282d9e`,
+and GUI source `dcb281e2d52dd11b6274a189b2b84a2920375fed9ee65f2c7618e06df1e2e063`.
+The Linux build has a minimal runtime dependency surface but requires GLIBC
+2.42 or newer; both public Ubuntu hosts provide GLIBC 2.43. Package validation
+passed, but the release remains unsigned, independently unreproduced,
+unaudited, and a prerelease.
+
+Genesis pre10 was published to `https://monzero.org` on 2026-08-25. Live
+availability checks passed for the homepage, whitepaper, release metadata and
+notes, and all five binary/source archives. The web node-status and explorer
+proxies report height 1 and the expected pre10 genesis hash. The webspace
+rollback snapshot is
+`/home/www/Monzero-backups/20260825T201122Z-pre10-site`.
+
 Genesis pre9 publication is authorized as an explicitly untested prerelease.
 No earlier test result is attributed to its exact binaries. Compilation,
 packaging, checksum generation, and publication availability checks are not

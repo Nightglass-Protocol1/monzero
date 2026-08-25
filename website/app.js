@@ -79,7 +79,7 @@ const fields = {
 
 async function updateNodeStatus() {
   try {
-    const response = await fetch('/api/node-info/', {
+    const response = await fetch('/api/node-info/index.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: '{}',
