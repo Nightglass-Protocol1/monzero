@@ -9,6 +9,18 @@ No earlier test result is attributed to its exact binaries. Compilation,
 packaging, checksum generation, and publication availability checks are not
 treated as functional or security test evidence.
 
+Genesis pre9 is built from core commit
+`782d9c28645816aabb4f558e43e9ce5497fa1ef3` and GUI commit
+`f31aba2332009ebc0b4a278a1291f98ec2bb868a`. The generated unsigned artifact
+SHA-256 values are Linux CLI `275d0d3d64de57d0d5516e7836c8709b850c8cbae4554b618fb2cb7f70e7434d`,
+Windows CLI `7b99c32ce25260393b5147311b2bdef75a536b67a2a0a127e11843712960c294`,
+Windows GUI `546760e22e14efcf73e9897c9601cedd063bd82449689b6f4483cbea76606b3b`,
+core source `27ef17275fd5e5296f41b49d1cdcd00fb0c11d9bb70beaf5fe80f14975aadf7d`,
+and GUI source `8f47abce67c0c0e7e7e382ae0757b305996c097f6094ffaf6dc7c68a43166488`.
+Their compilation completed, but no test suite, release verifier, native
+startup, wallet lifecycle, network, or platform smoke test was run for the
+exact artifacts.
+
 This file records evidence for the current release assessment. It complements
 `RELEASE_CHECKLIST.md`; unchecked requirements remain release blockers even
 when they are outside the source repository.
