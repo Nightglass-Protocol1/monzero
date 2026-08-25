@@ -1857,6 +1857,95 @@ PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const 
     return createTransactionMultDest(std::vector<string> {dst_addr}, payment_id, amount ? (std::vector<uint64_t> {*amount}) : (optional<std::vector<uint64_t>>()), mixin_count, priority, subaddr_account, subaddr_indices);
 }
 
+PendingTransaction *WalletImpl::createAssetIssuanceTransaction(
+    const string &asset_type,
+    uint64_t atomic_supply,
+    uint32_t display_decimals,
+    const string &metadata_hash,
+    const string &metadata_reference,
+    const string &collection_id,
+    const string &recipient_address,
+    uint32_t mixin_count,
+    PendingTransaction::Priority priority,
+    uint32_t subaddr_account,
+    std::set<uint32_t> subaddr_indices,
+    string &asset_id)
+{
+    clearStatus();
+    pauseRefresh();
+    PendingTransactionImpl *transaction = new PendingTransactionImpl(*this);
+    asset_id.clear();
+
+    do {
+        if (checkBackgroundSync("cannot create asset issuance transactions"))
+            break;
+
+        cryptonote::assets::issuance_descriptor descriptor;
+        descriptor.network = m_wallet->nettype();
+        if (asset_type == "fungible")
+            descriptor.type = cryptonote::assets::asset_class::fungible;
+        else if (asset_type == "nft")
+            descriptor.type = cryptonote::assets::asset_class::non_fungible;
+        else if (asset_type == "collection")
+            descriptor.type = cryptonote::assets::asset_class::collection;
+        else if (asset_type == "edition")
+            descriptor.type = cryptonote::assets::asset_class::edition;
+        else {
+            setStatusError(tr("Unknown asset type; expected fungible, nft, collection, or edition"));
+            break;
+        }
+        if (display_decimals > std::numeric_limits<uint8_t>::max()) {
+            setStatusError(tr("Asset display decimals exceed 255"));
+            break;
+        }
+        descriptor.atomic_supply = atomic_supply;
+        descriptor.display_decimals = static_cast<uint8_t>(display_decimals);
+        descriptor.metadata_reference = metadata_reference;
+        if (!metadata_hash.empty()
+            && !epee::string_tools::hex_to_pod(metadata_hash, descriptor.metadata_hash)) {
+            setStatusError(tr("Asset metadata hash must be a 32-byte hexadecimal value"));
+            break;
+        }
+        if (!collection_id.empty()
+            && !epee::string_tools::hex_to_pod(collection_id, descriptor.collection_id)) {
+            setStatusError(tr("Asset collection id must be a 32-byte hexadecimal value"));
+            break;
+        }
+
+        cryptonote::address_parse_info recipient{};
+        if (!cryptonote::get_account_address_from_str(recipient, m_wallet->nettype(), recipient_address)
+            || recipient.has_payment_id) {
+            setStatusError(tr("Invalid asset recipient address; integrated addresses are not supported"));
+            break;
+        }
+
+        try {
+            tools::wallet2::pending_tx pending;
+            crypto::hash id{};
+            string error;
+            const size_t adjusted_mixin = m_wallet->adjust_mixin(mixin_count);
+            const uint32_t adjusted_priority = m_wallet->adjust_priority(static_cast<uint32_t>(priority));
+            if (!m_wallet->create_asset_issuance_transaction(descriptor, recipient.address,
+                    recipient.is_subaddress, adjusted_mixin, adjusted_priority,
+                    subaddr_account, std::move(subaddr_indices), pending, id, &error)) {
+                setStatusError(error.empty() ? tr("Failed to create asset issuance transaction") : error);
+                break;
+            }
+            transaction->m_pending_tx.push_back(std::move(pending));
+            pendingTxPostProcess(transaction);
+            asset_id = epee::string_tools::pod_to_hex(id);
+        } catch (const std::exception &e) {
+            setStatusError(string(tr("Failed to create asset issuance transaction: ")) + e.what());
+        } catch (...) {
+            setStatusError(tr("Failed to create asset issuance transaction: unknown error"));
+        }
+    } while (false);
+
+    statusWithErrorString(transaction->m_status, transaction->m_errorString);
+    startRefresh();
+    return transaction;
+}
+
 PendingTransaction *WalletImpl::createSweepUnmixableTransaction()
 
 {

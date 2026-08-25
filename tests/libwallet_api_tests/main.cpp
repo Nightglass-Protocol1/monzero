@@ -222,6 +222,39 @@ TEST_F(WalletManagerTest, WalletManagerCreatesWallet)
 
 }
 
+TEST_F(WalletManagerTest, AssetIssuanceRejectsInvalidPublicInputsBeforeConstruction)
+{
+    Monero::Wallet *wallet = wmgr->createWallet(
+        WALLET_NAME, WALLET_PASS, WALLET_LANG, Monero::NetworkType::MAINNET);
+    ASSERT_EQ(Monero::Wallet::Status_Ok, wallet->status());
+
+    const auto expect_error = [&](const std::string &asset_type,
+                                  uint32_t decimals,
+                                  const std::string &metadata_hash,
+                                  const std::string &collection_id,
+                                  const std::string &recipient) {
+        std::string asset_id = "must be cleared";
+        Monero::PendingTransaction *transaction =
+            wallet->createAssetIssuanceTransaction(
+                asset_type, 1, decimals, metadata_hash, "", collection_id,
+                recipient, 0, Monero::PendingTransaction::Priority_Low,
+                0, {}, asset_id);
+        ASSERT_NE(nullptr, transaction);
+        EXPECT_EQ(Monero::PendingTransaction::Status_Error, transaction->status());
+        EXPECT_FALSE(transaction->errorString().empty());
+        EXPECT_TRUE(asset_id.empty());
+        wallet->disposeTransaction(transaction);
+    };
+
+    expect_error("unknown", 0, "", "", wallet->mainAddress());
+    expect_error("fungible", 256, "", "", wallet->mainAddress());
+    expect_error("fungible", 0, "00", "", wallet->mainAddress());
+    expect_error("fungible", 0, "", "00", wallet->mainAddress());
+    expect_error("fungible", 0, "", "", "not-an-address");
+
+    ASSERT_TRUE(wmgr->closeWallet(wallet));
+}
+
 TEST_F(WalletManagerTest, WalletManagerOpensWallet)
 {
 

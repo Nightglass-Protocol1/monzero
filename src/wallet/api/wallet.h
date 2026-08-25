@@ -163,6 +163,19 @@ public:
                                         PendingTransaction::Priority priority = PendingTransaction::Priority_Low,
                                         uint32_t subaddr_account = 0,
                                         std::set<uint32_t> subaddr_indices = {}) override;
+    PendingTransaction * createAssetIssuanceTransaction(
+                                        const std::string &asset_type,
+                                        uint64_t atomic_supply,
+                                        uint32_t display_decimals,
+                                        const std::string &metadata_hash,
+                                        const std::string &metadata_reference,
+                                        const std::string &collection_id,
+                                        const std::string &recipient_address,
+                                        uint32_t mixin_count,
+                                        PendingTransaction::Priority priority,
+                                        uint32_t subaddr_account,
+                                        std::set<uint32_t> subaddr_indices,
+                                        std::string &asset_id) override;
     virtual PendingTransaction * createSweepUnmixableTransaction() override;
     bool submitTransaction(const std::string &fileName) override;
     virtual UnsignedTransaction * loadUnsignedTx(const std::string &unsigned_filename) override;

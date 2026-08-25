@@ -887,6 +887,21 @@ struct Wallet
                                                    uint32_t subaddr_account = 0,
                                                    std::set<uint32_t> subaddr_indices = {}) = 0;
 
+    /** Construct, but never relay, a fixed-supply asset issuance. */
+    virtual PendingTransaction * createAssetIssuanceTransaction(
+                                                   const std::string &asset_type,
+                                                   uint64_t atomic_supply,
+                                                   uint32_t display_decimals,
+                                                   const std::string &metadata_hash,
+                                                   const std::string &metadata_reference,
+                                                   const std::string &collection_id,
+                                                   const std::string &recipient_address,
+                                                   uint32_t mixin_count,
+                                                   PendingTransaction::Priority priority,
+                                                   uint32_t subaddr_account,
+                                                   std::set<uint32_t> subaddr_indices,
+                                                   std::string &asset_id) = 0;
+
     /*!
      * \brief createSweepUnmixableTransaction creates transaction with unmixable outputs.
      * \return                  PendingTransaction object. caller is responsible to check PendingTransaction::status()
