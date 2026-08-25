@@ -4,6 +4,11 @@ Status: not ready for production release
 Assessment date: 2026-08-25
 Candidate line: Genesis prerelease
 
+Genesis pre9 publication is authorized as an explicitly untested prerelease.
+No earlier test result is attributed to its exact binaries. Compilation,
+packaging, checksum generation, and publication availability checks are not
+treated as functional or security test evidence.
+
 This file records evidence for the current release assessment. It complements
 `RELEASE_CHECKLIST.md`; unchecked requirements remain release blockers even
 when they are outside the source repository.

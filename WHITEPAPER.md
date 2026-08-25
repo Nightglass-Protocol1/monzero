@@ -345,10 +345,10 @@ new wallet is not required merely because the default directory changed.
 
 ## 11. Status and roadmap
 
-The current project is an unsigned, unaudited prerelease. Genesis pre8 remains
-the published baseline; later working-tree correctness changes are not a new
-release until the complete release gate, packaging, and deployment process is
-repeated. Its immediate work is
+The current project is an unsigned, unaudited prerelease. Genesis pre9 is an
+explicitly untested distribution: compilation and checksum generation do not
+qualify it as production-ready, and earlier pre8 test evidence does not apply
+to the exact pre9 binaries. Its immediate work is
 operational rather than promotional:
 
 1. obtain independent consensus, cryptography, and implementation review;
