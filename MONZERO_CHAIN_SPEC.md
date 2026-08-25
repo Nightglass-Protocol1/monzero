@@ -27,10 +27,10 @@ Twelve decimals would overflow that type.
 - P2P port: 6174
 - RPC port: 6175
 - ZMQ RPC port: 6176
-- Network UUID: `fc3291ba-8666-4b87-8ebb-d59b72d4fcaa`
+- Network UUID: `94834264-d0b2-41dd-b0f2-0ada675c7710`
 - Standard/integrated/subaddress prefixes: 86 / 87 / 88
-- Genesis nonce: 818137480
-- Genesis block hash: `3850cb9e2fb2ba3c680b24cee7574765acd6be1cc4d84a4360c7c53e83e3270d`
+- Genesis nonce: 2271206363
+- Genesis block hash: `84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4`
 - Default data directory: `.monzero`
 - Executables: `monzerod`, `monzero-wallet-cli`, `monzero-wallet-rpc`
 

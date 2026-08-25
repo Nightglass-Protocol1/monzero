@@ -29,8 +29,8 @@ namespace
   };
 
   const std::array<network_vector, 3> networks{{
-    {cryptonote::MAINNET, "fc3291ba-8666-4b87-8ebb-d59b72d4fcaa", 86, 87, 88,
-      6174, 6175, 6176, 818137480, "3850cb9e2fb2ba3c680b24cee7574765acd6be1cc4d84a4360c7c53e83e3270d"},
+    {cryptonote::MAINNET, "94834264-d0b2-41dd-b0f2-0ada675c7710", 86, 87, 88,
+      6174, 6175, 6176, 2271206363, "84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4"},
     {cryptonote::TESTNET, "adc2a271-5539-43d9-b3c2-7aadaf6b938c", 111, 112, 113,
       16174, 16175, 16176, 818137481, "d89bd4d42729aa9f68fd8d6bc86c3b12686a3fcd5ec83a392844efc067d5c040"},
     {cryptonote::STAGENET, "b1dcac5a-9d11-4653-8122-e67eec8b59ac", 131, 132, 133,

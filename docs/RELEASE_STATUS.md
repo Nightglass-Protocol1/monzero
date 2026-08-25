@@ -81,6 +81,14 @@ when they are outside the source repository.
 
 ## Verified in the current working tree
 
+- The development mainnet now has a fresh consensus identity: network UUID
+  `94834264-d0b2-41dd-b0f2-0ada675c7710`, genesis nonce `2271206363`, and
+  derived genesis block hash
+  `84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4`.
+  The premine-free genesis transaction, address prefixes, and ports are
+  unchanged. These values are not deployed: Genesis pre9 and all live nodes
+  remain on the superseded chain pending qualification and a rollback-safe
+  coordinated reset.
 - GUI development commit `49aa38a6` replaces the packaged application icons,
   title-bar marks, mining indicators, and history mining icon with Monzero
   artwork. The Windows icon is a multi-resolution ICO and the macOS icon is a
@@ -695,11 +703,11 @@ unsigned, unaudited prerelease with the same external production gates.
 
 ## Repository work still required
 
-- Decide and record the requested fresh-network identity before changing any
-  live node data. A new genesis transaction/nonce or network UUID is a
-  consensus migration and is distinct from generating a wallet recovery seed.
-  The currently published pre9 chain remains unchanged until a rollback-safe,
-  explicitly qualified migration is prepared.
+- Qualify and coordinate deployment of the new mainnet genesis identity before
+  changing any live node data. This consensus migration is distinct from a
+  wallet recovery seed. The currently published pre9 chain remains unchanged
+  until rollback backups, matching cross-platform binaries, node migration,
+  and height-zero wallet-rescan instructions are prepared.
 - Reproduce the passing core, GUI, functional, and website/explorer tests in
   CI and on clean supported systems. Security-specific testing, including
   fuzzing and sanitizer campaigns, is outside the currently authorized

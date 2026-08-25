@@ -232,10 +232,10 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 6175;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 6176;
   boost::uuids::uuid const NETWORK_ID = { {
-      0xfc, 0x32, 0x91, 0xba, 0x86, 0x66, 0x4b, 0x87, 0x8e, 0xbb, 0xd5, 0x9b, 0x72, 0xd4, 0xfc, 0xaa
+      0x94, 0x83, 0x42, 0x64, 0xd0, 0xb2, 0x41, 0xdd, 0xb0, 0xf2, 0x0a, 0xda, 0x67, 0x5c, 0x77, 0x10
     } }; // Monzero mainnet
   std::string const GENESIS_TX = "013c01ff0001bda282a38eab04029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd08807121017767aafcde9be00dcfd098715ebcf7f410daebc582fda69d24a28e9d0bc890d1";
-  uint32_t const GENESIS_NONCE = 818137480;
+  uint32_t const GENESIS_NONCE = 2271206363;
 
   // Hash domain separators
   const char HASH_KEY_BULLETPROOF_EXPONENT[] = "bulletproof";

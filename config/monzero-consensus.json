@@ -43,12 +43,12 @@
   },
   "networks": {
     "mainnet": {
-      "network_uuid": "fc3291ba-8666-4b87-8ebb-d59b72d4fcaa",
+      "network_uuid": "94834264-d0b2-41dd-b0f2-0ada675c7710",
       "address_prefixes": {"standard": 86, "integrated": 87, "subaddress": 88},
       "ports": {"p2p": 6174, "rpc": 6175, "zmq": 6176},
-      "genesis_nonce": 818137480,
+      "genesis_nonce": 2271206363,
       "genesis_transaction": "013c01ff0001bda282a38eab04029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd08807121017767aafcde9be00dcfd098715ebcf7f410daebc582fda69d24a28e9d0bc890d1",
-      "genesis_hash": "3850cb9e2fb2ba3c680b24cee7574765acd6be1cc4d84a4360c7c53e83e3270d"
+      "genesis_hash": "84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4"
     },
     "testnet": {
       "network_uuid": "adc2a271-5539-43d9-b3c2-7aadaf6b938c",

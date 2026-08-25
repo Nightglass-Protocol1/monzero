@@ -218,9 +218,9 @@ Monzero is not a Monero test network and does not share Monero's ledger.
 | Normal output spendable age | 10 blocks (about 20 minutes) |
 | Address prefixes | 86 / 87 / 88 |
 | P2P / RPC / ZMQ ports | 6174 / 6175 / 6176 |
-| Network UUID | `fc3291ba-8666-4b87-8ebb-d59b72d4fcaa` |
-| Genesis nonce | 818137480 |
-| Genesis block hash | `3850cb9e2fb2ba3c680b24cee7574765acd6be1cc4d84a4360c7c53e83e3270d` |
+| Network UUID | `94834264-d0b2-41dd-b0f2-0ada675c7710` |
+| Genesis nonce | 2271206363 |
+| Genesis block hash | `84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4` |
 
 Separate testnet and stagenet identities are defined in the machine-readable
 consensus manifest. Wallet seeds and private keys should never be reused
@@ -365,14 +365,14 @@ operational rather than promotional:
 5. keep experimental asset work isolated until its separate activation gates
    are satisfied.
 
-A fresh-network restart has been requested but has not yet been applied. A
-genesis transaction, genesis nonce, and peer-network UUID define consensus
-identity; a wallet recovery seed controls funds and is a separate secret. The
-mainnet values in Section 6 remain authoritative until a new identity is
-generated, tested, documented, released, and deployed through an explicit
-rollback-safe migration. Existing wallet files are not modified by preparing
-that migration, although balances from the old chain would not carry into a
-new genesis history.
+A fresh mainnet genesis identity is present in the development source. Its new
+genesis nonce produces the block hash recorded in Section 6, and its new peer-
+network UUID prevents nodes on the superseded chain from joining it. This is
+not a wallet recovery seed and does not modify wallet keys. Genesis pre9 and
+the live nodes still use the superseded identity until new binaries are
+qualified and deployed through an explicit rollback-safe migration. Balances
+and transaction history from the superseded chain will not carry into the new
+genesis history; wallets must rescan the fresh chain from height zero.
 
 No roadmap item is a promise of delivery or authorization to weaken a release
 gate.
