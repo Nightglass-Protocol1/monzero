@@ -23,6 +23,15 @@ done
 if find "$root" -type l -print -quit | grep -q .; then echo "Package contains symbolic links" >&2; exit 1; fi
 (cd "$root" && sha256sum -c SHA256SUMS)
 
+if [[ -f "$root/monzero-miner-reporter.ps1" ]]; then
+  grep -Fq 'mining_status' "$root/monzero-miner-reporter.ps1" || {
+    echo "Windows miner reporter does not query daemon mining status" >&2; exit 1;
+  }
+  grep -Fq 'miner-stats-token.txt' "$root/monzero-miner-reporter.ps1" || {
+    echo "Windows miner reporter does not use an external token file" >&2; exit 1;
+  }
+fi
+
 source_commit=$(sed -n 's/^source_commit=//p' "$root/BUILD-MANIFEST.txt")
 [[ $source_commit =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source commit in manifest" >&2; exit 1; }
 source_short=${source_commit:0:9}

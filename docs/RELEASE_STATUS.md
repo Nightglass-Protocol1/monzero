@@ -48,6 +48,12 @@ when they are outside the source repository.
   because the Windows test host was unavailable.
   Corresponding recursively complete GUI source is published with SHA-256
   `b7f0715b671d9eec55f2d9a8fadbe66296640ea8aa5c7bf2130c9e678983e58e`.
+- Mining telemetry is intentionally separate from consensus mining. The
+  homepage now labels opt-in reported speed separately and displays the
+  difficulty-derived network estimate (`difficulty / target`) even when no
+  miner is reporting. The Windows reporter passed an authenticated live
+  heartbeat test, stores its credential outside public packages, exposes no
+  wallet or machine identifier, and runs as a restartable per-user task.
 
 ## Verified in the current working tree
 

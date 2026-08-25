@@ -60,6 +60,7 @@ install -m 0644 "$source_root/utils/release/windows/README-WINDOWS.txt" "$packag
 for launcher in start-node.bat start-wallet-cli.bat start-mining.bat stop-mining.bat; do
   install -m 0644 "$source_root/utils/release/windows/$launcher" "$package_dir/$launcher"
 done
+install -m 0644 "$source_root/utils/release/windows/monzero-miner-reporter.ps1" "$package_dir/monzero-miner-reporter.ps1"
 
 {
   echo "package=$package_name"

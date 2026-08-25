@@ -78,3 +78,10 @@ MONZERO_STATS_TOKEN='team-ingest-token' \
 The table counts a miner as active for three minutes after its last heartbeat.
 Hash rate and blocks found are self-reported. Block counts are derived from the
 local daemon log and are not consensus-verified leaderboard claims.
+
+The Windows heartbeat helper is
+`utils/release/windows/monzero-miner-reporter.ps1`. Install its ingest token in
+`%APPDATA%\Monzero\miner-stats-token.txt` with access limited to the reporting
+account; never put that token in a public archive. The homepage separately
+shows `difficulty / target` as an estimated network hash rate even when no
+miner has opted into reporting.

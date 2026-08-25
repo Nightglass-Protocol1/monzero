@@ -70,6 +70,7 @@ function renderChart(series) {
 const fields = {
   height: document.querySelector('#metric-height'),
   difficulty: document.querySelector('#metric-difficulty'),
+  networkHashrate: document.querySelector('#metric-network-hashrate'),
   connections: document.querySelector('#metric-connections'),
   rpc: document.querySelector('#metric-rpc'),
   state: document.querySelector('#node-state'),
@@ -88,6 +89,9 @@ async function updateNodeStatus() {
     const info = await response.json();
     fields.height.textContent = number.format(info.height ?? 0);
     fields.difficulty.textContent = number.format(info.difficulty ?? 0);
+    const target = Number(info.target);
+    const networkHashrate = target > 0 ? Number(info.difficulty ?? 0) / target : 0;
+    fields.networkHashrate.textContent = formatHashrate(networkHashrate);
     document.querySelector('#chart-difficulty-value').textContent = number.format(info.difficulty ?? 0);
     addChartPoint('difficulty', info.difficulty);
     const peerCount = info.peer_connections

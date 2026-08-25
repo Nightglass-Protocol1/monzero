@@ -26,6 +26,13 @@ After the node is synchronized, open Command Prompt in this folder and run:
 The final argument is the CPU thread count. Run stop-mining.bat to stop mining
 without stopping the node. Solo-mining rewards remain locked for 60 blocks.
 
+Optional anonymous website reporting uses monzero-miner-reporter.ps1. It sends
+only a random installation ID, hashrate, and block count; it never sends a
+wallet address or machine name. The project operator must separately install
+an ingest credential at %APPDATA%\Monzero\miner-stats-token.txt. That private
+credential is deliberately absent from public archives. Mining works normally
+without website reporting.
+
 PACKAGE CONTENTS
 ----------------
 
