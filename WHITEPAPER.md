@@ -334,6 +334,15 @@ proves that the destination wallet recognizes its full amount. These checks
 improve portability and reward-accounting confidence; they do not replace an
 independent cryptographic review or validate any particular live wallet cache.
 
+The desktop GUI now uses a Monzero-specific `Monzero/wallets` directory for
+new wallets. To avoid locking out users upgrading from earlier prereleases,
+its wallet picker also discovers wallets in the legacy `Monero/wallets`
+directory, and previously saved absolute wallet paths continue to open in
+place. The application does not automatically move, rename, or delete wallet
+files. This compatibility behavior is especially important when rebuilding a
+wallet cache after a reorganization: the keys file must be preserved, and a
+new wallet is not required merely because the default directory changed.
+
 ## 11. Status and roadmap
 
 The current project is an unsigned, unaudited prerelease. Genesis pre8 remains

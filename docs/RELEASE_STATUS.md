@@ -1,7 +1,7 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-08-24
+Assessment date: 2026-08-25
 Candidate line: Genesis prerelease
 
 This file records evidence for the current release assessment. It complements
@@ -57,6 +57,14 @@ when they are outside the source repository.
 
 ## Verified in the current working tree
 
+- New GUI wallets default to the branded `Monzero/wallets` directory on
+  supported desktop/mobile paths and `Persistent/Monzero/wallets` under Tails
+  persistence. The wallet picker scans both that directory and the legacy
+  `Monero/wallets` location, without moving or deleting existing wallet or
+  keys files. The affected GUI target builds successfully. The headless QML
+  suite is currently blocked before test execution because this build host
+  lacks the QtTest QML module; it must pass in the qualified GUI build
+  environment before this change is packaged or released.
 - Ref10 carry normalization no longer relies on signed left-shift behavior:
   each carry is multiplied by the equivalent power of two. Wallet binary
   varints now convert enumeration values through their defined underlying
@@ -647,8 +655,11 @@ unsigned, unaudited prerelease with the same external production gates.
 
 ## Repository work still required
 
-- Complete parser fuzzing and reproduce the passing core, GUI, functional, and
-  website/explorer tests in CI and on clean supported systems.
+- Reproduce the passing core, GUI, functional, and website/explorer tests in
+  CI and on clean supported systems. Security-specific testing, including
+  fuzzing and sanitizer campaigns, is outside the currently authorized
+  operational scope and has not been used to qualify this working tree; any
+  such evidence must come from a separately authorized independent review.
 - Add the asset creation/inspection workflow to the desktop GUI. The CLI can export and
   validate canonical signed fungible, NFT, collection, and edition artifacts,
   and its direct issuance command becomes usable only after HF17 activation.
