@@ -81,6 +81,22 @@ when they are outside the source repository.
 
 ## Verified in the current working tree
 
+- GUI development commit `49aa38a6` replaces the packaged application icons,
+  title-bar marks, mining indicators, and history mining icon with Monzero
+  artwork. The Windows icon is a multi-resolution ICO and the macOS icon is a
+  valid ICNS container. The native Linux `monzero-wallet-gui` target rebuilt
+  successfully after the QML resource changes. These development assets are
+  not part of the published Genesis pre9 archives, and no replacement download
+  has been published.
+- Core development commit `7240934c7` exposes a public wallet API that
+  constructs, but never automatically relays, a fixed-supply asset issuance
+  transaction. It validates the asset class, decimal range, metadata hash,
+  collection identifier, and recipient before construction. The focused
+  invalid-input regression and the `wallet_api` build pass. GUI development
+  commit `4c13905f1` adds an asynchronous fungible issuance form and retains
+  the existing password and transaction-confirmation path before relay. The
+  native Linux GUI target links successfully, but runtime QML interaction
+  testing and the inactive-HF17 release gates remain outstanding.
 - New GUI wallets default to the branded `Monzero/wallets` directory on
   supported desktop/mobile paths and `Persistent/Monzero/wallets` under Tails
   persistence. The wallet picker scans both that directory and the legacy
@@ -679,6 +695,11 @@ unsigned, unaudited prerelease with the same external production gates.
 
 ## Repository work still required
 
+- Decide and record the requested fresh-network identity before changing any
+  live node data. A new genesis transaction/nonce or network UUID is a
+  consensus migration and is distinct from generating a wallet recovery seed.
+  The currently published pre9 chain remains unchanged until a rollback-safe,
+  explicitly qualified migration is prepared.
 - Reproduce the passing core, GUI, functional, and website/explorer tests in
   CI and on clean supported systems. Security-specific testing, including
   fuzzing and sanitizer campaigns, is outside the currently authorized

@@ -343,6 +343,13 @@ files. This compatibility behavior is especially important when rebuilding a
 wallet cache after a reorganization: the keys file must be preserved, and a
 new wallet is not required merely because the default directory changed.
 
+The development GUI resource bundle now uses Monzero-specific application,
+title-bar, mining-status, and mined-transfer artwork on Linux, Windows, and
+macOS packaging paths. Required upstream copyright notices, research names,
+and compatibility identifiers remain unchanged because branding does not
+erase provenance. These changes postdate Genesis pre9 and are not present in
+its published binaries.
+
 ## 11. Status and roadmap
 
 The current project is an unsigned, unaudited prerelease. Genesis pre9 is an
@@ -357,6 +364,15 @@ operational rather than promotional:
 4. disclose bootstrap issuance and launch conditions; and
 5. keep experimental asset work isolated until its separate activation gates
    are satisfied.
+
+A fresh-network restart has been requested but has not yet been applied. A
+genesis transaction, genesis nonce, and peer-network UUID define consensus
+identity; a wallet recovery seed controls funds and is a separate secret. The
+mainnet values in Section 6 remain authoritative until a new identity is
+generated, tested, documented, released, and deployed through an explicit
+rollback-safe migration. Existing wallet files are not modified by preparing
+that migration, although balances from the old chain would not carry into a
+new genesis history.
 
 No roadmap item is a promise of delivery or authorization to weaken a release
 gate.
