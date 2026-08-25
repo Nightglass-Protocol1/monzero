@@ -323,9 +323,23 @@ propagation, node restart, and longer-chain reorganization. Passing these
 tests is evidence about the tested implementation and platform, not a proof of
 correctness or a substitute for independent cryptographic review.
 
+Current correctness work also protects two implementation boundaries that are
+easy to overlook during toolchain upgrades. Ref10 carry normalization uses
+defined integer multiplication rather than signed left shifts, preserving the
+same powers-of-two arithmetic without relying on compiler-specific behavior.
+Binary wallet serialization converts enumeration values through their explicit
+underlying unsigned type while retaining the established varint encoding. A
+mined-reward regression constructs a modern view-tagged coinbase output and
+proves that the destination wallet recognizes its full amount. These checks
+improve portability and reward-accounting confidence; they do not replace an
+independent cryptographic review or validate any particular live wallet cache.
+
 ## 11. Status and roadmap
 
-The current project is an unsigned, unaudited prerelease. Its immediate work is
+The current project is an unsigned, unaudited prerelease. Genesis pre8 remains
+the published baseline; later working-tree correctness changes are not a new
+release until the complete release gate, packaging, and deployment process is
+repeated. Its immediate work is
 operational rather than promotional:
 
 1. obtain independent consensus, cryptography, and implementation review;

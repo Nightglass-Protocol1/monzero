@@ -172,6 +172,24 @@ TEST(Serialization, BinaryArchiveVarInts) {
   ASSERT_EQ(x, x1);
 }
 
+TEST(Serialization, BinaryArchiveEnumVarInts) {
+  enum class value_type : uint8_t { expected = 0xfd };
+  value_type value = value_type::expected;
+
+  ostringstream oss;
+  binary_archive<true> oar(oss);
+  oar.serialize_varint(value);
+  ASSERT_TRUE(oss.good());
+  ASSERT_EQ(string("\xfd\x01", 2), oss.str());
+
+  value_type restored{};
+  const std::string encoded = oss.str();
+  binary_archive<false> iar{epee::strspan<std::uint8_t>(encoded)};
+  iar.serialize_varint(restored);
+  ASSERT_TRUE(iar.good());
+  ASSERT_EQ(value_type::expected, restored);
+}
+
 TEST(Serialization, Test1) {
   ostringstream str;
   binary_archive<true> ar(str);

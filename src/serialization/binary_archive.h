@@ -36,6 +36,7 @@
 #include <cassert>
 #include <iostream>
 #include <iterator>
+#include <type_traits>
 #include <boost/endian/conversion.hpp>
 #include <boost/type_traits/make_unsigned.hpp>
 
@@ -46,6 +47,21 @@
 /* I have no clue what these lines means */
 PUSH_WARNINGS
 DISABLE_VS_WARNINGS(4244)
+
+namespace detail
+{
+  template <typename T, bool = std::is_enum<T>::value>
+  struct archive_unsigned
+  {
+    using type = typename boost::make_unsigned<T>::type;
+  };
+
+  template <typename T>
+  struct archive_unsigned<T, true>
+  {
+    using type = typename std::make_unsigned<typename std::underlying_type<T>::type>::type;
+  };
+}
 
 //TODO: fix size_t warning in x32 platform
 
@@ -137,7 +153,10 @@ struct binary_archive<false> : public binary_archive_base<false>
   template <class T>
   void serialize_varint(T &v)
   {
-    serialize_uvarint(*(typename boost::make_unsigned<T>::type *)(&v));
+    using unsigned_type = typename detail::archive_unsigned<T>::type;
+    unsigned_type value = 0;
+    serialize_uvarint(value);
+    v = static_cast<T>(value);
   }
 
   template <class T>
@@ -209,7 +228,9 @@ struct binary_archive<true> : public binary_archive_base<true>
   template <class T>
   void serialize_varint(T &v)
   {
-    serialize_uvarint(*(typename boost::make_unsigned<T>::type *)(&v));
+    using unsigned_type = typename detail::archive_unsigned<T>::type;
+    unsigned_type value = static_cast<unsigned_type>(v);
+    serialize_uvarint(value);
   }
 
   template <class T>

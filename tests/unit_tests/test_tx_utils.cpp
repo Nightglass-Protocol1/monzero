@@ -145,6 +145,22 @@ TEST(parse_and_validate_tx_extra, is_valid_tx_extra_parsed)
   crypto::public_key tx_pub_key = cryptonote::get_tx_pub_key_from_extra(tx);
   ASSERT_NE(tx_pub_key, crypto::null_pkey);
 }
+
+TEST(parse_and_validate_tx_extra, miner_reward_is_detectable_with_view_tags)
+{
+  cryptonote::transaction tx = AUTO_VAL_INIT(tx);
+  cryptonote::account_base acc;
+  acc.generate();
+
+  ASSERT_TRUE(cryptonote::construct_miner_tx(1700, 300000, 0, 300000, 0,
+    acc.get_keys().m_account_address, tx, {}, 1, HF_VERSION_VIEW_TAGS));
+
+  std::vector<size_t> outputs;
+  uint64_t received = 0;
+  ASSERT_TRUE(cryptonote::lookup_acc_outs(acc.get_keys(), tx, outputs, received));
+  ASSERT_EQ(1, outputs.size());
+  ASSERT_EQ(tx.vout.at(0).amount, received);
+}
 TEST(parse_and_validate_tx_extra, fails_on_big_extra_nonce)
 {
   cryptonote::transaction tx = AUTO_VAL_INIT(tx);

@@ -538,46 +538,46 @@ static void fe_mul(fe h, const fe f, const fe g) {
     i.e. |h1| <= 1.7*2^59; narrower ranges for h3, h5, h7, h9
   */
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
   /* |h0| <= 2^25 */
   /* |h4| <= 2^25 */
   /* |h1| <= 1.71*2^59 */
   /* |h5| <= 1.71*2^59 */
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 * ((int64_t)1 << 25);
+  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 * ((int64_t)1 << 25);
   /* |h1| <= 2^24; from now on fits into int32 */
   /* |h5| <= 2^24; from now on fits into int32 */
   /* |h2| <= 1.41*2^60 */
   /* |h6| <= 1.41*2^60 */
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 * ((int64_t)1 << 26);
+  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 * ((int64_t)1 << 26);
   /* |h2| <= 2^25; from now on fits into int32 unchanged */
   /* |h6| <= 2^25; from now on fits into int32 unchanged */
   /* |h3| <= 1.71*2^59 */
   /* |h7| <= 1.71*2^59 */
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 * ((int64_t)1 << 25);
+  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 * ((int64_t)1 << 25);
   /* |h3| <= 2^24; from now on fits into int32 unchanged */
   /* |h7| <= 2^24; from now on fits into int32 unchanged */
   /* |h4| <= 1.72*2^34 */
   /* |h8| <= 1.41*2^60 */
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
+  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 * ((int64_t)1 << 26);
   /* |h4| <= 2^25; from now on fits into int32 unchanged */
   /* |h8| <= 2^25; from now on fits into int32 unchanged */
   /* |h5| <= 1.01*2^24 */
   /* |h9| <= 1.71*2^59 */
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 * ((int64_t)1 << 25);
   /* |h9| <= 2^24; from now on fits into int32 unchanged */
   /* |h0| <= 1.1*2^39 */
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
   /* |h0| <= 2^25; from now on fits into int32 unchanged */
   /* |h1| <= 1.01*2^24 */
 
@@ -755,24 +755,24 @@ static void fe_sq(fe h, const fe f) {
   int64_t carry8;
   int64_t carry9;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 * ((int64_t)1 << 25);
+  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 * ((int64_t)1 << 25);
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 * ((int64_t)1 << 26);
+  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 * ((int64_t)1 << 26);
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 * ((int64_t)1 << 25);
+  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 * ((int64_t)1 << 25);
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
+  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 * ((int64_t)1 << 26);
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 * ((int64_t)1 << 25);
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
 
   h[0] = h0;
   h[1] = h1;
@@ -914,24 +914,24 @@ static void fe_sq2(fe h, const fe f) {
   h8 += h8;
   h9 += h9;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 * ((int64_t)1 << 25);
+  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 * ((int64_t)1 << 25);
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 * ((int64_t)1 << 26);
+  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 * ((int64_t)1 << 26);
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 * ((int64_t)1 << 25);
+  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 * ((int64_t)1 << 25);
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
+  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 * ((int64_t)1 << 26);
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 * ((int64_t)1 << 25);
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
 
   h[0] = h0;
   h[1] = h1;
@@ -1068,16 +1068,16 @@ void fe_tobytes(unsigned char *s, const fe h) {
   h0 += 19 * q;
   /* Goal: Output h-2^255 q, which is between 0 and 2^255-20. */
 
-  carry0 = h0 >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry1 = h1 >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry2 = h2 >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry3 = h3 >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry4 = h4 >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry5 = h5 >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry6 = h6 >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry7 = h7 >> 25; h8 += carry7; h7 -= carry7 << 25;
-  carry8 = h8 >> 26; h9 += carry8; h8 -= carry8 << 26;
-  carry9 = h9 >> 25;               h9 -= carry9 << 25;
+  carry0 = h0 >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
+  carry1 = h1 >> 25; h2 += carry1; h1 -= carry1 * ((int64_t)1 << 25);
+  carry2 = h2 >> 26; h3 += carry2; h2 -= carry2 * ((int64_t)1 << 26);
+  carry3 = h3 >> 25; h4 += carry3; h3 -= carry3 * ((int64_t)1 << 25);
+  carry4 = h4 >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
+  carry5 = h5 >> 25; h6 += carry5; h5 -= carry5 * ((int64_t)1 << 25);
+  carry6 = h6 >> 26; h7 += carry6; h6 -= carry6 * ((int64_t)1 << 26);
+  carry7 = h7 >> 25; h8 += carry7; h7 -= carry7 * ((int64_t)1 << 25);
+  carry8 = h8 >> 26; h9 += carry8; h8 -= carry8 * ((int64_t)1 << 26);
+  carry9 = h9 >> 25;               h9 -= carry9 * ((int64_t)1 << 25);
                   /* h10 = carry9 */
 
   /*
@@ -1367,17 +1367,17 @@ int ge_frombytes_vartime(ge_p3 *h, const unsigned char *s) {
     return -1;
   }
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 * ((int64_t)1 << 25);
+  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 * ((int64_t)1 << 25);
+  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 * ((int64_t)1 << 25);
+  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 * ((int64_t)1 << 25);
+  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 * ((int64_t)1 << 25);
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
+  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 * ((int64_t)1 << 26);
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
+  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 * ((int64_t)1 << 26);
+  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 * ((int64_t)1 << 26);
 
   h->Y[0] = h0;
   h->Y[1] = h1;
@@ -1810,18 +1810,18 @@ void sc_reduce(unsigned char *s) {
   s10 += s18 * 136657;
   s11 -= s18 * 683901;
 
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
 
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
 
   s5 += s17 * 666643;
   s6 += s17 * 470296;
@@ -1866,19 +1866,19 @@ void sc_reduce(unsigned char *s) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -1888,18 +1888,18 @@ void sc_reduce(unsigned char *s) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -1908,17 +1908,17 @@ void sc_reduce(unsigned char *s) {
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -2334,17 +2334,17 @@ void ge_fromfe_frombytes_vartime(ge_p2 *r, const unsigned char *s) {
   int64_t carry8;
   int64_t carry9;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 * ((int64_t)1 << 25);
+  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 * ((int64_t)1 << 25);
+  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 * ((int64_t)1 << 25);
+  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 * ((int64_t)1 << 25);
+  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 * ((int64_t)1 << 25);
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 * ((int64_t)1 << 26);
+  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 * ((int64_t)1 << 26);
+  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 * ((int64_t)1 << 26);
+  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 * ((int64_t)1 << 26);
+  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 * ((int64_t)1 << 26);
 
   u[0] = h0;
   u[1] = h1;
@@ -2457,19 +2457,19 @@ void sc_reduce32(unsigned char *s) {
   int64_t carry10;
   int64_t carry11;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -2479,18 +2479,18 @@ void sc_reduce32(unsigned char *s) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -2499,17 +2499,17 @@ void sc_reduce32(unsigned char *s) {
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -2596,19 +2596,19 @@ void sc_add(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   int64_t carry10;
   int64_t carry11;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -2618,18 +2618,18 @@ void sc_add(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -2638,17 +2638,17 @@ void sc_add(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -2735,19 +2735,19 @@ void sc_sub(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   int64_t carry10;
   int64_t carry11;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -2757,18 +2757,18 @@ void sc_sub(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -2777,17 +2777,17 @@ void sc_sub(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -2944,30 +2944,30 @@ void sc_mulsub(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s22 = -a11*b11;
   s23 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
-  carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 << 21;
-  carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 << 21;
-  carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
+  carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 * ((int64_t)1 << 21);
+  carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 * ((int64_t)1 << 21);
+  carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
-  carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 << 21;
-  carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 << 21;
-  carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
+  carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 * ((int64_t)1 << 21);
+  carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 * ((int64_t)1 << 21);
+  carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 * ((int64_t)1 << 21);
 
   s11 += s23 * 666643;
   s12 += s23 * 470296;
@@ -3011,18 +3011,18 @@ void sc_mulsub(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s10 += s18 * 136657;
   s11 -= s18 * 683901;
 
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
 
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
 
   s5 += s17 * 666643;
   s6 += s17 * 470296;
@@ -3067,19 +3067,19 @@ void sc_mulsub(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -3089,18 +3089,18 @@ void sc_mulsub(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -3109,17 +3109,17 @@ void sc_mulsub(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -3263,30 +3263,30 @@ void sc_mul(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s22 = a11*b11;
   s23 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
-  carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 << 21;
-  carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 << 21;
-  carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
+  carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 * ((int64_t)1 << 21);
+  carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 * ((int64_t)1 << 21);
+  carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
-  carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 << 21;
-  carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 << 21;
-  carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
+  carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 * ((int64_t)1 << 21);
+  carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 * ((int64_t)1 << 21);
+  carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 * ((int64_t)1 << 21);
 
   s11 += s23 * 666643;
   s12 += s23 * 470296;
@@ -3330,18 +3330,18 @@ void sc_mul(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s10 += s18 * 136657;
   s11 -= s18 * 683901;
 
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
 
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
 
   s5 += s17 * 666643;
   s6 += s17 * 470296;
@@ -3386,19 +3386,19 @@ void sc_mul(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -3408,18 +3408,18 @@ void sc_mul(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -3428,17 +3428,17 @@ void sc_mul(unsigned char *s, const unsigned char *a, const unsigned char *b) {
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -3596,30 +3596,30 @@ void sc_muladd(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s22 = a11*b11;
   s23 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
-  carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 << 21;
-  carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 << 21;
-  carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
+  carry18 = (s18 + (1<<20)) >> 21; s19 += carry18; s18 -= carry18 * ((int64_t)1 << 21);
+  carry20 = (s20 + (1<<20)) >> 21; s21 += carry20; s20 -= carry20 * ((int64_t)1 << 21);
+  carry22 = (s22 + (1<<20)) >> 21; s23 += carry22; s22 -= carry22 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
-  carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 << 21;
-  carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 << 21;
-  carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
+  carry17 = (s17 + (1<<20)) >> 21; s18 += carry17; s17 -= carry17 * ((int64_t)1 << 21);
+  carry19 = (s19 + (1<<20)) >> 21; s20 += carry19; s19 -= carry19 * ((int64_t)1 << 21);
+  carry21 = (s21 + (1<<20)) >> 21; s22 += carry21; s21 -= carry21 * ((int64_t)1 << 21);
 
   s11 += s23 * 666643;
   s12 += s23 * 470296;
@@ -3663,18 +3663,18 @@ void sc_muladd(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s10 += s18 * 136657;
   s11 -= s18 * 683901;
 
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 << 21;
-  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 << 21;
-  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 << 21;
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry12 = (s12 + (1<<20)) >> 21; s13 += carry12; s12 -= carry12 * ((int64_t)1 << 21);
+  carry14 = (s14 + (1<<20)) >> 21; s15 += carry14; s14 -= carry14 * ((int64_t)1 << 21);
+  carry16 = (s16 + (1<<20)) >> 21; s17 += carry16; s16 -= carry16 * ((int64_t)1 << 21);
 
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
-  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 << 21;
-  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 << 21;
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
+  carry13 = (s13 + (1<<20)) >> 21; s14 += carry13; s13 -= carry13 * ((int64_t)1 << 21);
+  carry15 = (s15 + (1<<20)) >> 21; s16 += carry15; s15 -= carry15 * ((int64_t)1 << 21);
 
   s5 += s17 * 666643;
   s6 += s17 * 470296;
@@ -3719,19 +3719,19 @@ void sc_muladd(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = (s0 + (1<<20)) >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry2 = (s2 + (1<<20)) >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry4 = (s4 + (1<<20)) >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry6 = (s6 + (1<<20)) >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry8 = (s8 + (1<<20)) >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry10 = (s10 + (1<<20)) >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
-  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry1 = (s1 + (1<<20)) >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry3 = (s3 + (1<<20)) >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry5 = (s5 + (1<<20)) >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry7 = (s7 + (1<<20)) >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry9 = (s9 + (1<<20)) >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry11 = (s11 + (1<<20)) >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -3741,18 +3741,18 @@ void sc_muladd(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s5 -= s12 * 683901;
   s12 = 0;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
-  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
+  carry11 = s11 >> 21; s12 += carry11; s11 -= carry11 * ((int64_t)1 << 21);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -3761,17 +3761,17 @@ void sc_muladd(unsigned char *s, const unsigned char *a, const unsigned char *b,
   s4 += s12 * 136657;
   s5 -= s12 * 683901;
 
-  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 << 21;
-  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 << 21;
-  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 << 21;
-  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 << 21;
-  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 << 21;
-  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 << 21;
-  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 << 21;
-  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 << 21;
-  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 << 21;
-  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 << 21;
-  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 << 21;
+  carry0 = s0 >> 21; s1 += carry0; s0 -= carry0 * ((int64_t)1 << 21);
+  carry1 = s1 >> 21; s2 += carry1; s1 -= carry1 * ((int64_t)1 << 21);
+  carry2 = s2 >> 21; s3 += carry2; s2 -= carry2 * ((int64_t)1 << 21);
+  carry3 = s3 >> 21; s4 += carry3; s3 -= carry3 * ((int64_t)1 << 21);
+  carry4 = s4 >> 21; s5 += carry4; s4 -= carry4 * ((int64_t)1 << 21);
+  carry5 = s5 >> 21; s6 += carry5; s5 -= carry5 * ((int64_t)1 << 21);
+  carry6 = s6 >> 21; s7 += carry6; s6 -= carry6 * ((int64_t)1 << 21);
+  carry7 = s7 >> 21; s8 += carry7; s7 -= carry7 * ((int64_t)1 << 21);
+  carry8 = s8 >> 21; s9 += carry8; s8 -= carry8 * ((int64_t)1 << 21);
+  carry9 = s9 >> 21; s10 += carry9; s9 -= carry9 * ((int64_t)1 << 21);
+  carry10 = s10 >> 21; s11 += carry10; s10 -= carry10 * ((int64_t)1 << 21);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;

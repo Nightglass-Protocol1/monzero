@@ -57,6 +57,18 @@ when they are outside the source repository.
 
 ## Verified in the current working tree
 
+- Ref10 carry normalization no longer relies on signed left-shift behavior:
+  each carry is multiplied by the equivalent power of two. Wallet binary
+  varints now convert enumeration values through their defined underlying
+  unsigned type instead of aliasing enum storage. The ordinary unit binary
+  builds successfully with both changes.
+- The current ordinary unit suite contains 1,300 tests. In the latest run,
+  1,291 passed in the default environment; the remaining nine ring database
+  and spent-output cases failed only because the default temporary filesystem
+  could not extend LMDB. All nine passed immediately when rerun with the
+  established workspace-backed `TMPDIR`. Focused regressions confirm legacy
+  varint bytes, enum-varint round trips, and wallet recognition of a modern
+  view-tagged mined reward.
 - The complete CMake build succeeds with the configured local toolchain.
 - All 1,298 unit tests pass in one run with workspace-backed temporary storage,
   including protected Monzero consensus vectors and
