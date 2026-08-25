@@ -21,6 +21,13 @@ Their compilation completed, but no test suite, release verifier, native
 startup, wallet lifecycle, network, or platform smoke test was run for the
 exact artifacts.
 
+Genesis pre9 was published to `https://monzero.org` on 2026-08-25. Public
+availability checks succeeded for the homepage, updated whitepaper, release
+metadata and notes, and all five binary/source archive URLs. These checks only
+establish that the files are reachable; they are not functional test evidence.
+The atomic webspace deployment retains the preceding live site at
+`/home/www/Monzero-backup-20260825T134000Z-pre9` for rollback.
+
 This file records evidence for the current release assessment. It complements
 `RELEASE_CHECKLIST.md`; unchecked requirements remain release blockers even
 when they are outside the source repository.
