@@ -48,11 +48,11 @@ sudo apt install build-essential cmake pkg-config libboost-all-dev \
   libudev-dev ccache doxygen graphviz
 ```
 
-Build the release binaries from this source tree. A public clone URL is not
-currently published, so prerelease source should be obtained as a verified
-archive from a maintainer and unpacked first:
+Clone the public source repository and build the release binaries from this
+source tree:
 
 ```bash
+git clone https://github.com/Nightglass-Protocol1/monzero.git monzero-core
 cd monzero-core
 git submodule update --init --recursive
 cmake -S . -B build/release -D CMAKE_BUILD_TYPE=Release
