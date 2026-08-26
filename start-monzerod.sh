@@ -15,6 +15,7 @@ P2P_PORT="${MONZERO_P2P_PORT:-6174}"
 RPC_PORT="${MONZERO_RPC_PORT:-6175}"
 ZMQ_PORT="${MONZERO_ZMQ_PORT:-6176}"
 PRIORITY_NODE="${MONZERO_PRIORITY_NODE:-node.monzero.org:6174}"
+SECONDARY_PRIORITY_NODE="${MONZERO_SECONDARY_PRIORITY_NODE:-node2.monzero.org:6174}"
 
 if [[ ! -x "$DAEMON_BIN" ]]; then
   printf 'Error: daemon executable not found: %s\n' "$DAEMON_BIN" >&2
@@ -50,7 +51,9 @@ printf '  Data: %s\n  P2P: %s\n  RPC: %s\n  ZMQ: %s\n' "$DATA_DIR" "$P2P_PORT" "
   --p2p-bind-port "$P2P_PORT" \
   --rpc-bind-port "$RPC_PORT" \
   --zmq-rpc-bind-port "$ZMQ_PORT" \
+  --disable-rpc-ban \
   --add-priority-node "$PRIORITY_NODE" \
+  --add-priority-node "$SECONDARY_PRIORITY_NODE" \
   --no-igd
 
 for _ in {1..30}; do
