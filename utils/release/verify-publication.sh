@@ -55,8 +55,8 @@ if not isinstance(data["production_ready"], bool):
 artifacts = data["artifacts"]
 if not isinstance(artifacts, list) or not artifacts:
     raise SystemExit("artifacts must be a non-empty array")
-if len(artifacts) != 2:
-    raise SystemExit("A Monzero publication must contain exactly two artifacts")
+if len(artifacts) not in (2, 3):
+    raise SystemExit("A Monzero publication must contain Linux, Windows, and optionally Windows GUI artifacts")
 
 source = data.get("source")
 if source is not None:
@@ -104,8 +104,9 @@ for artifact in artifacts:
     seen_filenames.add(filename)
     seen_platforms.add(platform)
     print("artifact\t" + platform + "\t" + filename + "\t" + str(size) + "\t" + digest)
-if seen_platforms != {"linux-x86_64", "windows-x64"}:
-    raise SystemExit("Artifacts must contain exactly linux-x86_64 and windows-x64")
+required_platforms = {"linux-x86_64", "windows-x64"}
+if not required_platforms.issubset(seen_platforms) or not seen_platforms.issubset(required_platforms | {"windows-gui-x64"}):
+    raise SystemExit("Artifacts must contain Linux and Windows CLI, with an optional Windows GUI")
 PY
 then
   exit 1
@@ -248,6 +249,15 @@ for row in "${release_fields[@]:6}"; do
         "$script_dir/verify-windows-package.sh" "$artifact"
       fi
       ;;
+    windows-gui-x64:*.zip)
+      package_commit=$(unzip -p "$artifact" '*/GUI_BUILD_MANIFEST.txt' |
+        sed -n 's/^core_source_commit=//p')
+      if [[ $production == 1 ]]; then
+        RELEASE_STRICT=1 "$script_dir/verify-windows-gui-package.sh" "$artifact"
+      else
+        "$script_dir/verify-windows-gui-package.sh" "$artifact"
+      fi
+      ;;
     *) echo "No package verifier for $platform artifact $filename" >&2; exit 1 ;;
   esac
   [[ $package_commit == "$source_commit" ]] || {
@@ -256,8 +266,8 @@ for row in "${release_fields[@]:6}"; do
   ((artifact_count += 1))
 done
 
-[[ $artifact_count -eq 2 ]] || {
-  echo "A Monzero publication must contain exactly Linux and Windows artifacts" >&2; exit 1;
+[[ $artifact_count -eq 2 || $artifact_count -eq 3 ]] || {
+  echo "A Monzero publication must contain Linux and Windows CLI, with an optional Windows GUI" >&2; exit 1;
 }
 if [[ $production == 1 && $source_count -ne 1 ]]; then
   echo "Production verification requires one verified source artifact" >&2

@@ -17,6 +17,12 @@ root=${roots[0]}
 for required in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe BUILD-MANIFEST.txt SHA256SUMS README.md README-WINDOWS.txt UPGRADE.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE start-node.bat start-wallet-cli.bat start-mining.bat stop-mining.bat; do
   [[ -f "$root/$required" ]] || { echo "Required package file is missing: $required" >&2; exit 1; }
 done
+grep -Fq -- '--rpc-bind-ip 127.0.0.1' "$root/start-node.bat" || {
+  echo "Windows node launcher does not restrict HTTP RPC to loopback" >&2; exit 1;
+}
+grep -Fq -- '--zmq-rpc-bind-ip 127.0.0.1' "$root/start-node.bat" || {
+  echo "Windows node launcher does not restrict ZMQ RPC to loopback" >&2; exit 1;
+}
 [[ $(sed -n 's/^package=//p' "$root/BUILD-MANIFEST.txt") == "$(basename "$root")" ]] || {
   echo "Build manifest package name does not match archive root" >&2; exit 1;
 }
@@ -29,6 +35,12 @@ if [[ -f "$root/monzero-miner-reporter.ps1" ]]; then
   }
   grep -Fq 'miner-stats-token.txt' "$root/monzero-miner-reporter.ps1" || {
     echo "Windows miner reporter does not use an external token file" >&2; exit 1;
+  }
+  grep -Fq 'blocks_found = Get-BlocksFound' "$root/monzero-miner-reporter.ps1" || {
+    echo "Windows miner reporter does not collect its mined block count" >&2; exit 1;
+  }
+  grep -Fq 'monzero-miner-reporter.ps1' "$root/start-mining.bat" || {
+    echo "Windows mining launcher does not start the optional website reporter" >&2; exit 1;
   }
 fi
 

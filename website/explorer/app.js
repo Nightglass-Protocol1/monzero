@@ -77,7 +77,7 @@ async function showBlocks() {
     const result = await api('blocks', {limit: 15});
     updateStats(result.info, result.headers[0] || null);
     view.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Height</th><th>Age</th><th>Block hash</th><th>Transactions</th><th>Difficulty</th><th>Reward</th><th>Size</th></tr></thead><tbody>${result.headers.map((block) => `
-      <tr><td><a class="link" href="#/block/${block.height}">${number.format(block.height)}</a></td><td class="muted">${age(block.timestamp)}</td><td><a class="link hash truncate" title="${block.hash}" href="#/block/${block.hash}">${shortHash(block.hash)}</a></td><td>${number.format(block.num_txes || 0)}</td><td class="muted">${number.format(block.difficulty || 0)}</td><td class="reward">${xmz(block.reward)}</td><td class="muted">${number.format(block.block_size || block.block_weight || 0)} B</td></tr>`).join('')}</tbody></table></div>`;
+      <tr><td><a class="link" href="#/block/${escapeHtml(block.height)}">${number.format(block.height)}</a></td><td class="muted">${age(block.timestamp)}</td><td><a class="link hash truncate" title="${escapeHtml(block.hash)}" href="#/block/${escapeHtml(block.hash)}">${escapeHtml(shortHash(block.hash))}</a></td><td>${number.format(block.num_txes || 0)}</td><td class="muted">${number.format(block.difficulty || 0)}</td><td class="reward">${xmz(block.reward)}</td><td class="muted">${number.format(block.block_size || block.block_weight || 0)} B</td></tr>`).join('')}</tbody></table></div>`;
     $('#refresh').addEventListener('click', showBlocks);
   } catch (error) { showError(error.message); setOffline(); }
 }
@@ -100,12 +100,12 @@ async function showBlock(value) {
       ${datum('Block size', `<strong>${number.format(h.block_size || h.block_weight || 0)} bytes</strong>`)}
       ${datum('Nonce', `<strong>${number.format(h.nonce || 0)}</strong>`)}
       ${datum('Version', `<strong>v${h.major_version ?? '—'}.${h.minor_version ?? '—'}</strong>`)}
-      ${datum('Previous block', h.prev_hash ? `<a class="link hash truncate" href="#/block/${h.prev_hash}">${shortHash(h.prev_hash)}</a>` : '<strong>Genesis</strong>')}
+      ${datum('Previous block', h.prev_hash ? `<a class="link hash truncate" href="#/block/${escapeHtml(h.prev_hash)}">${escapeHtml(shortHash(h.prev_hash))}</a>` : '<strong>Genesis</strong>')}
       ${datum('Proof-of-work hash', `<code>${escapeHtml(h.pow_hash || 'Not requested')}</code>`)}
       ${datum('Confirmations', `<strong>${chainInfo ? number.format(Math.max(0, chainInfo.height - h.height)) : '—'}</strong>`)}
     </div>
     <h3 class="subheading">Transactions in this block</h3>
-    ${txs.length ? `<div class="table-wrap"><table><thead><tr><th>#</th><th>Transaction hash</th></tr></thead><tbody>${txs.map((hash, i) => `<tr><td class="muted">${i + 1}</td><td><a class="link hash" href="#/tx/${hash}">${hash}</a></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>Coinbase only</strong><p>This block contains no regular transactions.</p></div>'}
+    ${txs.length ? `<div class="table-wrap"><table><thead><tr><th>#</th><th>Transaction hash</th></tr></thead><tbody>${txs.map((hash, i) => `<tr><td class="muted">${i + 1}</td><td><a class="link hash" href="#/tx/${escapeHtml(hash)}">${escapeHtml(hash)}</a></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>Coinbase only</strong><p>This block contains no regular transactions.</p></div>'}
     <details class="raw"><summary>Raw block JSON</summary><pre>${escapeHtml(JSON.stringify(block, null, 2))}</pre></details>`;
   } catch (error) { await tryTransaction(value, error); }
 }
@@ -130,7 +130,7 @@ async function showTransaction(hash) {
   const vout = decoded.vout || [];
   view.innerHTML = `<div class="detail-grid">
     ${datum('Transaction hash', `<code>${escapeHtml(hash)}</code>`)}
-    ${datum('Block height', tx.block_height != null ? `<a class="link" href="#/block/${tx.block_height}">${number.format(tx.block_height)}</a>` : '<strong>Unconfirmed</strong>')}
+    ${datum('Block height', tx.block_height != null ? `<a class="link" href="#/block/${escapeHtml(tx.block_height)}">${number.format(tx.block_height)}</a>` : '<strong>Unconfirmed</strong>')}
     ${datum('Confirmations', `<strong>${number.format(tx.confirmations || 0)}</strong>`)}
     ${datum('Fee', `<strong class="orange">${xmz(tx.fee || decoded.rct_signatures?.txnFee || 0)}</strong>`)}
     ${datum('Size', `<strong>${number.format(tx.size || tx.weight || 0)} bytes</strong>`)}
@@ -162,7 +162,7 @@ async function showAssets() {
     const assets = result.assets || [];
     view.innerHTML = `${result.supported === false ? '<div class="notice"><strong>Asset RPC upgrade pending</strong><p>The public explorer node does not expose the authenticated asset registry yet.</p></div>' : result.active ? '' : '<div class="notice"><strong>Assets are inactive</strong><p>The connected network has not activated the asset hard fork. Entries shown here are authenticated development-state records, not transferable production assets.</p></div>'}
       ${assets.length ? `<div class="table-wrap"><table><thead><tr><th>Asset</th><th>Class</th><th>Supply</th><th>Issued at</th><th>Metadata trust</th></tr></thead><tbody>${assets.map((asset) => `
-        <tr><td><a class="link hash" href="#/asset/${escapeHtml(asset.asset_id)}">${shortHash(asset.asset_id, 16)}</a></td><td>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</td><td>${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</td><td><a class="link" href="#/block/${asset.height}">#${number.format(asset.height || 0)}</a></td><td>${asset.collection_id ? '<span class="trust verified">Controller-authorized member</span>' : '<span class="trust">Issuer-signed descriptor</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No registered assets</strong><p>No authenticated issuance records are present on this network.</p></div>'}
+        <tr><td><a class="link hash" href="#/asset/${escapeHtml(asset.asset_id)}">${escapeHtml(shortHash(asset.asset_id, 16))}</a></td><td>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</td><td>${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</td><td><a class="link" href="#/block/${escapeHtml(asset.height)}">#${number.format(asset.height || 0)}</a></td><td>${asset.collection_id ? '<span class="trust verified">Controller-authorized member</span>' : '<span class="trust">Issuer-signed descriptor</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No registered assets</strong><p>No authenticated issuance records are present on this network.</p></div>'}
       <p class="registry-note">Showing ${number.format(assets.length)} of ${number.format(result.total || 0)} records. External metadata is never trusted solely because its reference appears on-chain.</p>`;
   } catch (error) { showError(error.message); }
 }
@@ -180,7 +180,7 @@ async function showAsset(assetId) {
       ${datum('Class', `<strong>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</strong>`)}
       ${datum('Fixed supply', `<strong class="big">${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</strong>`)}
       ${datum('Display decimals', `<strong>${number.format(asset.display_decimals || 0)}</strong>`)}
-      ${datum('Issuance height', `<a class="link" href="#/block/${asset.height}">#${number.format(asset.height || 0)}</a>`)}
+      ${datum('Issuance height', `<a class="link" href="#/block/${escapeHtml(asset.height)}">#${number.format(asset.height || 0)}</a>`)}
       ${datum('Issuer key', `<code>${escapeHtml(asset.issuer_key)}</code>`)}
       ${datum('Collection authority', collectionAuthorized ? `<span class="trust verified">Controller-authorized</span><a class="link hash" href="#/asset/${escapeHtml(asset.collection_id)}">${escapeHtml(shortHash(asset.collection_id, 16))}</a>` : '<span class="trust">Standalone issuance</span>')}
       ${datum('Metadata content hash', hasMetadataHash ? `<code>${escapeHtml(asset.metadata_content_hash)}</code>` : '<strong>Not committed</strong>')}
@@ -188,7 +188,7 @@ async function showAsset(assetId) {
       ${datum('Known outputs', `<strong>${number.format(result.output_total || 0)}</strong>`)}
     </div>
     <h3 class="subheading">Confidential outputs</h3>
-    ${(result.outputs || []).length ? `<div class="table-wrap"><table><thead><tr><th>Output ID</th><th>Height</th><th>Index</th><th>Commitment</th></tr></thead><tbody>${result.outputs.map((output) => `<tr><td><code>${escapeHtml(shortHash(output.output_id, 14))}</code></td><td><a class="link" href="#/block/${output.height}">#${number.format(output.height || 0)}</a></td><td>${number.format(output.output_index || 0)}</td><td><code>${escapeHtml(shortHash(output.commitment, 14))}</code></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No live outputs</strong><p>No unspent confidential outputs are recorded for this asset.</p></div>'}`;
+    ${(result.outputs || []).length ? `<div class="table-wrap"><table><thead><tr><th>Output ID</th><th>Height</th><th>Index</th><th>Commitment</th></tr></thead><tbody>${result.outputs.map((output) => `<tr><td><code>${escapeHtml(shortHash(output.output_id, 14))}</code></td><td><a class="link" href="#/block/${escapeHtml(output.height)}">#${number.format(output.height || 0)}</a></td><td>${number.format(output.output_index || 0)}</td><td><code>${escapeHtml(shortHash(output.commitment, 14))}</code></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No live outputs</strong><p>No unspent confidential outputs are recorded for this asset.</p></div>'}`;
 }
 
 function datum(label, value) { return `<div class="datum"><span>${escapeHtml(label)}</span>${value}</div>`; }

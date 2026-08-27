@@ -14,7 +14,8 @@ QUICK START
 4. Create a new wallet and record its recovery seed offline.
 
 The first Windows Firewall prompt should be allowed for monzerod.exe on the
-appropriate network. Incoming P2P uses TCP port 6174. Local RPC uses 6175.
+appropriate network. Incoming P2P uses TCP port 6174. HTTP RPC uses 6175;
+both HTTP and ZMQ RPC are explicitly restricted to 127.0.0.1.
 
 MINING
 ------
@@ -31,7 +32,10 @@ only a random installation ID, hashrate, and block count; it never sends a
 wallet address or machine name. The project operator must separately install
 an ingest credential at %APPDATA%\Monzero\miner-stats-token.txt. That private
 credential is deliberately absent from public archives. Mining works normally
-without website reporting.
+without website reporting. When that credential exists, start-mining.bat
+automatically starts the reporter; no Scheduled Task setup is required. Reporter
+diagnostics are written to %APPDATA%\Monzero\miner-stats-reporter.log.
+Mined block counts are read locally from %PROGRAMDATA%\monzero\monzero.log.
 
 PACKAGE CONTENTS
 ----------------

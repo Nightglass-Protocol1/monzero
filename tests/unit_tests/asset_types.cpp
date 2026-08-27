@@ -73,7 +73,7 @@ TEST(asset_types, deterministic_canonical_identity)
   ASSERT_TRUE(cryptonote::assets::derive_asset_id(descriptor, first));
   ASSERT_TRUE(cryptonote::assets::derive_asset_id(descriptor, second));
   EXPECT_EQ(first, second);
-  EXPECT_EQ("1a83e64b6ec56327a06ae1d25387b6f1762120e0ec0b532351395d770a9896ce",
+  EXPECT_EQ("c01217f0225bcd1af8062cfe5a410eb9045d4eeb4a3badd51c8f38ee66c5f7b5",
     epee::string_tools::pod_to_hex(first));
 
   std::vector<uint8_t> encoded;

@@ -15,7 +15,7 @@ import uuid
 from pathlib import Path
 
 
-FOUND_BLOCK = re.compile(r"Found block [0-9a-f]+ at height ", re.IGNORECASE)
+FOUND_BLOCK = re.compile(r"Found block <?[0-9a-f]+>? at height ", re.IGNORECASE)
 
 
 def json_request(url: str, body: dict | None = None, token: str = "") -> dict:

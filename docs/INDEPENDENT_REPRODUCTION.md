@@ -13,9 +13,10 @@ release metadata before building. Do not accept a source tree sent only through
 the same channel as the reference binaries without independently checking its
 published digest.
 
-The release operator supplies four candidate paths to the reproducer: the
-reference Linux and Windows packages plus the independently built Linux and
-Windows packages. On the reproducer's machine, run:
+The release operator supplies reference and independently built Linux and
+Windows packages. If official metadata includes the Windows GUI, its reference
+and independently built packages are required as an additional pair. On the
+reproducer's machine, run:
 
 ```bash
 export MONZERO_REPRODUCER_ID='public name or organization identifying the builder'
@@ -29,8 +30,11 @@ utils/release/compare-reproduced-packages.sh \
 gpg --armor --detach-sign RELEASE.reproduction.json
 ```
 
-The comparator runs the normal package verifier against all four inputs and
-requires byte-for-byte equality for each platform, one exact clean source
+For a release that includes the GUI, insert the reference and reproduced GUI
+ZIP paths immediately before `RELEASE.reproduction.json`.
+
+The comparator runs the normal package verifier against every input and
+requires byte-for-byte equality for each published platform, one exact clean source
 commit, and safe package structure before writing canonical JSON. A mismatch
 is a stop condition; do not normalize timestamps, rebuild an archive from
 extracted files, or compare only executable version strings.

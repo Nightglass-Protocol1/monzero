@@ -151,6 +151,19 @@ h3 { margin: auto 0 1rem; font-size: 1.4rem; font-weight: 600; }
 .steps div { display: flex; flex-direction: column; gap: .5rem; }
 .steps strong { font-weight: 600; }.steps code { color: #9b8cab; font: .75rem var(--mono); }
 
+.windows-guide { padding-top: 0; }
+.windows-guide .section-heading { margin-bottom: 2.5rem; }
+.windows-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); }
+.windows-steps li { display: grid; grid-template-columns: 42px 1fr; gap: 1rem; padding: 1.5rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.windows-steps li:nth-child(even) { border-right: 0; }
+.windows-steps li:nth-last-child(-n+2) { border-bottom: 0; }
+.windows-steps > li > span { color: var(--lime); font: .7rem var(--mono); }
+.windows-steps strong { display: block; margin-bottom: .55rem; font-weight: 600; }
+.windows-steps p, .windows-help p { margin: 0; color: var(--muted); font-size: .78rem; }
+.windows-steps code, .windows-help code { color: #aa98bf; font: .72rem var(--mono); overflow-wrap: anywhere; }
+.windows-help { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 1.3rem 1.5rem; border: 1px solid var(--line); border-top: 0; background: rgba(255,180,84,.04); }
+.windows-help strong { color: #e5c6b3; }
+
 .download { padding-top: 2rem; }
 .download-card { padding: clamp(2rem, 5vw, 4.5rem); display: grid; grid-template-columns: 1fr .8fr; gap: 4rem; align-items: center; border: 1px solid rgba(169,112,255,.42); background: radial-gradient(circle at 85% 30%, rgba(169,112,255,.18), transparent 32%), #15101e; }
 .download-card h2 { font-size: clamp(2.3rem, 4vw, 4rem); }
@@ -182,6 +195,9 @@ footer p { margin: 0; } footer a { color: inherit; }
   .coin-stage { min-height: 390px; margin-top: 1rem; }
   .coin-stage img { width: min(72vw, 430px); }
   .network, .mine, .faq, .download-card, .studio-shell { grid-template-columns: 1fr; }
+  .windows-steps, .windows-help { grid-template-columns: 1fr; }
+  .windows-steps li { border-right: 0; }
+  .windows-steps li:nth-last-child(2) { border-bottom: 1px solid var(--line); }
   .miner-summary { grid-template-columns: 1fr 1fr; }
   .chart-grid { grid-template-columns: 1fr; }
   .chart-card { border-right: 0; border-bottom: 1px solid var(--line); }

@@ -3,7 +3,8 @@ param(
     [string]$Rpc = 'http://127.0.0.1:6175',
     [string]$TokenFile = "$env:APPDATA\Monzero\miner-stats-token.txt",
     [string]$IdFile = "$env:APPDATA\Monzero\telemetry-id.txt",
-    [string]$LogFile = "$env:APPDATA\Monzero\miner-stats-reporter.log",
+    [string]$ReporterLogFile = "$env:APPDATA\Monzero\miner-stats-reporter.log",
+    [string]$DaemonLogFile = "$env:PROGRAMDATA\monzero\monzero.log",
     [ValidateRange(30, 3600)][int]$Interval = 60
 )
 
@@ -11,12 +12,19 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 function Write-ReporterLog([string]$Message) {
-    $directory = Split-Path -Parent $LogFile
+    $directory = Split-Path -Parent $ReporterLogFile
     New-Item -ItemType Directory -Force -Path $directory | Out-Null
-    if ((Test-Path $LogFile) -and (Get-Item $LogFile).Length -gt 1048576) {
-        Move-Item -Force $LogFile "$LogFile.previous"
+    if ((Test-Path $ReporterLogFile) -and (Get-Item $ReporterLogFile).Length -gt 1048576) {
+        Move-Item -Force $ReporterLogFile "$ReporterLogFile.previous"
     }
-    Add-Content -Path $LogFile -Value "$(Get-Date -Format o) $Message"
+    Add-Content -Path $ReporterLogFile -Value "$(Get-Date -Format o) $Message"
+}
+
+function Get-BlocksFound {
+    if (-not (Test-Path $DaemonLogFile)) {
+        return 0
+    }
+    return @(Select-String -Path $DaemonLogFile -Pattern 'Found block <?[0-9a-f]+>? at height ' -AllMatches).Count
 }
 
 if (-not (Test-Path $TokenFile)) {
@@ -58,7 +66,7 @@ try {
                 $payload = @{
                     installation_id = $installationId
                     hashrate = [math]::Max(0, [int64]$status.speed)
-                    blocks_found = 0
+                    blocks_found = Get-BlocksFound
                 } | ConvertTo-Json -Compress
                 $headers = @{ Authorization = "Bearer $token" }
                 $result = Invoke-RestMethod -Method Post -Uri $Endpoint -Headers $headers `

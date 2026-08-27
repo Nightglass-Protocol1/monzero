@@ -4,6 +4,9 @@ Website for `monzero.org`, including the PHP-backed block explorer at
 `/explorer/` and the local-draft asset workspace at `/app/`. It contains no
 build-time dependencies.
 
+The public source repository is
+<https://github.com/Nightglass-Protocol1/monzero>.
+
 The homepage links to `/WHITEPAPER.md`. Deploy the repository-root
 `WHITEPAPER.md` at that exact document-root path whenever the site is updated;
 the packaged copies and public copy must come from the same reviewed source.
@@ -33,8 +36,8 @@ On IONOS web hosting, upload the complete contents of this directory to the
 domain's assigned document root. PHP must be enabled so `/explorer/api.php` can
 proxy the allowlisted, read-only requests to the restricted public node.
 
-`releases/genesis-pre10-notes.txt` is the human-readable companion to the
-machine-readable pre10 metadata. It covers the CLI, source, and separately
+`releases/genesis-pre11-notes.txt` is the human-readable companion to the
+machine-readable pre11 metadata. It covers the CLI, source, and separately
 packaged Windows graphical-wallet archive. Keep its release identity,
 platform scope, and limitations aligned with `docs/RELEASE_NOTES.md` without
 changing published archive hashes.
@@ -82,6 +85,12 @@ local daemon log and are not consensus-verified leaderboard claims.
 The Windows heartbeat helper is
 `utils/release/windows/monzero-miner-reporter.ps1`. Install its ingest token in
 `%APPDATA%\Monzero\miner-stats-token.txt` with access limited to the reporting
-account; never put that token in a public archive. The homepage separately
+account; never put that token in a public archive. `start-mining.bat` launches
+the reporter automatically when that file exists; the reporter's named mutex
+prevents duplicate instances. The homepage separately
 shows `difficulty / target` as an estimated network hash rate even when no
 miner has opted into reporting.
+
+On Windows the daemon's default data and mining log directory is
+`%PROGRAMDATA%\monzero`; the reporter diagnostic log remains under
+`%APPDATA%\Monzero`.

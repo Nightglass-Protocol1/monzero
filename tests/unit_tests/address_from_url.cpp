@@ -33,14 +33,15 @@
 #include "wallet/wallet2.h"
 #include "common/dns_utils.h"
 #include "simplewallet/simplewallet.h"
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
 TEST(AddressFromTXT, Success)
 {
-  std::string addr = "46BeWrHpwXmHDpDEUmZBWZfoQpdc6HaERCNmx1pEYL2rAcuwufPN9rXHHtyUA4QVy66qeFQkn6sfK8aHYjA3jk3o1Bv16em";
+  std::string addr = "FVtn1gEMEHA2FGvjJLYyrsEbWEtcheVujLSHfRgR6tA95V93io63jC1gKTQrfqS81oAvJee5EJ8CEQ2bkaHVSWfcS4ry354";
 
-  std::string txtr = "oa1:xmr";
+  std::string txtr = "oa1:xmz";
   txtr += " recipient_address=";
   txtr += addr;
   txtr += ";";
@@ -59,7 +60,7 @@ TEST(AddressFromTXT, Success)
 
   EXPECT_STREQ(addr.c_str(), res.c_str());
 
-  std::string txtr3 = "foobar oa1:xmr tx_description=\"Donation for Monero Development Fund\"; ";
+  std::string txtr3 = "foobar oa1:xmz tx_description=\"Donation for Monzero Development Fund\"; ";
   txtr3 += "recipient_address=";
   txtr3 += addr;
   txtr3 += "; foobar";
@@ -67,11 +68,17 @@ TEST(AddressFromTXT, Success)
   res = tools::dns_utils::address_from_txt_record(txtr3);
 
   EXPECT_STREQ(addr.c_str(), res.c_str());
+
+  // Accept legacy records published before the XMZ OpenAlias namespace was
+  // introduced, without using that namespace for new Monzero records.
+  std::string legacy = "oa1:xmr recipient_address=" + addr + ";";
+  res = tools::dns_utils::address_from_txt_record(legacy);
+  EXPECT_STREQ(addr.c_str(), res.c_str());
 }
 
 TEST(AddressFromTXT, Failure)
 {
-  std::string txtr = "oa1:xmr recipient_address=not a real address";
+  std::string txtr = "oa1:xmz recipient_address=not a real address";
 
   std::string res = tools::dns_utils::address_from_txt_record(txtr);
 
@@ -85,11 +92,17 @@ TEST(AddressFromTXT, Failure)
 
 TEST(AddressFromURL, Success)
 {
-  const std::string addr = "888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H";
+  if (std::getenv("MONZERO_DONATION_DNS_TEST") == nullptr)
+  {
+    std::cout << "Skipping live donation DNS assertion: set MONZERO_DONATION_DNS_TEST=1 after publishing donate.monzero.org" << std::endl;
+    return;
+  }
+
+  const std::string addr = "FVtn1gEMEHA2FGvjJLYyrsEbWEtcheVujLSHfRgR6tA95V93io63jC1gKTQrfqS81oAvJee5EJ8CEQ2bkaHVSWfcS4ry354";
   
   bool dnssec_result = false;
 
-  std::vector<std::string> addresses = tools::dns_utils::addresses_from_url("donate.getmonero.org", dnssec_result);
+  std::vector<std::string> addresses = tools::dns_utils::addresses_from_url("donate.monzero.org", dnssec_result);
 
   EXPECT_EQ(1, addresses.size());
   if (addresses.size() == 1)
@@ -98,7 +111,7 @@ TEST(AddressFromURL, Success)
   }
 
   // OpenAlias address with an @ instead of first .
-  addresses = tools::dns_utils::addresses_from_url("donate@getmonero.org", dnssec_result);
+  addresses = tools::dns_utils::addresses_from_url("donate@monzero.org", dnssec_result);
   EXPECT_EQ(1, addresses.size());
   if (addresses.size() == 1)
   {

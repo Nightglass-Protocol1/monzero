@@ -402,8 +402,11 @@ namespace dns_utils
 // TODO: parse the string in a less stupid way, probably with regex
 std::string address_from_txt_record(const std::string& s)
 {
-  // make sure the txt record has "oa1:xmr" and find it
-  auto pos = s.find("oa1:xmr");
+  // Prefer Monzero's OpenAlias namespace while retaining legacy records that
+  // used Monero's namespace before the fork established its own ticker.
+  auto pos = s.find("oa1:xmz");
+  if (pos == std::string::npos)
+    pos = s.find("oa1:xmr");
   if (pos == std::string::npos)
     return {};
   // search from there to find "recipient_address="

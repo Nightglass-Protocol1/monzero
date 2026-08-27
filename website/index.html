@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0c0911">
   <title>Monzero — Private by design. Open by nature.</title>
   <link rel="icon" href="assets/monzero-xmz-coin.png">
-  <link rel="stylesheet" href="styles.css?v=20260823-nightshade">
+  <link rel="stylesheet" href="styles.css?v=20260826-windows-guide">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -190,40 +190,59 @@
       </ol>
     </section>
 
+    <section class="windows-guide section" id="windows-mining">
+      <div class="section-heading compact">
+        <p class="eyebrow">Windows mining</p>
+        <h2>Start mining and appear in the live statistics.</h2>
+        <p>Use the Windows command-line package from the download section. Extract the complete ZIP before running anything; do not launch files from inside the ZIP.</p>
+      </div>
+      <ol class="windows-steps">
+        <li><span>1</span><div><strong>Start and synchronize the node</strong><p>Double-click <code>start-node.bat</code>, allow the Windows Firewall prompt, and leave the window open. The launcher connects to <code>node.monzero.org:6174</code> and the local RPC listens on <code>127.0.0.1:6175</code>.</p></div></li>
+        <li><span>2</span><div><strong>Create a fresh wallet</strong><p>Run <code>start-wallet-cli.bat</code>, create a Monzero-only wallet, and record its recovery seed offline. Never reuse a Monero wallet or seed.</p></div></li>
+        <li><span>3</span><div><strong>Start CPU mining</strong><p>Open Command Prompt in the extracted folder and run <code>start-mining.bat YOUR_MONZERO_ADDRESS 2</code>. Replace the address and choose the number of CPU threads you want to use.</p></div></li>
+        <li><span>4</span><div><strong>Enable optional website statistics</strong><p>Ask the project operator for a miner-stat ingest token and save it as <code>%APPDATA%\Monzero\miner-stats-token.txt</code>. Run <code>start-mining.bat</code> again; it starts the reporter automatically, and your anonymous hash rate should appear above within about 60 seconds.</p></div></li>
+      </ol>
+      <div class="windows-help">
+        <p><strong>Not appearing?</strong> Confirm the node is synchronized and mining is active, then inspect <code>%APPDATA%\Monzero\miner-stats-reporter.log</code>. The token is private: do not post it publicly or place it in a distributable ZIP.</p>
+        <p>Run <code>stop-mining.bat</code> to stop mining. The website removes a miner after three minutes without a successful heartbeat.</p>
+      </div>
+    </section>
+
     <section class="download section" id="download">
       <div class="download-card">
         <div>
-          <p class="eyebrow">Genesis pre10</p>
+          <p class="eyebrow">Genesis pre11</p>
           <h2>Download Monzero</h2>
           <p>Experimental Windows graphical wallet and command-line builds for Windows and Linux x86-64. Packages include the matching node, checksums, <a href="WHITEPAPER.md">protocol whitepaper</a>, release status, and upgrade guidance. The recursively complete source archive contains the exact pinned core commit and submodules.</p>
-          <p class="release-note">Unsigned and unaudited experimental prerelease software for the fresh Monzero network. Pre10 changes the mainnet UUID and genesis nonce, so it is intentionally incompatible with pre9 and requires a clean blockchain data directory. The core source passed 1,298 unit tests, 18 RPC functional tests, and the complete 175-test core replay; the archives passed checksum and structural verification. Native Windows execution, independent reproduction, code signing, sustained fuzzing, and an external audit remain outstanding.</p>
-          <p class="release-metadata">Core source <code>519654692657855445c0ab490380dd2465ea5c91</code> · GUI source <code>7244605d0b11ee68c3f077aba792355b58bf94b0</code> · network UUID <code>94834264-d0b2-41dd-b0f2-0ada675c7710</code> · <a href="releases/genesis-pre10.json">machine-readable metadata</a> · <a href="releases/genesis-pre10-notes.txt">release notes and limitations</a></p>
+          <p class="release-note">Unsigned and unaudited experimental prerelease software for the fresh Monzero network. Pre11 retains the pre10 chain and updates desktop launchers and the GUI embedded daemon to use both public P2P nodes while preventing GUI polling from banning loopback. Focused builds, archive verification, and a local synchronized-daemon smoke check passed. Native Windows execution, independent reproduction, code signing, sustained fuzzing, and an external audit remain outstanding.</p>
+          <p class="release-metadata">Core source <code>a99f85b357ee687b524bb06ea3cc933b8047a4a0</code> · GUI source <code>94ec2a7c36efcd265956253a771ce9a6dbd9d1ab</code> · network UUID <code>94834264-d0b2-41dd-b0f2-0ada675c7710</code> · <a href="releases/genesis-pre11.json">machine-readable metadata</a> · <a href="releases/genesis-pre11-notes.txt">release notes and limitations</a></p>
+          <p><a class="button secondary" href="https://github.com/Nightglass-Protocol1/monzero" target="_blank" rel="noopener noreferrer">View source code on GitHub</a></p>
         </div>
         <div class="download-action">
           <div class="release-download">
-            <a class="button primary wide" href="downloads/monzero-genesis-pre10-windows-gui-x64.zip" download>Windows graphical wallet <span>70 MB · ZIP</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre10-windows-gui-x64.zip.sha256" download>Windows GUI SHA-256 checksum</a>
-            <code class="hash">04a8e59c9603d9e1c849e905eb6f9ed39f03787123ff742fb150af54b6aad659</code>
+            <a class="button primary wide" href="downloads/monzero-genesis-pre11-windows-gui-x64.zip" download>Windows graphical wallet <span>65 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre11-windows-gui-x64.zip.sha256" download>Windows GUI SHA-256 checksum</a>
+            <code class="hash">e1950bfebb52833747ea3d5100e56b9b97989bc757f2adfb17672724960ac6cc</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre10-windows-x64.zip" download>Windows command line <span>23 MB · ZIP</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre10-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
-            <code class="hash">3e50890ab6b44eec27aac1fc73e5bc9101ad841499e50941f90a45c3f61662f2</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre11-windows-x64.zip" download>Windows command line <span>26 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre11-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
+            <code class="hash">a9d13c3cca63b7d7a8fd3a00aee3f10aac2d2f379598ebebc585b840b69d2889</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre10-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.42+ <span>29 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre10-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
-            <code class="hash">7eb3d2d0c527b58e2dc3854317d2abcf49bc42222206d522d36994007e7fbb2b</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre11-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.42+ <span>18 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre11-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
+            <code class="hash">b789df327c27457b5e1e0194d678bd21f0315da13483fd69ce349c5c15aa3246</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre10-source.tar.gz" download>Complete source <span>194 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre10-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
-            <code class="hash">97215f624eac4edae9b6ec33bf320fe71370e43a2fc6c6633335c818f3282d9e</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre11-source.tar.gz" download>Complete source <span>194 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre11-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
+            <code class="hash">467255c6d72e6ee92bc33f899c235f8f9afbbd7090621599d20fac8d0f04a648</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre10-gui-source.tar.gz" download>Graphical-wallet source <span>208 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre10-gui-source.tar.gz.sha256" download>GUI source SHA-256 checksum</a>
-            <code class="hash">dcb281e2d52dd11b6274a189b2b84a2920375fed9ee65f2c7618e06df1e2e063</code>
+            <a class="button secondary wide" href="downloads/monzero-genesis-pre11-gui-source.tar.gz" download>Graphical-wallet source <span>210 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-genesis-pre11-gui-source.tar.gz.sha256" download>GUI source SHA-256 checksum</a>
+            <code class="hash">8505792782310a792798f57efef09855e5433b858ab2663ff789436373f21f99</code>
           </div>
           <p class="unsigned-note">Windows binaries are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; verify the published SHA-256 checksum before running them.</p>
         </div>
@@ -239,7 +258,7 @@
         <details><summary>Why is my mining balance still zero?</summary><p>Monzero currently uses solo mining. You receive a coinbase reward only when your machine finds a block; simply hashing does not create a gradual balance. A found reward remains locked for 60 blocks.</p></details>
         <details><summary>Is Monzero the same network as Monero?</summary><p>No. Monzero is an independent experimental chain with a different genesis block, network ID, ports, address prefixes, ticker, and monetary policy.</p></details>
         <details><summary>Can I reuse my existing seed?</summary><p>No. Create a new wallet and seed exclusively for Monzero. Reusing keys across forks can seriously damage privacy.</p></details>
-        <details><summary>Is this a production release?</summary><p>No. Genesis pre10 is experimental, unsigned, and unaudited prerelease software. It starts a fresh network and is incompatible with pre9 chain data.</p></details>
+        <details><summary>Is this a production release?</summary><p>No. Genesis pre11 is experimental, unsigned, and unaudited prerelease software. It uses the pre10 chain and is incompatible with pre9 chain data.</p></details>
       </div>
     </section>
   </main>
@@ -251,6 +270,6 @@
   </footer>
 
   <div class="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=20260825-pre10"></script>
+  <script src="app.js?v=20260827-pre11"></script>
 </body>
 </html>

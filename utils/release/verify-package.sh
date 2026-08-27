@@ -26,6 +26,16 @@ root=${roots[0]}
   echo "Build or checksum manifest is missing" >&2
   exit 1
 }
+[[ -x "$root/start-monzerod.sh" ]] || {
+  echo "Required node launcher is missing or not executable" >&2
+  exit 1
+}
+grep -Fq -- '--rpc-bind-ip 127.0.0.1' "$root/start-monzerod.sh" || {
+  echo "Linux node launcher does not restrict HTTP RPC to loopback" >&2; exit 1;
+}
+grep -Fq -- '--zmq-rpc-bind-ip 127.0.0.1' "$root/start-monzerod.sh" || {
+  echo "Linux node launcher does not restrict ZMQ RPC to loopback" >&2; exit 1;
+}
 for required_document in README.md UPGRADE.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE; do
   [[ -f "$root/$required_document" ]] || {
     echo "Required release document is missing: $required_document" >&2

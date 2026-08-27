@@ -72,6 +72,16 @@ grep -Fq 'MONZERO_ZMQ_PORT:-6176' start-monzerod.sh || {
   echo "User-facing branding gate failed: node launcher does not default to mainnet ZMQ port 6176" >&2
   fail=true
 }
+for bind_option in '--rpc-bind-ip 127.0.0.1' '--zmq-rpc-bind-ip 127.0.0.1'; do
+  grep -Fq -- "$bind_option" start-monzerod.sh || {
+    echo "User-facing branding gate failed: Linux launcher omits loopback binding: $bind_option" >&2
+    fail=true
+  }
+  grep -Fq -- "$bind_option" utils/release/windows/start-node.bat || {
+    echo "User-facing branding gate failed: Windows launcher omits loopback binding: $bind_option" >&2
+    fail=true
+  }
+done
 if grep -Eq '^MINER_ADDRESS="\$\{MONZERO_MINER_ADDRESS:-[^}]+' start-monzero-miner.sh; then
   echo "User-facing branding gate failed: mining launcher contains a default reward address" >&2
   fail=true

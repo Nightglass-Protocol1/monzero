@@ -49,7 +49,9 @@ printf '  Data: %s\n  P2P: %s\n  RPC: %s\n  ZMQ: %s\n' "$DATA_DIR" "$P2P_PORT" "
   --detach \
   --data-dir "$DATA_DIR" \
   --p2p-bind-port "$P2P_PORT" \
+  --rpc-bind-ip 127.0.0.1 \
   --rpc-bind-port "$RPC_PORT" \
+  --zmq-rpc-bind-ip 127.0.0.1 \
   --zmq-rpc-bind-port "$ZMQ_PORT" \
   --disable-rpc-ban \
   --add-priority-node "$PRIORITY_NODE" \

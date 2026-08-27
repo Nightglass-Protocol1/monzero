@@ -1,8 +1,33 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-08-25
+Assessment date: 2026-08-27
 Candidate line: Genesis prerelease
+
+## Genesis pre11 continuation
+
+Genesis pre11 remains a prerelease and is not a production candidate. Core
+commit `a99f85b357ee687b524bb06ea3cc933b8047a4a0` and GUI commit
+`94ec2a7c36efcd265956253a771ce9a6dbd9d1ab` retain the Genesis pre10 chain
+identity. The continuation audit found no demonstrated critical or high-
+severity vulnerability; the release-hardening working tree passes all 1,303 unit
+tests, including the protected consensus vectors, corrected asset-ID fixed
+vector, ban-list test without port contention, and HTTP Origin enforcement.
+
+Pre11 must not be promoted to stable. Its Windows CLI archive predates the
+miner-reporter correction and fails the strengthened verifier. Strict Linux
+verification rejects its dynamically loaded Boost libraries, and its GLIBC
+2.42 floor is above the documented production portability target. The GUI
+source archive lacks the standard per-file source manifest. Native Windows
+CLI/GUI execution, independent reproduction, release signing, a completed
+independent security review, and production HTTPS/network-readiness evidence
+remain outstanding.
+
+The next candidate must be built from one clean reviewed commit after these
+working-tree remediations are committed. Final metadata must pass
+`verify-publication.sh`; production promotion additionally requires signed
+metadata, distinct signed reproduction evidence, strict package verification,
+and the live deployment/rollback gates in `RELEASE_CHECKLIST.md`.
 
 Genesis pre10 starts the fresh Monzero mainnet at network UUID
 `94834264-d0b2-41dd-b0f2-0ada675c7710`, genesis nonce `2271206363`, and

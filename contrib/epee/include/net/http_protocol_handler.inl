@@ -617,8 +617,20 @@ namespace net_utils
 		http_response_info response{};
 		//CHECK_AND_ASSERT_MES(res, res, "handle_request(query_info, response) returned false" );
 		bool res = true;
+		const bool has_origin = !query_info.m_header_info.m_origin.empty();
+		const bool origin_allowed = !has_origin
+			|| std::binary_search(m_config.m_access_control_origins.begin(), m_config.m_access_control_origins.end(), "*")
+			|| std::binary_search(m_config.m_access_control_origins.begin(), m_config.m_access_control_origins.end(), query_info.m_header_info.m_origin);
 
-		if (query_info.m_http_method != http::http_method_options)
+		if (!origin_allowed)
+		{
+			response.m_response_code = 403;
+			response.m_response_comment = "Forbidden";
+			response.m_mime_tipe = "text/plain";
+			response.m_body = "Cross-origin request forbidden\n";
+			m_want_close = true;
+		}
+		else if (query_info.m_http_method != http::http_method_options)
 		{
 			res = handle_request(query_info, response);
 			if (response.m_response_code == 500)

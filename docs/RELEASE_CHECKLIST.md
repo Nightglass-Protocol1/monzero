@@ -89,6 +89,12 @@ its digest-pinned, network-isolated Ubuntu 24.04 container before publication;
 an allowlisted library name alone does not prove that its symbol versions are
 portable.
 
+An official GUI artifact must pass `verify-windows-gui-package.sh`. Stable
+verification requires its manifest to record native Windows testing,
+independent reproduction, completed security review, and release-test
+execution. A GUI artifact listed in release metadata must also be included in
+the independent reproduction comparison and signed attestation.
+
 `BINARY_BUILD_REPRODUCIBILITY=verified` may be supplied to the packager only
 after an independent builder has reproduced the exact packaged binaries. The
 default is `unverified`; setting the variable is an attestation input, not a

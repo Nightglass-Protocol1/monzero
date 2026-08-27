@@ -76,7 +76,8 @@ namespace
 
     http_server()
       : epee::http_server_impl_base<http_server>(),
-        dummy_size(payload_size)
+        dummy_size(payload_size),
+        calls(0)
     {}
 
     CHAIN_HTTP_TO_MAP2(connection_context); //forward http requests to uri map
@@ -87,13 +88,111 @@ namespace
 
     bool on_dummy(const dummy::request&, dummy::response& res, const connection_context *ctx = NULL)
     {
+      ++calls;
       res.payload.resize(dummy_size.load(), 'f');
       return true;
     }
 
     std::atomic<std::size_t> dummy_size;
+    std::atomic<std::size_t> calls;
   };
+
+  boost::beast::http::response<boost::beast::http::string_body> request_dummy(
+    const unsigned short port, const boost::beast::http::verb method,
+    const std::string& origin = {})
+  {
+    namespace http = boost::beast::http;
+    boost::asio::io_context context{};
+    boost::asio::ip::tcp::socket stream{context};
+    stream.connect({boost::asio::ip::make_address("127.0.0.1"), port});
+    http::request<http::string_body> req{method, "/dummy", 11};
+    req.set(http::field::host, "127.0.0.1");
+    if (!origin.empty())
+      req.set(http::field::origin, origin);
+    if (method == http::verb::post)
+    {
+      req.set(http::field::content_type, "text/plain");
+      req.body() = make_payload();
+      req.prepare_payload();
+    }
+    http::write(stream, req);
+    boost::beast::flat_buffer buffer{};
+    http::response<http::string_body> res{};
+    http::read(stream, buffer, res);
+    return res;
+  }
 } // anonymous
+
+TEST(http_server, rejects_disallowed_browser_origin_before_dispatch)
+{
+  namespace http = boost::beast::http;
+
+  http_server server{};
+  server.dummy_size = 1;
+  ASSERT_TRUE(server.init(nullptr, "8080"));
+  ASSERT_TRUE(server.run(1, false));
+
+  boost::system::error_code error{};
+  boost::asio::io_context context{};
+  boost::asio::ip::tcp::socket stream{context};
+  stream.connect(
+    boost::asio::ip::tcp::endpoint{
+      boost::asio::ip::make_address("127.0.0.1"), 8080
+    },
+    error
+  );
+  ASSERT_FALSE(bool(error)) << error.message();
+
+  http::request<http::string_body> req{http::verb::post, "/dummy", 11};
+  req.set(http::field::host, "127.0.0.1");
+  req.set(http::field::origin, "https://attacker.invalid");
+  req.set(http::field::content_type, "text/plain");
+  req.body() = make_payload();
+  req.prepare_payload();
+  http::write(stream, req, error);
+  ASSERT_FALSE(bool(error)) << error.message();
+
+  boost::beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(stream, buffer, res, error);
+  EXPECT_FALSE(bool(error)) << error.message();
+  EXPECT_EQ(403u, res.result_int());
+  EXPECT_EQ(0u, server.calls.load());
+  server.send_stop_signal();
+}
+
+TEST(http_server, permits_configured_and_wildcard_browser_origins)
+{
+  namespace http = boost::beast::http;
+  const std::string allowed{"https://wallet.example"};
+
+  for (const auto& origins : std::vector<std::vector<std::string>>{{allowed}, {"*"}})
+  {
+    static unsigned short port = 8081;
+    http_server server{};
+    server.dummy_size = 1;
+    ASSERT_TRUE(server.init(nullptr, std::to_string(port), "127.0.0.1", "::", false, true, origins));
+    ASSERT_TRUE(server.run(1, false));
+    const auto response = request_dummy(port++, http::verb::post, allowed);
+    EXPECT_EQ(200u, response.result_int());
+    EXPECT_EQ(allowed, response[http::field::access_control_allow_origin]);
+    EXPECT_EQ(1u, server.calls.load());
+    server.send_stop_signal();
+  }
+}
+
+TEST(http_server, rejects_disallowed_preflight_before_dispatch)
+{
+  namespace http = boost::beast::http;
+  http_server server{};
+  ASSERT_TRUE(server.init(nullptr, "8083", "127.0.0.1", "::", false, true,
+    {"https://wallet.example"}));
+  ASSERT_TRUE(server.run(1, false));
+  const auto response = request_dummy(8083, http::verb::options, "https://attacker.invalid");
+  EXPECT_EQ(403u, response.result_int());
+  EXPECT_EQ(0u, server.calls.load());
+  server.send_stop_signal();
+}
 
 TEST(http_server, response_soft_limit)
 {
