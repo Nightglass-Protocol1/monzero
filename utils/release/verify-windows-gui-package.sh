@@ -40,6 +40,12 @@ for binary in monzero-wallet-gui.exe monzerod.exe monzero-wallet-cli.exe monzero
   report=$(file "$root/$binary")
   echo "$report"
   grep -Fq 'PE32+ executable' <<< "$report" || { echo "Not a Windows x64 PE binary: $binary" >&2; exit 1; }
+  pe_headers=$(x86_64-w64-mingw32-objdump -p "$root/$binary")
+  for mitigation in HIGH_ENTROPY_VA DYNAMIC_BASE NX_COMPAT; do
+    grep -Fq "$mitigation" <<< "$pe_headers" || {
+      echo "Required PE mitigation $mitigation is missing: $binary" >&2; exit 1;
+    }
+  done
 done
 x86_64-w64-mingw32-objdump -p "$root/monzero-wallet-gui.exe" |
   grep -E '^Subsystem[[:space:]].*\(Windows GUI\)$' >/dev/null || { echo "GUI executable does not use the Windows GUI subsystem" >&2; exit 1; }

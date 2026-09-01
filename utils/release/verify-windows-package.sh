@@ -51,6 +51,12 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
   report=$(file "$root/$binary")
   echo "$report"
   grep -Fq 'PE32+ executable' <<< "$report" || { echo "Not a Windows x64 PE binary: $binary" >&2; exit 1; }
+  pe_headers=$(x86_64-w64-mingw32-objdump -p "$root/$binary")
+  for mitigation in HIGH_ENTROPY_VA DYNAMIC_BASE NX_COMPAT; do
+    grep -Fq "$mitigation" <<< "$pe_headers" || {
+      echo "Required PE mitigation $mitigation is missing: $binary" >&2; exit 1;
+    }
+  done
   strings "$root/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || { echo "Version mismatch: $binary" >&2; exit 1; }
   while read -r library; do
     case ${library^^} in

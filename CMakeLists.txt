@@ -891,9 +891,16 @@ else()
 
   # some windows linker bits
   if (WIN32)
-    add_linker_flag_if_supported(-Wl,--dynamicbase LD_SECURITY_FLAGS)
-    add_linker_flag_if_supported(-Wl,--nxcompat LD_SECURITY_FLAGS)
-    add_linker_flag_if_supported(-Wl,--high-entropy-va LD_SECURITY_FLAGS)
+    # GNU ld supports these PE mitigations, but some older MinGW linkers can
+    # crash while CMake probes them with try_compile. Apply them directly for
+    # MinGW so a failed probe cannot silently produce an NX-only executable.
+    if (MINGW)
+      set(LD_SECURITY_FLAGS "${LD_SECURITY_FLAGS} -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va")
+    else()
+      add_linker_flag_if_supported(-Wl,--dynamicbase LD_SECURITY_FLAGS)
+      add_linker_flag_if_supported(-Wl,--nxcompat LD_SECURITY_FLAGS)
+      add_linker_flag_if_supported(-Wl,--high-entropy-va LD_SECURITY_FLAGS)
+    endif()
   endif()
 
   # Warnings, that when ignored are so severe, that they can segfault or even UB any application.
