@@ -1,8 +1,41 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-08-27
+Assessment date: 2026-09-01
 Candidate line: Genesis prerelease
+
+## Genesis pre12 local qualification
+
+Genesis pre12 is a locally qualified prerelease candidate built from core
+commit `c70d190890ab939f25cd16b5d975ab5e14b8b018` and GUI commit
+`94ec2a7c36efcd265956253a771ce9a6dbd9d1ab`. It retains the fresh-chain
+identity introduced by Genesis pre10: mainnet UUID
+`94834264-d0b2-41dd-b0f2-0ada675c7710`, genesis nonce `2271206363`, and
+genesis hash `84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4`.
+It is the same chain as pre10 and pre11; the public asset hard fork remains
+inactive.
+
+All 1,303 unit tests passed, including protected consensus and release-
+hardening regressions. Focused DNS/OpenAlias, HTTP Origin, asset, and RPC
+tests passed. The sanitizer-backed asset-wire fuzz target completed 10,000
+executions without a finding. Linux and Windows CLI targets and the static
+Windows GUI target built with embedded core version `0.18.5.1-c70d19089`;
+the GUI reports source `94ec2a7c3`.
+
+The Linux, Windows CLI, Windows GUI, core source, and GUI source archives pass
+their non-production package verifiers and the combined publication gate.
+The GUI source archive recursively includes GUI submodules and the exact
+pre12 core rather than the GUI commit's older core gitlink. Three local core-
+source packaging runs are byte-for-byte identical. The exact Linux archive
+starts and stops correctly in the pinned, network-disabled Ubuntu smoke
+environment, binds HTTP RPC to loopback, and imports no GLIBC symbol newer
+than 2.29.
+
+Pre12 is not ready for production promotion. Native Windows CLI and GUI
+execution, independently operated binary reproduction with a distinct signed
+attestation, release and Windows code signing, and an independent security
+review remain incomplete. Local deterministic packaging is not independent
+reproduction, and local security testing is not an independent audit.
 
 ## Genesis pre11 continuation
 

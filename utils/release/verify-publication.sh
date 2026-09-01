@@ -72,6 +72,28 @@ if source is not None:
     if not isinstance(source_digest, str) or len(source_digest) != 64 or any(c not in "0123456789abcdef" for c in source_digest):
         raise SystemExit("Invalid source artifact SHA-256")
 
+gui_source = data.get("gui_source")
+if gui_source is not None:
+    if not isinstance(gui_source, dict):
+        raise SystemExit("gui_source must be an object")
+    gui_filename = gui_source.get("filename")
+    gui_size = gui_source.get("size_bytes")
+    gui_digest = gui_source.get("sha256")
+    gui_commit = gui_source.get("gui_source_commit")
+    gui_core_commit = gui_source.get("core_source_commit")
+    if not isinstance(gui_filename, str) or pathlib.PurePosixPath(gui_filename).name != gui_filename:
+        raise SystemExit("Unsafe GUI source artifact filename")
+    if not isinstance(gui_size, int) or isinstance(gui_size, bool) or gui_size <= 0:
+        raise SystemExit("Invalid GUI source artifact size")
+    if not isinstance(gui_digest, str) or len(gui_digest) != 64 or any(c not in "0123456789abcdef" for c in gui_digest):
+        raise SystemExit("Invalid GUI source artifact SHA-256")
+    if not isinstance(gui_commit, str) or len(gui_commit) != 40 or any(c not in "0123456789abcdef" for c in gui_commit):
+        raise SystemExit("Invalid GUI source commit")
+    if gui_core_commit != commit:
+        raise SystemExit("GUI source core commit does not match release source commit")
+    if data.get("gui_source_commit") != gui_commit:
+        raise SystemExit("GUI source commit does not match top-level release metadata")
+
 print("true" if data["production_ready"] else "false")
 print(data["channel"])
 print(commit)
@@ -80,6 +102,8 @@ print(data["signing"])
 print(data["independent_reproducibility"])
 if source is not None:
     print("\t".join(("source", "source", source_filename, str(source_size), source_digest)))
+if gui_source is not None:
+    print("\t".join(("gui_source", "gui-source", gui_filename, str(gui_size), gui_digest)))
 seen_filenames = set()
 seen_platforms = set()
 for artifact in artifacts:
@@ -204,6 +228,7 @@ fi
 
 artifact_count=0
 source_count=0
+gui_source_count=0
 for row in "${release_fields[@]:6}"; do
   IFS=$'\t' read -r marker platform filename expected_size expected_hash <<< "$row"
   artifact="$artifact_dir/$filename"
@@ -225,6 +250,20 @@ for row in "${release_fields[@]:6}"; do
       sed -n 's/^source_commit=//p')
     [[ $package_commit == "$source_commit" ]] || {
       echo "Source commit mismatch in $filename" >&2; exit 1;
+    }
+    continue
+  fi
+  if [[ $marker == gui_source ]]; then
+    ((gui_source_count += 1))
+    [[ $gui_source_count -eq 1 ]] || { echo "Multiple GUI source artifacts are forbidden" >&2; exit 1; }
+    "$script_dir/verify-gui-source-package.sh" "$artifact"
+    package_gui_commit=$(tar -xOf "$artifact" --wildcards '*/SOURCE-MANIFEST.txt' |
+      sed -n 's/^gui_source_commit=//p')
+    package_core_commit=$(tar -xOf "$artifact" --wildcards '*/SOURCE-MANIFEST.txt' |
+      sed -n 's/^core_source_commit=//p')
+    metadata_gui_commit=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["gui_source_commit"])' "$metadata")
+    [[ $package_gui_commit == "$metadata_gui_commit" && $package_core_commit == "$source_commit" ]] || {
+      echo "GUI/core source commit mismatch in $filename" >&2; exit 1;
     }
     continue
   fi
@@ -273,4 +312,8 @@ if [[ $production == 1 && $source_count -ne 1 ]]; then
   echo "Production verification requires one verified source artifact" >&2
   exit 1
 fi
-echo "Publication verification passed ($artifact_count binary artifacts, $source_count source package, commit $source_commit)"
+if [[ $production == 1 ]] && grep -q $'"platform"[[:space:]]*:[[:space:]]*"windows-gui-x64"' "$metadata" && [[ $gui_source_count -ne 1 ]]; then
+  echo "Production verification with a GUI artifact requires one verified GUI source artifact" >&2
+  exit 1
+fi
+echo "Publication verification passed ($artifact_count binary artifacts, $source_count core source, $gui_source_count GUI source, commit $source_commit)"

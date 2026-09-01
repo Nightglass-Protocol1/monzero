@@ -1,0 +1,67 @@
+MONZERO GENESIS PRE12
+=====================
+
+Genesis pre12 is experimental, unsigned, and independently unaudited
+prerelease software. It is not a production release.
+
+Core source: c70d190890ab939f25cd16b5d975ab5e14b8b018
+GUI source:  94ec2a7c36efcd265956253a771ce9a6dbd9d1ab
+Network UUID: 94834264-d0b2-41dd-b0f2-0ada675c7710
+Genesis nonce: 2271206363
+Genesis hash: 84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4
+Native currency: XMZ
+Asset hard fork: inactive; no public activation is scheduled
+
+PACKAGES
+
+Linux x86-64 CLI
+  SHA-256: 1d27b98ffa48b66178106bd6ece92ca766a9166811d20931c2d91ca52c742553
+
+Windows x64 CLI
+  SHA-256: 5318c6e3ede7e916213fad3c3a7449c6b2e0f99f38260dc6ee842fc934848cdf
+
+Windows x64 graphical wallet
+  SHA-256: 57521212662368cb49323932b98eff898de5c54563aed0c5a2365fdc4679c098
+
+Complete core source
+  SHA-256: f3cdf60c5663fb1242c1ec9f2429c1814ab8d0846401629f96c17dbaae49721f
+
+Graphical-wallet source
+  SHA-256: 8b8805cc8adddc398761b30862814d0c3ea719582157a52a00ce0f75596a2fb5
+
+CHANGES SINCE PRE11
+
+- HTTP requests with a disallowed Origin are rejected before RPC dispatch.
+- Linux and Windows launchers bind HTTP and ZMQ RPC to loopback by default.
+- Windows mining-reporter lifecycle and authentication handling are hardened.
+- OpenAlias uses the Monzero oa1:xmz namespace; the live donation lookup is
+  opt-in and no longer contacts inherited Monero donation infrastructure.
+- Release package verification now enforces binary/source identity, archive
+  safety, loopback launchers, and complete source manifests.
+- The protected asset-ID fixed vector and release-hardening regressions were
+  corrected and pass in the complete unit suite.
+- Consensus identity, ports, address prefixes, supply rules, and the public
+  asset hard-fork schedule remain unchanged from Genesis pre10 and pre11.
+
+UPGRADE
+
+Pre12 uses the same chain as pre10 and pre11. Stop wallets, miners, and the
+daemon cleanly; verify the new archive checksum; and extract it into a new
+directory. Existing blockchain and wallet data do not require migration. Keep
+the previous verified binaries until the updated client has synchronized and
+remained healthy. Never reuse a Monero or other CryptoNote seed with Monzero.
+
+TEST STATUS AND LIMITATIONS
+
+All 1,303 unit tests passed. Focused DNS/OpenAlias, HTTP Origin, asset, and RPC
+regressions passed, and the asset-wire sanitizer fuzz target completed 10,000
+executions without a finding. All five archives pass their checksums and
+non-production package verifiers. The source packager produced three
+byte-for-byte identical local archives. The exact Linux package starts and
+stops successfully in the pinned, network-disabled Ubuntu compatibility
+container and requires at most GLIBC 2.29.
+
+Native Windows CLI/GUI execution, independently operated binary reproduction,
+release signing, and an independent security review remain outstanding.
+Windows may show an unknown-publisher warning. Local deterministic packaging
+is not represented as independent reproduction.
