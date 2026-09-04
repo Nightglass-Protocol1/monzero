@@ -143,7 +143,7 @@ jobs:
         run: ${{env.APT_SET_CONF}}
       - name: update apt
         run: apt update
-      - name: install monero dependencies
+      - name: install Monzero dependencies
         run: ${{env.APT_INSTALL_LINUX}}
       - name: configure git
         run: git config --global --add safe.directory '*'
@@ -192,7 +192,7 @@ jobs:
         run: ${{env.APT_SET_CONF}}
       - name: update apt
         run: apt update
-      - name: install monero dependencies
+      - name: install Monzero dependencies
         run: ${{env.APT_INSTALL_LINUX}}
       - name: configure git
         run: git config --global --add safe.directory '*'
@@ -242,10 +242,10 @@ jobs:
         run: ${{env.APT_SET_CONF}}
       - name: update apt
         run: apt update
-      - name: install monero dependencies
+      - name: install Monzero dependencies
         run: ${{env.APT_INSTALL_LINUX}}
-      - name: install pip
-        run: apt install -y python3-pip
+      - name: install test dependencies
+        run: apt install -y python3-pip gnupg
       - name: install Python dependencies
         run: pip install requests psutil monotonic zmq deepdiff
       - name: configure git
@@ -272,6 +272,11 @@ jobs:
           ${{env.CCACHE_SETTINGS}}
           ${{env.BUILD_DEFAULT_LINUX}}
           cmake --build build --target test
+      - name: release safety regressions
+        run: |
+          tests/phase0/test-user-facing-branding.sh
+          tests/phase0/test-release-archive-safety.sh
+          tests/phase0/test-release-signing-subkeys.sh
       - name: save ccache
         uses: actions/cache/save@v5
         if: github.event_name != 'pull_request' && steps.ccache-restore.outputs.cache-hit != 'true'
@@ -292,7 +297,7 @@ jobs:
       - name: update apt
         run: apt update
       - name: install dependencies
-        run: apt install -y git python3-pip
+        run: apt install -y git python3
       - name: configure git
         run: git config --global --add safe.directory '*'
       - uses: actions/checkout@v5
@@ -301,11 +306,13 @@ jobs:
           submodules: recursive
       - name: archive
         run: |
-          pip install git-archive-all
-          export VERSION="monero-$(git describe)"
-          export OUTPUT="$VERSION.tar"
-          echo "OUTPUT=$OUTPUT" >> $GITHUB_ENV
-          git-archive-all --prefix "$VERSION/" --force-submodules "$OUTPUT"
+          source_commit=$(git rev-parse HEAD)
+          version=$(git describe --tags --always)
+          package_output=$(utils/release/package-source.sh "$source_commit" "$PWD" "$version")
+          output=$(printf '%s\n' "$package_output" | awk '/\.tar\.gz$/ { archive=$0 } END { print archive }')
+          test -n "$output"
+          utils/release/verify-source-package.sh "$output"
+          echo "OUTPUT=$(basename "$output")" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.OUTPUT }}
