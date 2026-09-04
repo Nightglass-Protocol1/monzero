@@ -4,6 +4,7 @@ set -euo pipefail
 [[ $# -eq 1 ]] || { echo "Usage: $0 <monzero-gui-source.tar.gz>" >&2; exit 2; }
 archive=$(realpath "$1")
 [[ -f $archive ]] || { echo "GUI source archive not found: $archive" >&2; exit 2; }
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 
 python3 - "$archive" <<'PY'
 import pathlib, posixpath, sys, tarfile
@@ -40,6 +41,7 @@ root=${roots[0]}
 [[ $(sed -n 's/^package=//p' "$root/SOURCE-MANIFEST.txt") == "$(basename "$root")" ]] || {
   echo "GUI source manifest package name does not match archive root" >&2; exit 1;
 }
+"$script_dir/verify-release-notes.sh" "$root/SOURCE-MANIFEST.txt" -gui-source "$root/monero/docs/RELEASE_NOTES.md"
 gui_commit=$(sed -n 's/^gui_source_commit=//p' "$root/SOURCE-MANIFEST.txt")
 core_commit=$(sed -n 's/^core_source_commit=//p' "$root/SOURCE-MANIFEST.txt")
 source_epoch=$(sed -n 's/^source_date_epoch=//p' "$root/SOURCE-MANIFEST.txt")

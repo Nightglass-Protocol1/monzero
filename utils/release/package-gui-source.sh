@@ -23,6 +23,10 @@ git -C "$gui_repository" cat-file -e "$gui_commit^{commit}" 2>/dev/null || {
 git -C "$core_repository" cat-file -e "$core_commit^{commit}" 2>/dev/null || {
   echo "Core commit is unavailable: $core_commit" >&2; exit 2;
 }
+git -C "$core_repository" show "$core_commit:docs/RELEASE_NOTES.md" |
+  grep -Fqx "Release label: $version" || {
+    echo "Core RELEASE_NOTES.md at $core_commit does not match release label: $version" >&2; exit 1;
+  }
 
 gui_epoch=$(git -C "$gui_repository" show -s --format=%ct "$gui_commit")
 core_epoch=$(git -C "$core_repository" show -s --format=%ct "$core_commit")

@@ -276,6 +276,7 @@ jobs:
         run: |
           tests/phase0/test-user-facing-branding.sh
           tests/phase0/test-release-archive-safety.sh
+          tests/phase0/test-release-notes-version.sh
           tests/phase0/test-release-signing-subkeys.sh
       - name: save ccache
         uses: actions/cache/save@v5

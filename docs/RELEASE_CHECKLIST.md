@@ -74,6 +74,9 @@ which case the filename and embedded manifest are marked development/dirty.
 `utils/release/verify-package.sh` verifies archive shape, inner checksums,
 safe extraction paths, required release documents, executable presence,
 formats, and identical manifest-bound versions across the daemon and wallet.
+All binary and source package verifiers also require `RELEASE_NOTES.md` to
+declare the exact package release label; stale notes fail verification before
+an archive can qualify.
 This makes packaging
 deterministic; it does not by itself make locally compiled binaries
 reproducible. `RELEASE_STRICT=1` additionally rejects dirty manifests,

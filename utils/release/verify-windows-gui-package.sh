@@ -14,7 +14,7 @@ mapfile -t roots < <(find "$work_dir" -mindepth 1 -maxdepth 1 -type d)
 [[ ${#roots[@]} -eq 1 ]] || { echo "Archive must contain exactly one root directory" >&2; exit 1; }
 root=${roots[0]}
 
-for required in monzero-wallet-gui.exe monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe GUI_BUILD_MANIFEST.txt SHA256SUMS README-GUI.txt LICENSE start-node.bat start-wallet-gui.bat; do
+for required in monzero-wallet-gui.exe monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe GUI_BUILD_MANIFEST.txt SHA256SUMS README-GUI.txt RELEASE_NOTES.md LICENSE start-node.bat start-wallet-gui.bat; do
   [[ -f "$root/$required" ]] || { echo "Required GUI package file is missing: $required" >&2; exit 1; }
 done
 grep -Fq -- '--rpc-bind-ip 127.0.0.1' "$root/start-node.bat" || {
@@ -26,6 +26,7 @@ grep -Fq -- '--zmq-rpc-bind-ip 127.0.0.1' "$root/start-node.bat" || {
 [[ $(sed -n 's/^package=//p' "$root/GUI_BUILD_MANIFEST.txt") == "$(basename "$root")" ]] || {
   echo "GUI build manifest package name does not match archive root" >&2; exit 1;
 }
+"$script_dir/verify-release-notes.sh" "$root/GUI_BUILD_MANIFEST.txt" -windows-gui-x64 "$root/RELEASE_NOTES.md"
 (cd "$root" && sha256sum -c SHA256SUMS)
 
 gui_commit=$(sed -n 's/^gui_source_commit=//p' "$root/GUI_BUILD_MANIFEST.txt")

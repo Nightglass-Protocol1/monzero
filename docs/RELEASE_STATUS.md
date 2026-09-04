@@ -1,7 +1,7 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-09-02
+Assessment date: 2026-09-04
 Candidate line: Genesis prerelease
 
 ## Genesis pre12 local qualification
@@ -23,8 +23,8 @@ Windows GUI target built with embedded core version `0.18.5.1-19b947119`;
 the GUI reports source `b0fee657c`. All packaged Windows executables have
 high-entropy ASLR, ASLR, and NX enabled, enforced by the package verifiers.
 
-The Linux, Windows CLI, Windows GUI, core source, and GUI source archives pass
-their non-production package verifiers and the combined publication gate.
+The Linux, Windows CLI, Windows GUI, core source, and GUI source archives passed
+the then-current non-production package verifiers and combined publication gate.
 The GUI source archive recursively includes GUI submodules and the exact
 pre12 core rather than the GUI commit's older core gitlink. Three local core-
 source packaging runs are byte-for-byte identical. The exact Linux archive
@@ -37,6 +37,49 @@ execution, independently operated binary reproduction with a distinct signed
 attestation, release and Windows code signing, and an independent security
 review remain incomplete. Local deterministic packaging is not independent
 reproduction, and local security testing is not an independent audit.
+
+The qualified pre12 artifacts remain unchanged. Later commits described below
+belong to the next candidate and do not retroactively qualify or alter pre12.
+Post-qualification review found that all five pre12 archives embed the stale
+Genesis pre9 release notes. Those notes incorrectly call the candidate
+deliberately untested and omit pre12 changes and evidence. The binaries and
+their recorded hashes are unchanged, but pre12 must not be promoted; the new
+release-notes binding gate intentionally rejects each old archive so that a
+correctly documented next candidate supersedes it.
+
+## Post-pre12 development hardening
+
+Core commit `9eb5382ad` removes undefined behavior from the circular
+`Blockchain`/`tx_memory_pool` construction pattern. The pool now supports an
+explicit, checked two-phase binding, and core, offline utilities, and test
+fixtures preserve valid construction and destruction order. The core tests,
+block-weight tests, all seven affected blockchain utilities, and the focused
+20-test binding/weight/distribution suite build or pass locally. The expanded
+full unit suite passes all 1,304 tests after the change.
+
+Core commit `d702017dd` prevents a local wallet CLI null dereference when wallet
+creation is cancelled before `wallet2::make_new()` returns a wallet. The
+wallet CLI target rebuilds, starts for `--help`, and passes the user-facing
+branding gate after the change.
+
+CI commit `ed9984466` runs the branding, hostile-archive, and signing-subkey
+release regressions in the Linux test job. It also replaces the unpinned PyPI
+source archiver with Monzero's deterministic recursive source packager and
+verifier, and corrects inherited `monero-*` binary artifact paths. A local
+source-package simulation produced an archive that passed the repository's
+source-package verifier; hosted CI execution is still required.
+
+The next-candidate working tree also binds every binary and source archive's
+package label to an exact `Release label:` declaration in its embedded release
+notes. Positive and stale-label regressions pass locally, and the strengthened
+Linux CLI, Windows CLI, Windows GUI, core-source, and GUI-source verifiers all
+reject the stale pre12 archives at this gate. Genesis pre13 notes now describe
+the post-pre12 changes and distinguish source-tree tests from future exact-
+artifact qualification.
+
+These commits have not been packaged. A clean next-candidate build must repeat
+the complete qualification, platform, package, and publication gates rather
+than reusing pre12 evidence.
 
 ## Genesis pre11 continuation
 

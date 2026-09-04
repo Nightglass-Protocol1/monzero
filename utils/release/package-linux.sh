@@ -16,6 +16,9 @@ output_dir=$(realpath -m "$2")
 version=$3
 
 [[ $version =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]] || { echo "Invalid version label" >&2; exit 2; }
+grep -Fqx "Release label: $version" "$source_root/docs/RELEASE_NOTES.md" || {
+  echo "RELEASE_NOTES.md does not match release label: $version" >&2; exit 1;
+}
 [[ -x "$build_bin/monzerod" ]] || { echo "Missing executable: $build_bin/monzerod" >&2; exit 2; }
 [[ -x "$build_bin/monzero-wallet-cli" ]] || { echo "Missing executable: $build_bin/monzero-wallet-cli" >&2; exit 2; }
 

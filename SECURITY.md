@@ -28,6 +28,8 @@ Upstream Monero services, third-party exchanges, mining pools, hosting
 providers, and user-operated infrastructure are outside the project's control;
 report those issues to their respective operators.
 
-Genesis pre6 is experimental, unsigned, and unaudited. This policy establishes
-a private reporting channel; it does not change the release's prerelease status
-or imply that remaining production gates have passed.
+Genesis pre12 is the latest locally qualified candidate. It remains an
+experimental, unsigned, independently unreproduced, and unaudited prerelease.
+Development commits after pre12 require a new qualification cycle before they
+can be packaged. This policy establishes a private reporting channel; it does
+not imply that any remaining production gate has passed.

@@ -56,6 +56,15 @@ tests/phase0/test-release-archive-safety.sh
 It proves that normal tar and ZIP inputs pass pre-extraction validation while
 links, traversal paths, and duplicate entries fail closed.
 
+Release notes are also bound to the exact package label. Run the regression
+after changing package naming, manifests, or release documentation:
+
+```bash
+tests/phase0/test-release-notes-version.sh
+```
+
+The binary package verifiers reject missing or stale `RELEASE_NOTES.md` files.
+
 ## Fast unit gate
 
 Run the ordinary unit tests with a validating resolver and keep the expensive

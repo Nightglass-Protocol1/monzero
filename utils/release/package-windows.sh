@@ -8,6 +8,9 @@ build_bin=$(realpath "$1")
 output_dir=$(realpath -m "$2")
 version=$3
 [[ $version =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]] || { echo "Invalid version label" >&2; exit 2; }
+grep -Fqx "Release label: $version" "$source_root/docs/RELEASE_NOTES.md" || {
+  echo "RELEASE_NOTES.md does not match release label: $version" >&2; exit 1;
+}
 
 for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
   [[ -f "$build_bin/$binary" ]] || { echo "Missing executable: $build_bin/$binary" >&2; exit 1; }

@@ -1,55 +1,70 @@
-# Monzero Genesis pre9 release notes
+# Monzero Genesis pre13 release notes
 
-Genesis pre9 is an experimental, unsigned, unaudited, and deliberately
-untested prerelease. It is not a production release. The exact source commit and
-artifact digests are recorded in each package manifest and the matching
-machine-readable release metadata published at `https://monzero.org`.
+Release label: genesis-pre13
+
+Genesis pre13 is the next experimental prerelease candidate. It is not a
+production release. The candidate has not yet been packaged, published, or
+deployed; final artifact digests and exact source commits must be recorded in
+the package manifests and matching machine-readable release metadata.
 
 ## Packaged platforms
 
-| Package | Compatibility scope |
+| Package | Intended compatibility scope |
 | --- | --- |
 | Linux x86-64 CLI | glibc 2.31 or newer |
 | Windows x64 CLI | 64-bit Windows command-line environment |
 | Windows x64 GUI | 64-bit Windows graphical environment |
-| Complete source | Pinned repository commit and recursive submodule contents |
+| Complete source | Exact repository commit and recursive pinned submodules |
 
-The binary archives contain `monzerod`, the command-line wallet, and wallet
-RPC. The Linux archive includes shell launchers and systemd examples; the
-Windows CLI archive includes batch launchers. The GUI is distributed in a
-separate archive with matching command-line tools.
-macOS, Linux ARM, Windows ARM, mobile platforms, and 32-bit systems are not
-qualified by this candidate.
+The binary archives are intended to contain `monzerod`, the command-line
+wallet, and wallet RPC. The GUI is distributed separately with matching core
+tools. macOS, Linux ARM, Windows ARM, mobile platforms, and 32-bit systems are
+not qualified by this candidate.
 
-## Changes since Genesis pre8
+## Changes since Genesis pre12
 
-- Defined cryptographic carry normalization without signed left-shift behavior.
-- Corrected wallet enum-varint conversion while retaining its wire encoding.
-- Added modern view-tagged mined-reward ownership coverage to the source tree.
-- New GUI wallets default to `Monzero/wallets`; the wallet picker also scans
-  the legacy `Monero/wallets` directory without moving or deleting files.
-- Updated the whitepaper and release evidence for these changes.
+- Removed undefined behavior from circular `Blockchain` and transaction-pool
+  initialization. Pool-to-chain binding is now explicit and checked, and the
+  affected utilities and tests preserve valid destruction order.
+- Prevented a command-line wallet crash when wallet creation is cancelled
+  before a wallet object is returned.
+- Added a package gate that rejects missing or stale release notes when their
+  declared release label does not match the archive.
+- Hardened CI to run release archive, notes, signing-subkey, and branding
+  regressions; use Monzero's deterministic source packager and verifier; and
+  collect correctly named Monzero cross-build artifacts.
+- No mainnet consensus identity, genesis block, address prefix, port, monetary
+  policy, or public hard-fork schedule changed. Monzero Assets remain inactive
+  on every public network.
 
-## Verification performed
+## Source-tree verification performed
 
-At the publisher's direction, no test suite, package verifier, platform smoke
-test, or native wallet lifecycle test was run to qualify the exact Genesis
-pre9 artifacts. Successful compilation and checksum generation are packaging
-steps, not test evidence. Earlier pre8 results do not qualify pre9.
+- All 1,304 unit tests pass on the local Linux build.
+- The core-test, block-weight, wallet CLI, and seven affected blockchain
+  utility targets build successfully.
+- The focused transaction-pool binding, long-term block-weight, fee-scaling,
+  and output-distribution suite passes all 20 tests.
+- The branding, hostile-archive, signing-subkey, and release-notes binding
+  regression gates pass locally.
+- A local simulation of the CI source-package path produced a recursively
+  complete archive that passed the source-package verifier.
+
+These are source-tree results. They do not qualify binaries that have not yet
+been built, and they are not an independent security review.
 
 ## Known limitations and safety notices
 
-- Packages and release metadata are unsigned; there is no production Monzero
-  release-signing identity yet.
+- Final pre13 artifacts do not yet exist and must complete the full clean
+  qualification cycle before publication.
+- Packages and release metadata will remain unsigned until the offline release
+  signing process is completed.
 - A separately trusted operator has not reproduced and signed the binaries.
 - Consensus, cryptography, and the broader implementation have not completed
-  independent audit.
+  an independent audit.
+- Native Windows CLI and GUI execution testing remains required for the exact
+  candidate archives.
 - The public network has limited independent infrastructure and hash power.
-- Windows SmartScreen may warn because the executables are not code-signed.
-- Hardware-wallet, multisig, view-only, offline-signing, GUI, and funded
-  transaction lifecycles do not have complete clean-system release evidence.
-- The asset prototype remains inactive on every public network. Studio drafts
-  are unsigned JSON and cannot be submitted to consensus.
+- Windows SmartScreen may warn until the executables are code-signed.
 - Never reuse a Monero or other CryptoNote-derived seed, keys, wallet file, or
   data directory with Monzero.
 
@@ -63,8 +78,8 @@ until the upgraded node has synchronized and remained healthy.
 
 ## Verification and reporting
 
-Compare downloads with the SHA-256 values in the published JSON metadata and
-adjacent `.sha256` files. Review `BUILD-MANIFEST.txt` or
+Compare downloads with the SHA-256 values in the final published JSON metadata
+and adjacent `.sha256` files. Review `BUILD-MANIFEST.txt` or
 `SOURCE-MANIFEST.txt` inside the archive before use. Current evidence and
 unresolved gates are recorded in `RELEASE_STATUS.md` and
 `RELEASE_CHECKLIST.md`. Report security issues privately to

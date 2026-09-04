@@ -14,7 +14,7 @@ mapfile -t roots < <(find "$work_dir" -mindepth 1 -maxdepth 1 -type d)
 [[ ${#roots[@]} -eq 1 ]] || { echo "Archive must contain exactly one root directory" >&2; exit 1; }
 root=${roots[0]}
 
-for required in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe BUILD-MANIFEST.txt SHA256SUMS README.md README-WINDOWS.txt UPGRADE.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE start-node.bat start-wallet-cli.bat start-mining.bat stop-mining.bat; do
+for required in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe BUILD-MANIFEST.txt SHA256SUMS README.md README-WINDOWS.txt UPGRADE.md RELEASE_NOTES.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE start-node.bat start-wallet-cli.bat start-mining.bat stop-mining.bat; do
   [[ -f "$root/$required" ]] || { echo "Required package file is missing: $required" >&2; exit 1; }
 done
 grep -Fq -- '--rpc-bind-ip 127.0.0.1' "$root/start-node.bat" || {
@@ -26,6 +26,7 @@ grep -Fq -- '--zmq-rpc-bind-ip 127.0.0.1' "$root/start-node.bat" || {
 [[ $(sed -n 's/^package=//p' "$root/BUILD-MANIFEST.txt") == "$(basename "$root")" ]] || {
   echo "Build manifest package name does not match archive root" >&2; exit 1;
 }
+"$script_dir/verify-release-notes.sh" "$root/BUILD-MANIFEST.txt" -windows-x64 "$root/RELEASE_NOTES.md"
 if find "$root" -type l -print -quit | grep -q .; then echo "Package contains symbolic links" >&2; exit 1; fi
 (cd "$root" && sha256sum -c SHA256SUMS)
 

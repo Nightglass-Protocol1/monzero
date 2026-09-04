@@ -36,7 +36,7 @@ grep -Fq -- '--rpc-bind-ip 127.0.0.1' "$root/start-monzerod.sh" || {
 grep -Fq -- '--zmq-rpc-bind-ip 127.0.0.1' "$root/start-monzerod.sh" || {
   echo "Linux node launcher does not restrict ZMQ RPC to loopback" >&2; exit 1;
 }
-for required_document in README.md UPGRADE.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE; do
+for required_document in README.md UPGRADE.md RELEASE_NOTES.md RELEASE_STATUS.md RELEASE_CHECKLIST.md LICENSE; do
   [[ -f "$root/$required_document" ]] || {
     echo "Required release document is missing: $required_document" >&2
     exit 1
@@ -48,6 +48,7 @@ manifest_package=$(sed -n 's/^package=//p' "$root/BUILD-MANIFEST.txt")
   echo "Build manifest package name does not match archive root" >&2
   exit 1
 }
+"$script_dir/verify-release-notes.sh" "$root/BUILD-MANIFEST.txt" -linux-x86_64 "$root/RELEASE_NOTES.md"
 
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Package contains symbolic links" >&2

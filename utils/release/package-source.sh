@@ -15,6 +15,10 @@ git -C "$source_root" cat-file -e "$source_commit^{commit}" 2>/dev/null || {
   echo "Source commit is not available locally: $source_commit" >&2; exit 2;
 }
 [[ $version =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]] || { echo "Invalid version label" >&2; exit 2; }
+git -C "$source_root" show "$source_commit:docs/RELEASE_NOTES.md" |
+  grep -Fqx "Release label: $version" || {
+    echo "RELEASE_NOTES.md at $source_commit does not match release label: $version" >&2; exit 1;
+  }
 
 source_epoch=$(git -C "$source_root" show -s --format=%ct "$source_commit")
 package_name="monzero-${version}-source"
