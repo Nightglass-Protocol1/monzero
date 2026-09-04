@@ -202,9 +202,10 @@ int main(int argc, char* argv[])
   do_diff = command_line::get_arg(vm, arg_diff);
 
   LOG_PRINT_L0("Initializing source blockchain (BlockchainDB)");
+  tx_memory_pool m_mempool;
   std::unique_ptr<Blockchain> core_storage;
-  tx_memory_pool m_mempool(*core_storage);
   core_storage.reset(new Blockchain(m_mempool));
+  m_mempool.set_blockchain(*core_storage);
   BlockchainDB *db = new_db();
   if (db == NULL)
   {

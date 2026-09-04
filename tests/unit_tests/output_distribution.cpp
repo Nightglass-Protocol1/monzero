@@ -77,9 +77,10 @@ public:
 
 bool get_output_distribution(uint64_t amount, uint64_t from, uint64_t to, uint64_t &start_height, std::vector<uint64_t> &distribution, uint64_t &base)
 {
+  cryptonote::tx_memory_pool txpool;
   std::unique_ptr<cryptonote::Blockchain> bc;
-  cryptonote::tx_memory_pool txpool(*bc);
   bc.reset(new cryptonote::Blockchain(txpool));
+  txpool.set_blockchain(*bc);
   struct get_test_options {
     const std::pair<uint8_t, uint64_t> hard_forks[2];
     const cryptonote::test_options test_options = {

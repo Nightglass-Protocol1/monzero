@@ -99,11 +99,23 @@ namespace cryptonote
   {
   public:
     /**
+     * @brief Construct an unbound pool for two-phase Blockchain setup
+     *
+     * set_blockchain() must be called before any operation that accesses the
+     * chain. This avoids forming a reference to an object whose lifetime has
+     * not started yet when the two classes are constructed together.
+     */
+    tx_memory_pool();
+
+    /**
      * @brief Constructor
      *
      * @param bchs a Blockchain class instance, for getting chain info
      */
     tx_memory_pool(Blockchain& bchs);
+
+    /** Bind the pool to its Blockchain exactly once (idempotent for the same object). */
+    void set_blockchain(Blockchain& bchs);
 
 
     /**
@@ -680,7 +692,8 @@ private:
      */
     std::unordered_set<crypto::hash> m_timed_out_transactions;
 
-    Blockchain& m_blockchain;  //!< reference to the Blockchain object
+    Blockchain& blockchain() const;
+    Blockchain* m_blockchain;  //!< Blockchain object, bound before pool use
 
     size_t m_txpool_max_weight;
     size_t m_txpool_weight;
@@ -726,6 +739,5 @@ namespace boost
 }
 BOOST_CLASS_VERSION(cryptonote::tx_memory_pool, CURRENT_MEMPOOL_ARCHIVE_VER)
 BOOST_CLASS_VERSION(cryptonote::tx_memory_pool::tx_details, CURRENT_MEMPOOL_TX_DETAILS_ARCHIVE_VER)
-
 
 

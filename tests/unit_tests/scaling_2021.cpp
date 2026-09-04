@@ -50,9 +50,10 @@ public:
 }
 
 #define PREFIX_WINDOW(hf_version,window) \
+  cryptonote::tx_memory_pool txpool; \
   std::unique_ptr<cryptonote::Blockchain> bc; \
-  cryptonote::tx_memory_pool txpool(*bc); \
   bc.reset(new cryptonote::Blockchain(txpool)); \
+  txpool.set_blockchain(*bc); \
   struct get_test_options { \
     const std::pair<uint8_t, uint64_t> hard_forks[3]; \
     const cryptonote::test_options test_options = { \

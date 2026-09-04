@@ -130,9 +130,10 @@ int main(int argc, char* argv[])
   // because unlike blockchain_storage constructor, which takes a pointer to
   // tx_memory_pool, Blockchain's constructor takes tx_memory_pool object.
   LOG_PRINT_L0("Initializing source blockchain (BlockchainDB)");
+  tx_memory_pool m_mempool;
   Blockchain* core_storage = NULL;
-  tx_memory_pool m_mempool(*core_storage);
   core_storage = new Blockchain(m_mempool);
+  m_mempool.set_blockchain(*core_storage);
 
   BlockchainDB* db = new_db();
   if (db == NULL)

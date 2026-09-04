@@ -110,8 +110,23 @@ struct BlockchainAndPool
 {
   cryptonote::tx_memory_pool txpool;
   cryptonote::Blockchain bc;
-  BlockchainAndPool(): txpool(bc), bc(txpool) {}
+  BlockchainAndPool(): txpool(), bc(txpool) { txpool.set_blockchain(bc); }
 };
+
+TEST(tx_memory_pool, requires_one_blockchain_binding)
+{
+  cryptonote::tx_memory_pool txpool;
+  EXPECT_THROW(txpool.have_tx(crypto::null_hash, cryptonote::relay_category::all), std::logic_error);
+
+  cryptonote::Blockchain blockchain(txpool);
+  EXPECT_NO_THROW(txpool.set_blockchain(blockchain));
+  EXPECT_NO_THROW(txpool.set_blockchain(blockchain));
+
+  cryptonote::tx_memory_pool other_pool;
+  cryptonote::Blockchain other_blockchain(other_pool);
+  other_pool.set_blockchain(other_blockchain);
+  EXPECT_THROW(txpool.set_blockchain(other_blockchain), std::logic_error);
+}
 
 #define PREFIX_WINDOW(hf_version,window) \
   BlockchainAndPool bap; \

@@ -150,9 +150,10 @@ int main(int argc, char* argv[])
   // tx_memory_pool, Blockchain's constructor takes tx_memory_pool object.
   LOG_PRINT_L0("Initializing source blockchain (BlockchainDB)");
   const std::string input = command_line::get_arg(vm, arg_input);
+  tx_memory_pool m_mempool;
   std::unique_ptr<Blockchain> core_storage;
-  tx_memory_pool m_mempool(*core_storage);
   core_storage.reset(new Blockchain(m_mempool));
+  m_mempool.set_blockchain(*core_storage);
   BlockchainDB* db = new_db();
   if (db == NULL)
   {

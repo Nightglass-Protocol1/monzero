@@ -227,7 +227,7 @@ namespace cryptonote
 
   //-----------------------------------------------------------------------------------------------
   core::core(i_cryptonote_protocol* pprotocol):
-              m_mempool(m_blockchain_storage),
+              m_mempool(),
               m_blockchain_storage(m_mempool),
               m_miner(this, [this](const cryptonote::block &b, uint64_t height, const crypto::hash *seed_hash, unsigned int threads, crypto::hash &hash) {
                 return cryptonote::get_block_longhash(&m_blockchain_storage, b, hash, height, seed_hash, threads);
@@ -242,6 +242,7 @@ namespace cryptonote
               m_nettype(UNDEFINED),
               m_update_available(false)
   {
+    m_mempool.set_blockchain(m_blockchain_storage);
     m_checkpoints_updating.clear();
     set_cryptonote_protocol(pprotocol);
   }

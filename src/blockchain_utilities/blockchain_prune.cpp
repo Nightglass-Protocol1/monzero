@@ -523,14 +523,15 @@ int main(int argc, char* argv[])
   // because unlike blockchain_storage constructor, which takes a pointer to
   // tx_memory_pool, Blockchain's constructor takes tx_memory_pool object.
   MINFO("Initializing source blockchain (BlockchainDB)");
+  std::array<std::unique_ptr<tx_memory_pool>, 2> mempools;
   std::array<std::unique_ptr<Blockchain>, 2> core_storage;
-  Blockchain *blockchain = NULL;
-  tx_memory_pool m_mempool(*blockchain);
   boost::filesystem::path paths[2];
   bool already_pruned = false;
   for (size_t n = 0; n < core_storage.size(); ++n)
   {
-    core_storage[n].reset(new Blockchain(m_mempool));
+    mempools[n].reset(new tx_memory_pool());
+    core_storage[n].reset(new Blockchain(*mempools[n]));
+    mempools[n]->set_blockchain(*core_storage[n]);
 
     BlockchainDB* db = new_db();
     if (db == NULL)

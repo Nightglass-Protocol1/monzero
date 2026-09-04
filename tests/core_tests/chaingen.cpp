@@ -143,7 +143,8 @@ namespace
 
 }
 
-static std::unique_ptr<cryptonote::Blockchain> init_blockchain(const std::vector<test_event_entry> & events, cryptonote::network_type nettype)
+static std::unique_ptr<cryptonote::Blockchain> init_blockchain(const std::vector<test_event_entry> & events,
+    cryptonote::network_type nettype, cryptonote::tx_memory_pool &txpool)
 {
   std::unique_ptr<cryptonote::Blockchain> bc;
   v_hardforks_t hardforks;
@@ -159,8 +160,8 @@ static std::unique_ptr<cryptonote::Blockchain> init_blockchain(const std::vector
   test_options_tmp.hard_forks = hardforks.data();
   test_options = &test_options_tmp;
 
-  cryptonote::tx_memory_pool txpool(*bc);
   bc.reset(new cryptonote::Blockchain(txpool));
+  txpool.set_blockchain(*bc);
 
   cryptonote::Blockchain *blockchain = bc.get();
   auto bdb = new TestDB();
@@ -393,6 +394,7 @@ bool test_generator::construct_block_manually_tx(cryptonote::block& blk, const c
 void test_generator::fill_nonce(cryptonote::block& blk, const difficulty_type& diffic, uint64_t height)
 {
   const cryptonote::Blockchain *blockchain = nullptr;
+  cryptonote::tx_memory_pool txpool;
   std::unique_ptr<cryptonote::Blockchain> bc;
 
   if (blk.major_version >= RX_BLOCK_VERSION && diffic > 1)
@@ -403,7 +405,7 @@ void test_generator::fill_nonce(cryptonote::block& blk, const difficulty_type& d
     }
     else
     {
-      bc = init_blockchain(*m_events, m_nettype);
+      bc = init_blockchain(*m_events, m_nettype, txpool);
       blockchain = bc.get();
     }
   }
