@@ -33,6 +33,8 @@ not qualified by this candidate.
   declared release label does not match the archive.
 - Added pre-extraction archive safety checks to the Linux package and wallet
   smoke tests, including regression coverage for correctly hashed unsafe archives.
+- Disabled host ICU auto-detection in the depends Boost build, preventing
+  undeclared build-machine libraries from leaking into release dependencies.
 - Hardened CI to run release archive, notes, signing-subkey, and branding
   regressions; use Monzero's deterministic source packager and verifier; and
   collect correctly named Monzero cross-build artifacts.
