@@ -40,18 +40,29 @@ def request(port: int, path: str, body: dict, timeout: float = 5.0) -> dict:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        result = json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            result = json.loads(response.read().decode("utf-8"))
+    except TimeoutError as error:
+        # Identify the operation without logging parameters, which may contain
+        # temporary recovery seeds or wallet passwords.
+        operation = body.get("method", path)
+        raise TestFailure(f"RPC {operation} on port {port} timed out after {timeout}s") from error
     if "error" in result:
         raise TestFailure(f"RPC error from port {port}: {result['error']}")
     return result
 
 
 def json_rpc(port: int, method: str, params: dict | None = None) -> dict:
+    # Wallet creation/opening performs password derivation; refresh and signing
+    # can also exceed the short node-health timeout on a busy release builder.
+    # Keep these operations bounded, and never retry a state-changing request.
+    timeout = 60.0 if port == WALLET_RPC_PORT else 5.0
     response = request(
         port,
         "/json_rpc",
         {"jsonrpc": "2.0", "id": "0", "method": method, "params": params or {}},
+        timeout=timeout,
     )
     return response.get("result", {})
 
@@ -151,6 +162,7 @@ def main() -> int:
     processes: list[subprocess.Popen | None] = [None, None, None]
     wallet_process = None
     logs = []
+    passed = False
 
     try:
         print(f"Temporary test network: {root}")
@@ -346,6 +358,7 @@ def main() -> int:
         print("Final height:", final_info[0]["height"])
         print("Final tip:", final_hashes[0])
         print("Confirmed transaction:", transaction_hash)
+        passed = True
         return 0
     finally:
         stop_process(wallet_process)
@@ -353,10 +366,8 @@ def main() -> int:
             stop_process(process)
         for log in logs:
             log.close()
-        if args.keep_data:
-            kept = pathlib.Path.cwd() / f"monzero-phase0-{int(time.time())}"
-            shutil.move(str(root), str(kept))
-            print(f"Kept test data at {kept}")
+        if args.keep_data or not passed:
+            print(f"Kept test data at {root}")
         else:
             shutil.rmtree(root, ignore_errors=True)
 

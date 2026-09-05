@@ -22,8 +22,13 @@ wallet from its temporary mnemonic seed, rescans from height zero, and checks
 the recovered address and balance.
 
 Ports 26174-26205 must be available. All child processes are terminated on
-normal completion and on test failure. Pass `--keep-data` to retain temporary
-databases and logs for diagnosis. Temporary data defaults to `build/test-tmp`
+normal completion and on test failure. Failed runs retain temporary databases
+and logs automatically; pass `--keep-data` to retain successful runs too.
+RPC timeouts identify the method and port without logging wallet parameters.
+Node RPC calls have a five-second timeout; wallet RPC calls have a bounded
+60-second timeout to allow password derivation, scanning, and signing on busy
+builders. State-changing calls are not automatically retried.
+Temporary data defaults to `build/test-tmp`
 so LMDB mappings do not exhaust small dedicated `/tmp` filesystems.
 
 This is a smoke test, not the complete consensus qualification suite.
