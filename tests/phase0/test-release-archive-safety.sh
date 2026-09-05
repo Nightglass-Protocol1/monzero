@@ -69,4 +69,24 @@ for case in "tar.gz:$work_dir/link.tar.gz" "zip:$work_dir/link.zip" \
   fi
 done
 
+# Smoke-test entry points must reject unsafe archives before extraction or
+# execution, even when the caller supplies the correct archive checksum.
+archive="$work_dir/link.tar.gz"
+expected_hash=$(sha256sum "$archive" | awk '{print $1}')
+for script in smoke-test-linux-package.sh smoke-test-linux-wallet.sh; do
+  args=("$archive" "$expected_hash")
+  if [[ $script == smoke-test-linux-wallet.sh ]]; then
+    args+=(127.0.0.1:1)
+  fi
+  if bash "$project_root/utils/release/$script" "${args[@]}" >"$work_dir/$script.log" 2>&1; then
+    echo "Smoke test accepted an unsafe archive: $script" >&2
+    exit 1
+  fi
+  if ! grep -q 'Archive contains a link or special file:' "$work_dir/$script.log"; then
+    echo "Smoke test did not reject the archive through the safety validator: $script" >&2
+    cat "$work_dir/$script.log" >&2
+    exit 1
+  fi
+done
+
 echo "Release archive pre-extraction safety tests passed"

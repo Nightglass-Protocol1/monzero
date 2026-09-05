@@ -10,13 +10,16 @@ archive=$(realpath "$1")
 expected_hash=$2
 [[ -f $archive ]] || { echo "Archive not found: $archive" >&2; exit 2; }
 [[ $expected_hash =~ ^[0-9a-f]{64}$ ]] || { echo "Expected SHA-256 must be 64 lowercase hexadecimal characters" >&2; exit 2; }
-command -v docker >/dev/null || { echo "This smoke test requires Docker" >&2; exit 2; }
 
 actual_hash=$(sha256sum "$archive" | awk '{print $1}')
 [[ $actual_hash == "$expected_hash" ]] || {
   echo "Archive SHA-256 mismatch: expected $expected_hash, got $actual_hash" >&2
   exit 1
 }
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+python3 "$script_dir/validate-binary-archive.py" tar.gz "$archive"
+command -v docker >/dev/null || { echo "This smoke test requires Docker" >&2; exit 2; }
 
 # Ubuntu 24.04 is a clean compatibility floor, not a build environment. Pin the
 # root filesystem by digest so a later tag update cannot silently change the

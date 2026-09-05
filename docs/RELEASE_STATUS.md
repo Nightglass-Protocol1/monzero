@@ -1,8 +1,28 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-09-04
+Assessment date: 2026-09-05
 Candidate line: Genesis prerelease
+
+## Genesis pre13 qualification in progress
+
+The current candidate retains the pre12 chain identity. All 16 local
+adversarial core tests passed, including transaction-pool and alternative-chain
+double-spend cases. Both Linux smoke-test entry points now validate archive
+contents before extraction; regression tests reject a link-containing archive
+even when its SHA-256 matches the caller's supplied checksum.
+
+Linux dependencies are being qualified in the pinned Ubuntu 20.04 environment.
+The prior Windows dependency cache mixes compiler generations and fails the
+protobuf link check; a separate dependency prefix is being rebuilt without
+overwriting that cache or disabling hardware-wallet support. Neither an
+incomplete build nor a successful source-tree test qualifies a release archive.
+
+Exact-artifact results must be recorded with hashes in release evidence after
+the clean build completes. Native Windows execution, independently operated
+binary reproduction, release/code signing, and independent security review
+remain outstanding production gates. No pre13 publication or deployment has
+been performed as part of this local qualification.
 
 ## Genesis pre12 local qualification
 

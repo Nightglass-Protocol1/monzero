@@ -22,6 +22,9 @@ actual_hash=$(sha256sum "$archive" | awk '{print $1}')
   exit 1
 }
 
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+python3 "$script_dir/validate-binary-archive.py" tar.gz "$archive"
+
 work_dir=$(mktemp -d -t monzero-linux-wallet.XXXXXXXX)
 wallet_rpc_pid=
 passed=false

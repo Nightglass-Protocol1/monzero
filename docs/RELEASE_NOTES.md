@@ -3,9 +3,10 @@
 Release label: genesis-pre13
 
 Genesis pre13 is the next experimental prerelease candidate. It is not a
-production release. The candidate has not yet been packaged, published, or
-deployed; final artifact digests and exact source commits must be recorded in
-the package manifests and matching machine-readable release metadata.
+production release. Exact-artifact qualification is recorded separately from
+these source-tree notes; final artifact digests and exact source commits must
+be recorded in the package manifests and matching machine-readable release
+metadata. Packaging alone does not authorize publication or deployment.
 
 ## Packaged platforms
 
@@ -30,6 +31,8 @@ not qualified by this candidate.
   before a wallet object is returned.
 - Added a package gate that rejects missing or stale release notes when their
   declared release label does not match the archive.
+- Added pre-extraction archive safety checks to the Linux package and wallet
+  smoke tests, including regression coverage for correctly hashed unsafe archives.
 - Hardened CI to run release archive, notes, signing-subkey, and branding
   regressions; use Monzero's deterministic source packager and verifier; and
   collect correctly named Monzero cross-build artifacts.
@@ -46,16 +49,19 @@ not qualified by this candidate.
   and output-distribution suite passes all 20 tests.
 - The branding, hostile-archive, signing-subkey, and release-notes binding
   regression gates pass locally.
+- All 16 adversarial core tests pass, including transaction-pool and
+  double-spend scenarios involving alternative chains.
 - A local simulation of the CI source-package path produced a recursively
   complete archive that passed the source-package verifier.
 
-These are source-tree results. They do not qualify binaries that have not yet
-been built, and they are not an independent security review.
+These are source-tree results. They do not qualify a particular binary archive
+without matching artifact evidence, and they are not an independent security review.
 
 ## Known limitations and safety notices
 
-- Final pre13 artifacts do not yet exist and must complete the full clean
-  qualification cycle before publication.
+- Each pre13 artifact must complete the full clean qualification cycle before
+  publication; consult its exact-hash evidence rather than assuming these
+  source-tree test results apply to it.
 - Packages and release metadata will remain unsigned until the offline release
   signing process is completed.
 - A separately trusted operator has not reproduced and signed the binaries.
