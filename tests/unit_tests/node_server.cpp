@@ -1366,5 +1366,35 @@ TEST(regtest, isolates_p2p_state_from_mainnet_data_dir)
   EXPECT_TRUE(regtest_public.gray.empty());
 }
 
+TEST(cryptonote_protocol_handler, serving_objects_preserves_request_timer)
+{
+  test_core core;
+  cryptonote::t_cryptonote_protocol_handler<test_core> protocol(core, nullptr);
+  cryptonote::cryptonote_connection_context context;
+  context.set_state_normal();
+  cryptonote::NOTIFY_REQUEST_GET_OBJECTS::request request{};
+  epee::byte_slice encoded;
+  ASSERT_TRUE(epee::serialization::store_t_to_binary(request, encoded));
+  const auto serve = [&]() {
+    epee::byte_stream response;
+    bool handled = false;
+    protocol.handle_invoke_map(true, cryptonote::NOTIFY_REQUEST_GET_OBJECTS::ID,
+        epee::span<const uint8_t>{reinterpret_cast<const uint8_t*>(encoded.data()), encoded.size()},
+        response, context, handled);
+    EXPECT_TRUE(handled);
+  };
+  EXPECT_TRUE(context.m_last_request_time.is_not_a_date_time());
+  serve();
+  EXPECT_TRUE(context.m_last_request_time.is_not_a_date_time());
+
+  const auto pending = boost::posix_time::microsec_clock::universal_time() - boost::posix_time::seconds(10);
+  context.m_state = cryptonote::cryptonote_connection_context::state_synchronizing;
+  context.m_last_request_time = pending;
+  context.m_expect_response = cryptonote::NOTIFY_RESPONSE_GET_OBJECTS::ID;
+  serve();
+  EXPECT_EQ(pending, context.m_last_request_time);
+  EXPECT_EQ(int(cryptonote::NOTIFY_RESPONSE_GET_OBJECTS::ID), context.m_expect_response);
+}
+
 namespace nodetool { template class node_server<cryptonote::t_cryptonote_protocol_handler<test_core>>; }
 namespace cryptonote { template class t_cryptonote_protocol_handler<test_core>; }

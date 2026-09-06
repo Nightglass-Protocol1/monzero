@@ -35,6 +35,10 @@ not qualified by this candidate.
   smoke tests, including regression coverage for correctly hashed unsafe archives.
 - Disabled host ICU auto-detection in the depends Boost build, preventing
   undeclared build-machine libraries from leaking into release dependencies.
+- Fixed a peer synchronization stall after competing forks by keeping inbound
+  block-serving activity separate from the timer for our own outstanding
+  requests. The regression test and two three-node reorganisation, transfer,
+  and wallet-restoration simulations pass with the original sync deadline.
 - Hardened CI to run release archive, notes, signing-subkey, and branding
   regressions; use Monzero's deterministic source packager and verifier; and
   collect correctly named Monzero cross-build artifacts.

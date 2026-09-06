@@ -12,6 +12,15 @@ double-spend cases. Both Linux smoke-test entry points now validate archive
 contents before extraction; regression tests reject a link-containing archive
 even when its SHA-256 matches the caller's supplied checksum.
 
+Release testing reproduced and corrected a peer synchronization stall after a
+competing fork. Serving an inbound block-object request had overwritten the
+timestamp used for this node's own outstanding request, which could prevent a
+subsequent synchronization callback from requesting the longer chain. A focused
+timer-preservation regression passes, and the corrected daemon completed two
+full three-node tests covering restart, competing-fork convergence, transfer
+confirmation, and deterministic wallet restoration within the original
+120-second convergence deadline.
+
 Linux dependencies are being qualified in the pinned Ubuntu 20.04 environment.
 The prior Windows dependency cache mixes compiler generations and fails the
 protobuf link check; a separate dependency prefix is being rebuilt without

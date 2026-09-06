@@ -1008,7 +1008,9 @@ namespace cryptonote
       drop_connection(context, false, false);
       return 1;
     }
-    context.m_last_request_time = boost::posix_time::microsec_clock::universal_time();
+    // Serving a peer request must not alter our outstanding-request timer.
+    // A timestamp here can suppress the next chain request after a fork;
+    // during an active download it would also postpone our response timeout.
     MLOG_P2P_MESSAGE("-->>NOTIFY_RESPONSE_GET_OBJECTS: blocks.size()="
                      << rsp.blocks.size() << ", rsp.m_current_blockchain_height=" << rsp.current_blockchain_height
                      << ", missed_ids.size()=" << rsp.missed_ids.size());
