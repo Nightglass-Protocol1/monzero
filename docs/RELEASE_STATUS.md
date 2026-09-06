@@ -1,37 +1,55 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-09-05
+Assessment date: 2026-09-06
 Candidate line: Genesis prerelease
 
-## Genesis pre13 qualification in progress
+## Genesis pre13 qualified unsigned prerelease
 
-The current candidate retains the pre12 chain identity. All 16 local
-adversarial core tests passed, including transaction-pool and alternative-chain
-double-spend cases. Both Linux smoke-test entry points now validate archive
-contents before extraction; regression tests reject a link-containing archive
-even when its SHA-256 matches the caller's supplied checksum.
+Genesis pre13 was built from core commit
+`bddd92e435d66cef92478618b35c3812dfc34328` and GUI commit
+`b0fee657ce7f079de36995ddb5c6053ce7bf7d4f`. It retains the pre10 through
+pre12 chain identity. The consensus configuration and hard-fork schedule are
+unchanged, and the public asset hard fork remains inactive.
 
-Release testing reproduced and corrected a peer synchronization stall after a
-competing fork. Serving an inbound block-object request had overwritten the
-timestamp used for this node's own outstanding request, which could prevent a
-subsequent synchronization callback from requesting the longer chain. A focused
-timer-preservation regression passes, and the corrected daemon completed two
-full three-node tests covering restart, competing-fork convergence, transfer
-confirmation, and deterministic wallet restoration within the original
-120-second convergence deadline.
+All 1,305 unit tests passed, including the new synchronization-timer
+regression. The exact Linux archive passed clean-container startup, a
+three-node restart/propagation/competing-fork/reorganization/transfer test, and
+wallet creation and deterministic restoration. The exact Windows CLI archive
+passed native Windows version, daemon startup, mainnet/offline RPC, and clean
+RPC shutdown checks. The Windows GUI archive passed its manifest, PE64,
+subsystem, ASLR/NX, and noninteractive native startup checks; interactive GUI
+wallet workflows remain pending.
 
-Linux dependencies are being qualified in the pinned Ubuntu 20.04 environment.
-The prior Windows dependency cache mixes compiler generations and fails the
-protobuf link check; a separate dependency prefix is being rebuilt without
-overwriting that cache or disabling hardware-wallet support. Neither an
-incomplete build nor a successful source-tree test qualifies a release archive.
+The combined publication verifier passed all three binary archives and both
+complete source archives. Their SHA-256 digests are:
 
-Exact-artifact results must be recorded with hashes in release evidence after
-the clean build completes. Native Windows execution, independently operated
-binary reproduction, release/code signing, and independent security review
-remain outstanding production gates. No pre13 publication or deployment has
-been performed as part of this local qualification.
+- Linux x86-64: `6e280ff46b45c7065dd9089e773c0ecd3954d618d0bdda1f686a0940a8b10aa4`
+- Windows x64 CLI: `96425939b70f5de84a00855a45f92002f1901b4d5e70fba35515f9d681bb7d13`
+- Windows x64 GUI: `86746b270906ae0427bc9f43fa5860ed7e75ce8eee103f1e95835dfaef0d1648`
+- Core source: `1f005d7fa27942b32bb4a821c5c554b3870adf09f4b242547d46e5035d2b5166`
+- GUI source: `c416224fc350d78b35026e279028b215f95861dae57d25e6fb8425e3d9d7b436`
+
+Genesis pre13 was published on `https://monzero.org` on 2026-09-06 as an
+explicitly unsigned, independently unaudited prerelease. Complete HTTPS
+downloads of all five artifacts reproduce the metadata digests. The preceding
+web files are retained at
+`/home/www/Monzero-backup-20260906T171858Z-pre13` for rollback.
+
+Both public nodes were upgraded one at a time from revision `519654692` to the
+exact packaged daemon `0.18.5.1-bddd92e43`, whose SHA-256 is
+`9286f86c2e25c5efbfbb65d81d12f83704078b59d4a6a057ed0460402fdfa7e0`.
+The EU rollback is `/var/backups/monzero-pre13-20260906T1725Z`; the US rollback
+is `/var/backups/monzero-pre13-20260906T1728Z`. After deployment both services
+were active and synchronized at height 1,043 with top hash
+`1ccdb5387b61c8b964023b14441f0fd74700d130938b9a33f68e4fb55f109e69`,
+two peer connections, active health/readiness timers, and no warning-or-higher
+daemon journal entries since restart. The tip itself is stale because no new
+block has been mined, so network readiness continues to fail truthfully.
+
+Independent binary reproduction, release and Windows code signing,
+interactive Windows GUI testing, sustained live-network observation, and an
+independent security review remain outstanding production gates.
 
 ## Genesis pre12 local qualification
 
