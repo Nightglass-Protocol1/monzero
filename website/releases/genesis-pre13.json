@@ -5,11 +5,13 @@
   "channel": "prerelease",
   "production_ready": false,
   "source_commit": "bddd92e435d66cef92478618b35c3812dfc34328",
-  "gui_source_commit": "b0fee657ce7f079de36995ddb5c6053ce7bf7d4f",
+  "gui_source_commit": "2e40a3a40c8a34494a6d67d7d26953897fd58181",
   "network_uuid": "94834264-d0b2-41dd-b0f2-0ada675c7710",
   "genesis_nonce": 2271206363,
   "genesis_hash": "84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4",
   "published_at": "2026-09-06T17:18:58Z",
+  "revised_at": "2026-09-07T18:08:21Z",
+  "gui_package_revision": 2,
   "security_audit": "not_completed",
   "signing": "unsigned",
   "independent_reproducibility": "unverified",
@@ -22,9 +24,9 @@
   },
   "gui_source": {
     "filename": "monzero-genesis-pre13-gui-source.tar.gz",
-    "size_bytes": 35616796,
-    "sha256": "c416224fc350d78b35026e279028b215f95861dae57d25e6fb8425e3d9d7b436",
-    "gui_source_commit": "b0fee657ce7f079de36995ddb5c6053ce7bf7d4f",
+    "size_bytes": 35617717,
+    "sha256": "68571df159342d8f9d2c0ebbc2c4a523ce900fb6f111a350ae73945421d720e2",
+    "gui_source_commit": "2e40a3a40c8a34494a6d67d7d26953897fd58181",
     "core_source_commit": "bddd92e435d66cef92478618b35c3812dfc34328",
     "recursive_submodules_included": true
   },
@@ -47,9 +49,9 @@
     {
       "platform": "windows-gui-x64",
       "filename": "monzero-genesis-pre13-windows-gui-x64.zip",
-      "size_bytes": 55578737,
-      "sha256": "86746b270906ae0427bc9f43fa5860ed7e75ce8eee103f1e95835dfaef0d1648",
-      "tests": "manifest_pe_subsystem_and_native_noninteractive_startup_passed_interactive_wallet_testing_pending"
+      "size_bytes": 62703197,
+      "sha256": "6120e4786f35c6a0d4d8302bfa730500a86e60776fcaf63e24fac5f4f6bbb547",
+      "tests": "automatic_sync_logic_qml_validation_manifest_archive_pe_and_subsystem_checks_passed_interactive_wallet_testing_pending"
     }
   ]
 }

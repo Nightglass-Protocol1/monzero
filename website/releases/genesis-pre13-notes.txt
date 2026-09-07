@@ -5,7 +5,7 @@ Genesis pre13 is experimental, unsigned, and independently unaudited
 prerelease software. It is not a production release.
 
 Core source: bddd92e435d66cef92478618b35c3812dfc34328
-GUI source:  b0fee657ce7f079de36995ddb5c6053ce7bf7d4f
+GUI source:  2e40a3a40c8a34494a6d67d7d26953897fd58181
 Network UUID: 94834264-d0b2-41dd-b0f2-0ada675c7710
 Genesis hash: 84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4
 Native currency: XMZ
@@ -17,11 +17,11 @@ Linux x86-64 CLI
 Windows x64 CLI
   96425939b70f5de84a00855a45f92002f1901b4d5e70fba35515f9d681bb7d13
 Windows x64 graphical wallet
-  86746b270906ae0427bc9f43fa5860ed7e75ce8eee103f1e95835dfaef0d1648
+  6120e4786f35c6a0d4d8302bfa730500a86e60776fcaf63e24fac5f4f6bbb547
 Complete core source
   1f005d7fa27942b32bb4a821c5c554b3870adf09f4b242547d46e5035d2b5166
 Graphical-wallet source
-  c416224fc350d78b35026e279028b215f95861dae57d25e6fb8425e3d9d7b436
+  68571df159342d8f9d2c0ebbc2c4a523ce900fb6f111a350ae73945421d720e2
 
 CHANGES SINCE PRE12
 
@@ -32,6 +32,9 @@ CHANGES SINCE PRE12
 - Hardened cancelled wallet creation and release/CI package checks.
 - Disabled accidental host ICU detection in the pinned Boost depends build.
 - Consensus identity and chain rules are unchanged from pre10 through pre12.
+- GUI package revision 2 starts its managed local daemon with synchronization
+  enabled and selects the local RPC endpoint automatically. New users do not
+  need to enter 127.0.0.1 or configure a node address.
 
 TEST STATUS AND LIMITATIONS
 
