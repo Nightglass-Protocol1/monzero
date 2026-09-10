@@ -1,6 +1,6 @@
 # Monzero: An Independent Privacy-Preserving Digital Currency
 
-**Protocol paper, draft 1.1 — August 2026**
+**Protocol paper, draft 1.2 — September 2026**
 
 ## Abstract
 
@@ -261,7 +261,52 @@ extended public testnet. Thinly traded assets would also have smaller
 practical anonymity sets than XMZ; cryptography cannot manufacture unrelated
 activity.
 
-## 9. Security assumptions and limitations
+## 9. Peer-to-peer exchange research
+
+The graphical-wallet source contains an opt-in, private DEX research build.
+Its intended first market family is BTC/XMZ, LTC/XMZ, and BCH/XMZ. External
+coins provide trade principal and pay their own native miner fees; the Monzero
+protocol fee is denominated only in XMZ. A user buying XMZ may begin with no
+XMZ, because a successful acquisition can deduct the disclosed protocol and
+Monzero network fees from the XMZ being delivered. For external-coin-to-
+external-coin trades through this protocol, the trader must separately obtain
+enough XMZ for the disclosed protocol fee. This policy applies only to this
+protocol and cannot impose fees on activity conducted elsewhere.
+
+The current prototype implements non-executable security evidence rather than
+a live exchange. It includes canonical Ed25519-signed offers, cancellations
+and settlement quotes; a validating persistent order book; deterministic
+crossing and crash-safe fill reservations; replay-resistant quote and relay
+stores; read-only chain and wallet observations; Bitcoin SegWit-v0 sighash,
+PSBT, fee, recovery, and confirmation evidence; typed XMZ success and refund
+evidence; and a crash-safe settlement journal. Settlement evidence binds the
+external redeem, XMZ principal delivery, and XMZ protocol-fee payment to the
+same accepted quote and fill. Refund evidence instead requires the confirmed
+external refund and two distinct XMZ refund legs, and cannot mark a protocol
+fee earned. Sticky reorganization tracking invalidates outcomes when an
+observed transaction disappears or changes block.
+
+Market messages can be wrapped in canonical, length-prefixed relay envelopes
+that bind the artifact commitment, sender identity, deployment domain,
+lifetime, type, and sequence. A locked owner-only replay store re-verifies each
+signature and accepts a new sender only at sequence one, followed by exact
+increments. Exact retries are idempotent; skipped, stale, conflicting, expired,
+cross-network, or unauthenticated messages fail closed. This is an
+authentication and persistence boundary only: peer discovery, transport,
+availability, admission control, and liquidity do not arise merely from
+having a chain adapter or signed message.
+
+Every prototype result remains `executable=false`. The build contains no live
+signing or transaction-broadcast authority, and its activation checks remain
+closed. Complete chain adapters, peer transport, production fee estimation,
+liquidity mechanisms, end-to-end isolated-network execution and recovery,
+adversarial multi-party testing, independent cryptographic and implementation
+review, reproducible packages, release signing, and applicable legal review
+remain prerequisites for activation. The local Linux development build passed
+36 focused DEX tests on 11 September 2026, but it is not the published Genesis
+pre13 binary and must not be represented as a working or production DEX.
+
+## 10. Security assumptions and limitations
 
 Monzero's safety depends on more than correct cryptographic primitives:
 
@@ -301,7 +346,7 @@ archive-extraction risk; they do not replace authenticated hashes,
 maintainer signatures, reproducible builds, or independent review of the
 binary itself.
 
-## 10. Governance and development
+## 11. Governance and development
 
 Monzero has no on-chain governance mechanism. Protocol evolution occurs
 through public source changes, review, release artifacts, and voluntary
@@ -343,41 +388,44 @@ files. This compatibility behavior is especially important when rebuilding a
 wallet cache after a reorganization: the keys file must be preserved, and a
 new wallet is not required merely because the default directory changed.
 
-The development GUI resource bundle now uses Monzero-specific application,
+The GUI resource bundle uses Monzero-specific application,
 title-bar, mining-status, and mined-transfer artwork on Linux, Windows, and
 macOS packaging paths. Required upstream copyright notices, research names,
 and compatibility identifiers remain unchanged because branding does not
-erase provenance. These changes postdate Genesis pre9 and are not present in
-its published binaries.
+erase provenance. These changes are included in the current Genesis pre13 GUI
+package.
 
-## 11. Status and roadmap
+## 12. Status and roadmap
 
-The current project is an unsigned, unaudited prerelease. Genesis pre9 is an
-explicitly untested distribution: compilation and checksum generation do not
-qualify it as production-ready, and earlier pre8 test evidence does not apply
-to the exact pre9 binaries. Its immediate work is
-operational rather than promotional:
+The current project is an unsigned, unaudited prerelease. Genesis pre13 GUI
+revision 2 is the latest published candidate. It retains the chain identity
+introduced by Genesis pre10 and adds automatic synchronization for the managed
+local GUI daemon. Its exact Linux archive passed clean-container, multi-node,
+reorganization, transfer, and wallet-lifecycle testing; the Windows CLI passed
+native daemon testing, while interactive Windows GUI testing remains pending.
+The in-development DEX prototype described in Section 9 postdates those
+published binaries and is not part of the pre13 release. Compilation, focused
+tests, and checksum generation alone do not qualify either project for
+production. Immediate work remains operational rather than promotional:
 
 1. obtain independent consensus, cryptography, and implementation review;
 2. complete independent binary reproduction and platform testing;
 3. establish a diverse, synchronized public peer and mining network;
 4. disclose bootstrap issuance and launch conditions; and
-5. keep experimental asset work isolated until its separate activation gates
-   are satisfied.
+5. keep experimental asset and DEX work isolated until their separate
+   activation gates are satisfied.
 
-A fresh mainnet genesis identity is present in the development source. Its new
-genesis nonce produces the block hash recorded in Section 6, and its new peer-
-network UUID prevents nodes on the superseded chain from joining it. This is
-not a wallet recovery seed and does not modify wallet keys. Genesis pre9 and
-the live nodes still use the superseded identity until new binaries are
-qualified and deployed through an explicit rollback-safe migration. Balances
-and transaction history from the superseded chain will not carry into the new
-genesis history; wallets must rescan the fresh chain from height zero.
+Genesis pre13 and the public nodes use the network UUID, genesis nonce, and
+genesis hash recorded in Section 6. Pre10 through pre13 share that chain;
+pre9 used a superseded identity and its balances and transaction history do
+not carry into the current genesis history. A network UUID is not a wallet
+recovery seed and changing it does not modify wallet keys, but users migrating
+from the superseded chain must rescan the current chain from height zero.
 
 No roadmap item is a promise of delivery or authorization to weaken a release
 gate.
 
-## 12. References and provenance
+## 13. References and provenance
 
 Monzero is based on Monero and CryptoNote research and implementation work. In
 particular, the design draws on:
