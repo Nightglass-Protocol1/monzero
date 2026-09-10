@@ -304,6 +304,13 @@ interruption between those two durable writes without accepting a conflicting
 message. Relay peers may differ from makers because the inner artifact retains
 its independent maker signature.
 
+Authenticated relay evidence has a deterministic binary wire frame with an
+explicit version, fixed network-byte-order integers, bounded length-prefixed
+fields, exact body length, and a 1,024-byte ceiling. Decoding rejects truncated,
+extended, oversized, noncanonical, mutated, expired, or cross-deployment frames
+before returning opaque evidence. The codec does not open a socket or discover a
+peer.
+
 Every prototype result remains `executable=false`. The build contains no live
 signing or transaction-broadcast authority, and its activation checks remain
 closed. Complete chain adapters, peer transport, production fee estimation,
@@ -311,7 +318,7 @@ liquidity mechanisms, end-to-end isolated-network execution and recovery,
 adversarial multi-party testing, independent cryptographic and implementation
 review, reproducible packages, release signing, and applicable legal review
 remain prerequisites for activation. The local Linux development build passed
-37 focused DEX tests on 11 September 2026, but it is not the published Genesis
+38 focused DEX tests on 11 September 2026, but it is not the published Genesis
 pre13 binary and must not be represented as a working or production DEX.
 
 ## 10. Security assumptions and limitations
