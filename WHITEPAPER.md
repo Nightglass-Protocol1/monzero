@@ -296,6 +296,14 @@ authentication and persistence boundary only: peer discovery, transport,
 availability, admission control, and liquidity do not arise merely from
 having a chain adapter or signed message.
 
+The local ingress coordinator independently re-verifies the relay wrapper and
+the maker-signed offer or cancellation, requires an exact artifact commitment
+and message-type match, persists replay state first, and then applies an
+idempotent order-book mutation. An exact retry can therefore recover an
+interruption between those two durable writes without accepting a conflicting
+message. Relay peers may differ from makers because the inner artifact retains
+its independent maker signature.
+
 Every prototype result remains `executable=false`. The build contains no live
 signing or transaction-broadcast authority, and its activation checks remain
 closed. Complete chain adapters, peer transport, production fee estimation,
@@ -303,7 +311,7 @@ liquidity mechanisms, end-to-end isolated-network execution and recovery,
 adversarial multi-party testing, independent cryptographic and implementation
 review, reproducible packages, release signing, and applicable legal review
 remain prerequisites for activation. The local Linux development build passed
-36 focused DEX tests on 11 September 2026, but it is not the published Genesis
+37 focused DEX tests on 11 September 2026, but it is not the published Genesis
 pre13 binary and must not be represented as a working or production DEX.
 
 ## 10. Security assumptions and limitations
