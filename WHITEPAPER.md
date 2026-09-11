@@ -1,6 +1,6 @@
 # Monzero: An Independent Privacy-Preserving Digital Currency
 
-**Protocol paper, draft 1.2 — September 2026**
+**Protocol paper, draft 1.3 — 11 September 2026**
 
 ## Abstract
 
@@ -304,6 +304,16 @@ interruption between those two durable writes without accepting a conflicting
 message. Relay peers may differ from makers because the inner artifact retains
 its independent maker signature.
 
+The current development tree persists the signed wrapper and pending inner
+artifact together in replay-store schema version 4. Local recovery reconstructs
+the stored offer or cancellation and re-verifies it before applying the
+order-book mutation. Only an exact, previously pending wrapper may recover
+after its relay lifetime expires; the inner artifact must still pass its own
+validation. Corrupted inner payloads leave the operation pending and prevent
+sequence advancement. Completion clears the pending payload. There is no
+automatic policy for skipping an invalid or expired pending artifact, and this
+local recovery mechanism does not supply a peer transport.
+
 Authenticated relay evidence has a deterministic binary wire frame with an
 explicit version, fixed network-byte-order integers, bounded length-prefixed
 fields, exact body length, and a 1,024-byte ceiling. Decoding rejects truncated,
@@ -421,7 +431,18 @@ native daemon testing, while interactive Windows GUI testing remains pending.
 The in-development DEX prototype described in Section 9 postdates those
 published binaries and is not part of the pre13 release. Compilation, focused
 tests, and checksum generation alone do not qualify either project for
-production. Immediate work remains operational rather than promotional:
+production.
+
+The published release manifest pins core source
+`bddd92e435d66cef92478618b35c3812dfc34328` and GUI source
+`2e40a3a40c8a34494a6d67d7d26953897fd58181`. Its GUI package revision is 2,
+dated 7 September 2026. Exact filenames, sizes, and SHA-256 digests are recorded
+in [`website/releases/genesis-pre13.json`](website/releases/genesis-pre13.json).
+These identifiers describe the distributed packages, not the newer private DEX
+development tree. Updating this paper does not rebuild or replace those
+packages, and does not enable DEX trading in them.
+
+Immediate work remains operational rather than promotional:
 
 1. obtain independent consensus, cryptography, and implementation review;
 2. complete independent binary reproduction and platform testing;
