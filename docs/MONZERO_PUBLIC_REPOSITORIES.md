@@ -1,8 +1,18 @@
 # Monzero source distribution
 
-The former Monzero code-host deployment has been retired. There is currently
-no canonical public Git clone URL for Monzero Core, Monzero GUI, or the Gitian
-signature repository. Do not advertise an unofficial mirror as authoritative.
+The former Monzero code-host deployment has been retired. As of 2026-09-13,
+the homepage and root `README.md` both link
+`https://github.com/Nightglass-Protocol1/monzero` as "the public source
+repository," but that mirror currently shows only a handful of commits and
+has not been verified against the checklist below (MFA/two-owner
+organization, branch protection, signed tags, independent-review gating,
+clean recursive-clone verification). Until it passes that checklist, treat
+it as a convenience mirror only, not the canonical, reviewable source of
+truth — do not describe it as authoritative in release metadata, and do not
+assume its history is complete or byte-identical to the working tree. This
+inconsistency between the live site and this document needs a deliberate
+decision (promote this mirror through the checklist, or stop linking it)
+rather than silent drift.
 
 Until a maintained public forge is selected, prerelease source should be
 distributed as a versioned archive together with its checksum and signed
