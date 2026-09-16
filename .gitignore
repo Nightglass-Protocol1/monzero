@@ -132,3 +132,9 @@ __pycache__/
 /tests/data/wallet_*_new_file2file*
 /tests/data/wallet_change_password_mem2file*
 /tests/data/wallet_mem2file*
+
+# Real wallet files must never live inside a source tree with any public
+# mirror. Keep wallets outside the repository entirely; these patterns are a
+# backstop against an accidental `git add`, not a substitute for that.
+*.keys
+/Wallet*
