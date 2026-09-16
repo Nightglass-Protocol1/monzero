@@ -33,11 +33,19 @@ gui_commit=$(sed -n 's/^gui_source_commit=//p' "$root/GUI_BUILD_MANIFEST.txt")
 core_commit=$(sed -n 's/^core_source_commit=//p' "$root/GUI_BUILD_MANIFEST.txt")
 [[ $gui_commit =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid GUI source commit" >&2; exit 1; }
 [[ $core_commit =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid core source commit" >&2; exit 1; }
+expected_core_version="0.18.5.1-${core_commit:0:9}"
+[[ $(sed -n 's/^core_version=//p' "$root/GUI_BUILD_MANIFEST.txt") == "$expected_core_version" ]] || {
+  echo "GUI manifest core version does not match its source commit" >&2; exit 1;
+}
 expected_gui_hash=$(sed -n 's/^gui_sha256=//p' "$root/GUI_BUILD_MANIFEST.txt")
 actual_gui_hash=$(sha256sum "$root/monzero-wallet-gui.exe" | awk '{print $1}')
 [[ $expected_gui_hash == "$actual_gui_hash" ]] || { echo "GUI executable hash does not match manifest" >&2; exit 1; }
 
 for binary in monzero-wallet-gui.exe monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
+  # Consume all strings output: grep -q can cause SIGPIPE under pipefail.
+  strings "$root/$binary" | grep -Fx "$expected_core_version" >/dev/null || {
+    echo "Embedded core version does not match GUI manifest: $binary" >&2; exit 1;
+  }
   report=$(file "$root/$binary")
   echo "$report"
   grep -Fq 'PE32+ executable' <<< "$report" || { echo "Not a Windows x64 PE binary: $binary" >&2; exit 1; }
