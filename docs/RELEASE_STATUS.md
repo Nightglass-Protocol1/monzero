@@ -7,8 +7,8 @@ Candidate line: Genesis prerelease
 ## Genesis pre13 qualified unsigned prerelease
 
 Genesis pre13 was built from core commit
-`bddd92e435d66cef92478618b35c3812dfc34328` and GUI commit
-`b0fee657ce7f079de36995ddb5c6053ce7bf7d4f`. It retains the pre10 through
+`bddd92e435d66cef92478618b35c3812dfc34328` and revised GUI package commit
+`2e40a3a40c8a34494a6d67d7d26953897fd58181`. It retains the pre10 through
 pre12 chain identity. The consensus configuration and hard-fork schedule are
 unchanged, and the public asset hard fork remains inactive.
 
@@ -26,12 +26,14 @@ complete source archives. Their SHA-256 digests are:
 
 - Linux x86-64: `6e280ff46b45c7065dd9089e773c0ecd3954d618d0bdda1f686a0940a8b10aa4`
 - Windows x64 CLI: `96425939b70f5de84a00855a45f92002f1901b4d5e70fba35515f9d681bb7d13`
-- Windows x64 GUI: `86746b270906ae0427bc9f43fa5860ed7e75ce8eee103f1e95835dfaef0d1648`
+- Windows x64 GUI revision 2: `5935799aca65b68b6fec4318a05ddbfa97b495d85c85e9927f937b009227d171`
 - Core source: `1f005d7fa27942b32bb4a821c5c554b3870adf09f4b242547d46e5035d2b5166`
-- GUI source: `c416224fc350d78b35026e279028b215f95861dae57d25e6fb8425e3d9d7b436`
+- GUI source revision 2: `68571df159342d8f9d2c0ebbc2c4a523ce900fb6f111a350ae73945421d720e2`
 
 Genesis pre13 was published on `https://monzero.org` on 2026-09-06 as an
-explicitly unsigned, independently unaudited prerelease. Complete HTTPS
+explicitly unsigned, independently unaudited prerelease; its GUI package and
+GUI source were revised on 2026-09-07 to add automatic local-daemon startup and
+node selection without changing chain identity. Complete HTTPS
 downloads of all five artifacts reproduce the metadata digests. The preceding
 web files are retained at
 `/home/www/Monzero-backup-20260906T171858Z-pre13` for rollback.
