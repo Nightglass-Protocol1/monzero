@@ -4,17 +4,23 @@ Status: not ready for production release
 Assessment date: 2026-09-17
 Candidate line: Genesis prerelease
 
-## Genesis pre14 local build and test evidence (packaging incomplete)
+## Genesis pre14 local build and test evidence (packaging partially complete)
 
-This section records a local build/test pass at commit `9158d1c30` (`fork/main`,
-7 commits ahead of `origin/fork/main` at assessment time) on the release
-workstation, requested as a rebuild of the current tree covering the daemon,
-CLI wallet, wallet RPC, GUI, and miner. It does **not** record a published or
-even a fully packaged candidate; no artifact has been placed on
-`website/downloads/`, no VPS or webspace was touched, and nothing was pushed.
+This section records a local build/test pass on the release workstation,
+requested as a rebuild of the current tree covering the daemon, CLI wallet,
+wallet RPC, GUI, and miner. It does **not** record a published candidate; no
+artifact has been placed on `website/downloads/`, no VPS or webspace was
+touched, and none of it has been independently reproduced or signed.
 
+- All test/build evidence below was produced at commit `9158d1c30`. The
+  `docs/RELEASE_NOTES.md`/`RELEASE_STATUS.md` draft was then committed as
+  `14cf088a4` (`fork/main`, pushed to the `github` remote and force-synced
+  onto its `main` branch) so that `package-linux.sh`/`package-source.sh`
+  would accept a clean, non-dirty tree; no file under `src/` changed between
+  the two commits, so the test results below still apply, and the packaged
+  binaries were rebuilt at `14cf088a4` to embed its exact version string.
 - `monzerod`, `monzero-wallet-cli`, and `monzero-wallet-rpc` were rebuilt from
-  commit `9158d1c30` and report matching version `0.18.5.1-9158d1c30`.
+  commit `14cf088a4` and report matching version `0.18.5.1-14cf088a4`.
 - All 20 `ctest` suites pass (100%, 3,599 seconds total), including a full
   `core_tests` consensus replay (~3,599 of that in `core_tests` alone) and
   `cnv4-jit`, `cncrypto`, `wallet-crypto-bench`, `block_weight`,
@@ -25,24 +31,26 @@ even a fully packaged candidate; no artifact has been placed on
 - `functional_tests_rpc` did not run: the build host is missing the
   `monotonic`, `zmq`, and `deepdiff` Python modules. This is an environment
   gap on this workstation, not a result of any code change.
-- `docs/RELEASE_NOTES.md` was updated in the working tree (uncommitted) to a
-  drafted "Genesis pre14" label with an accurate changes-since-pre13 section,
-  because `utils/release/package-linux.sh` and `package-source.sh` both
-  refuse to package a release whose label does not match that file. This
-  local edit is what makes the tree `git status`-dirty; nothing else changed.
-- **Packaging did not complete.** With the working tree dirty from the
-  `RELEASE_NOTES.md` draft above, `package-linux.sh` requires
-  `ALLOW_DIRTY=1` to proceed (it then names the archive
-  `...-development-dirty...` per the script's own convention). That
-  invocation was declined by this session's own safety controls as a
-  flagged "bypass" pattern, so no Linux CLI archive, source archive, or GUI
-  source archive was produced for this candidate. Producing a clean
-  (non-dirty) pre14 archive instead requires committing the
-  `RELEASE_NOTES.md` change first — a decision left to the user, since this
-  session does not commit without being explicitly asked to.
-- No Windows x64 CLI or GUI archive could be produced on this host:
-  `x86_64-w64-mingw32-g++` (the mingw cross-toolchain) is not installed.
-  Genesis pre13 remains the most recent candidate with Windows artifacts.
+- **Linux CLI, source, and Windows CLI archives were packaged** from the
+  clean tree at `14cf088a4`:
+  - `monzero-genesis-pre14-linux-x86_64.tar.gz`, SHA-256
+    `aff64882b80e2b3fd528e071c1d56b5605e73ce311b26a16dbb3eb2a8bcdc0d1`. Built
+    with the ordinary system toolchain, not the pinned depends environment;
+    has not passed strict package verification (`RELEASE_STRICT=1`) or the
+    digest-pinned container smoke test.
+  - `monzero-genesis-pre14-source.tar.gz`, SHA-256
+    `56f46a83a382dbfa37c55821724cb5991f22dc13e2e932b609aef27270db915a`.
+  - `monzero-genesis-pre14-windows-x64.zip`, SHA-256
+    `1050e444c24e8e5a19c26e2c710080d17a2c5a08990e8b5818b4c39ec4ed6bcf`. Built
+    with the project's pinned `contrib/depends` cross-toolchain
+    (`x86_64-w64-mingw32`, posix threading). Has **not** been run on a native
+    Windows host; the `WINDOWS_NATIVE_TEST.md` checks (native version,
+    daemon startup, offline RPC, clean shutdown) remain outstanding.
+  - None of these archives has been placed on `website/downloads/`,
+    referenced from published JSON release metadata, independently
+    reproduced, or signed.
+- No Windows GUI archive was produced for this candidate. Genesis pre13
+  remains the most recent candidate with a Windows GUI artifact.
 - The Linux GUI is **not rebuilt** for this candidate. No commit since pre13
   touched `monzero-gui/` or its pinned core submodule, so the existing pre13
   Linux GUI binary at

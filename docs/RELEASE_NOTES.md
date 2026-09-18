@@ -86,10 +86,16 @@ without matching artifact evidence, and they are not an independent security rev
   release workstation, not the pinned reproducible-build/depends environment
   used for prior published candidates; it has not passed strict package
   verification (`RELEASE_STRICT=1`) or the digest-pinned container smoke test.
-- No Windows x64 CLI or GUI archive was produced for this candidate: the
-  `x86_64-w64-mingw32-g++` cross-toolchain is not installed on this build
-  host. Genesis pre13 remains the most recent candidate with Windows
-  artifacts.
+- A Windows x64 CLI archive (`monzerod.exe`, `monzero-wallet-cli.exe`,
+  `monzero-wallet-rpc.exe`) was produced for this candidate using this
+  project's pinned `contrib/depends` cross-toolchain (`x86_64-w64-mingw32`,
+  posix threading variant), matching this exact source commit
+  (`0.18.5.1-14cf088a4`). SHA-256:
+  `1050e444c24e8e5a19c26e2c710080d17a2c5a08990e8b5818b4c39ec4ed6bcf`. It has
+  not been run on a native Windows host; the checks in
+  `WINDOWS_NATIVE_TEST.md` (native version, daemon startup, offline RPC,
+  clean shutdown) remain outstanding before this archive can be trusted.
+- No Windows GUI archive was produced for this candidate.
 - The Linux GUI archive for this candidate reuses the exact Genesis pre13 GUI
   binary and its pinned core commit (`bddd92e435d66cef92478618b35c3812dfc34328`)
   unchanged, because no commit since pre13 touched `monzero-gui/` or its
@@ -101,8 +107,10 @@ without matching artifact evidence, and they are not an independent security rev
 - A separately trusted operator has not reproduced and signed the binaries.
 - Consensus, cryptography, and the broader implementation have not completed
   an independent audit.
-- Native Windows CLI and GUI execution testing remains required for the exact
-  candidate archives, once produced.
+- Native Windows CLI execution testing remains required for the Windows x64
+  CLI archive produced for this candidate; it has not yet been run. No
+  Windows GUI archive exists for this candidate, so GUI execution testing
+  does not yet apply.
 - The public network has limited independent infrastructure and hash power.
 - Windows SmartScreen may warn until the executables are code-signed.
 - Never reuse a Monero or other CryptoNote-derived seed, keys, wallet file, or
