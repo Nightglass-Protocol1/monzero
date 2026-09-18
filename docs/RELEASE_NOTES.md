@@ -95,22 +95,41 @@ without matching artifact evidence, and they are not an independent security rev
   not been run on a native Windows host; the checks in
   `WINDOWS_NATIVE_TEST.md` (native version, daemon startup, offline RPC,
   clean shutdown) remain outstanding before this archive can be trusted.
-- No Windows GUI archive was produced for this candidate.
-- The Linux GUI archive for this candidate reuses the exact Genesis pre13 GUI
-  binary and its pinned core commit (`bddd92e435d66cef92478618b35c3812dfc34328`)
-  unchanged, because no commit since pre13 touched `monzero-gui/` or its
-  pinned core submodule. Its embedded core version therefore does not match
-  the pre14 CLI/daemon packages' embedded version, even though no relevant
-  core source differs between them.
+- A Windows x64 GUI archive (`monzero-wallet-gui.exe`, plus matching
+  `monzerod.exe`, `monzero-wallet-cli.exe`, `monzero-wallet-rpc.exe`) was
+  produced for this candidate, cross-compiled in the project's pinned static
+  Windows build-environment container against this exact core commit
+  (`0.18.5.1-06180b4ff`). SHA-256:
+  `639bf9f0a073196d833ee165810d442b56769c3698a64bb4394251553e0e2b0e`. Passed
+  `verify-windows-gui-package.sh` (manifest consistency, checksums, embedded
+  version match, PE mitigations, GUI subsystem). It has not been run on a
+  native Windows host.
+  - `monzero-gui`'s checked-out tip had diverged onto unmerged work (an
+    in-progress asset transfer/burn UI) pinned to a stale core snapshot from
+    a since-deleted repository path, unrelated to this candidate's core
+    line. This archive was instead built from GUI commit `0018a58f`, the
+    newest GUI commit whose Qt/wallet_api calls are all satisfied by this
+    core commit's actual wallet API (which has asset issuance, not yet
+    asset transfer/burn).
+- The Linux GUI was rebuilt locally from the same GUI commit (`0018a58f`)
+  against this exact core commit and compiles and links successfully, but
+  was not packaged: this project has no archive format or verification
+  script for a distributable Linux GUI package, so no Linux GUI archive was
+  produced. (Earlier notes describing a reused, unchanged pre13 Linux GUI
+  binary were based on a mistaken premise: `monzero-gui`'s tree is not a
+  submodule of this repository and had in fact moved since pre13.)
 - Packages and release metadata will remain unsigned until the offline release
   signing process is completed.
 - A separately trusted operator has not reproduced and signed the binaries.
 - Consensus, cryptography, and the broader implementation have not completed
   an independent audit.
-- Native Windows CLI execution testing remains required for the Windows x64
-  CLI archive produced for this candidate; it has not yet been run. No
-  Windows GUI archive exists for this candidate, so GUI execution testing
-  does not yet apply.
+- Native Windows execution testing remains required for both the Windows x64
+  CLI and GUI archives produced for this candidate; it has not yet been run
+  for either.
+- This candidate's Windows GUI archive was built from a different (older,
+  compatible) GUI source commit than `monzero-gui`'s current development
+  tip, deliberately excluding unmerged asset transfer/burn UI work; it does
+  not reflect the latest GUI development.
 - The public network has limited independent infrastructure and hash power.
 - Windows SmartScreen may warn until the executables are code-signed.
 - Never reuse a Monero or other CryptoNote-derived seed, keys, wallet file, or

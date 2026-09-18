@@ -4,7 +4,7 @@ Status: not ready for production release
 Assessment date: 2026-09-17
 Candidate line: Genesis prerelease
 
-## Genesis pre14 local build and test evidence (packaging partially complete)
+## Genesis pre14 local build and test evidence (unpublished)
 
 This section records a local build/test pass on the release workstation,
 requested as a rebuild of the current tree covering the daemon, CLI wallet,
@@ -49,17 +49,52 @@ touched, and none of it has been independently reproduced or signed.
   - None of these archives has been placed on `website/downloads/`,
     referenced from published JSON release metadata, independently
     reproduced, or signed.
-- No Windows GUI archive was produced for this candidate. Genesis pre13
-  remains the most recent candidate with a Windows GUI artifact.
-- The Linux GUI is **not rebuilt** for this candidate. No commit since pre13
-  touched `monzero-gui/` or its pinned core submodule, so the existing pre13
-  Linux GUI binary at
-  `build/pre13-linux-gui-sync/bin/monzero-wallet-gui` (GUI commit
-  `2e40a3a40c8a34494a6d67d7d26953897fd58181`, pinned core commit
-  `bddd92e435d66cef92478618b35c3812dfc34328`) is unchanged and would need to
-  be repackaged under a pre14 label as-is; its embedded core version would
-  then legitimately differ from the pre14 CLI/daemon package's embedded
-  version even though no relevant core source differs between them.
+- **A Windows GUI archive was produced** for this candidate:
+  `monzero-genesis-pre14-windows-gui-x64.zip`, SHA-256
+  `639bf9f0a073196d833ee165810d442b56769c3698a64bb4394251553e0e2b0e`,
+  containing `monzero-wallet-gui.exe` and matching `monzerod.exe`,
+  `monzero-wallet-cli.exe`, `monzero-wallet-rpc.exe` all embedding
+  `0.18.5.1-06180b4ff`. Cross-compiled in the project's pinned static
+  Windows build-environment container (image `monzero:build-env-windows`,
+  id `8d4384bd1e48`); passed `verify-windows-gui-package.sh` in full. Has
+  not been run on a native Windows host, independently reproduced, or
+  security audited.
+  - Before building this, `monzero-gui`'s checked-out tip (`e947617b6`) was
+    found to have diverged onto unmerged work (an asset transfer/burn UI)
+    pinned to a core snapshot from a deleted repository path
+    (`~/Projects/Monero-Fork`), unrelated to this candidate's `fork/main`
+    core line, and would not compile against it (missing
+    `createAssetTransferTransaction` in this core's `wallet2_api.h`).
+    `monzero-gui`'s own working tree also carries substantial unrelated,
+    uncommitted DEX-prototype work; none of it was touched.
+  - The archive was instead built from GUI commit `0018a58f` (parent of the
+    commit that introduced the asset-transfer/burn dependency), the newest
+    GUI commit compatible with this candidate's actual core wallet API.
+  - Built via a flat `git archive`/`rsync` export of GUI @ `0018a58f` plus
+    this repository's working tree copied into its `monero/` subdirectory
+    (`MANUAL_SUBMODULES=1`, `.git` metadata included so the build correctly
+    embeds `06180b4ff` rather than falling back to `-unknown`), rather than
+    `monzero-gui`'s usual nested-worktree submodule mechanism, which
+    corrupted its own working tree when tried directly.
+  - `make -j8` crashed the mingw linker (`ld`, SIGSEGV) building the
+    unrelated `monero-gen-ssl-cert` utility; building only the four needed
+    targets (`monzero-wallet-gui daemon simplewallet wallet_rpc_server`) at
+    lower parallelism avoided it. That utility was not built and is not
+    part of this package (it never was, historically).
+  - No packaging script exists in this repository for GUI archives, only
+    `verify-windows-gui-package.sh`; this archive's file layout, launcher
+    scripts, and `GUI_BUILD_MANIFEST.txt` were assembled by hand to match
+    the structure of the previously published pre13 Windows GUI archive.
+- The Linux GUI was also rebuilt locally from GUI commit `0018a58f` against
+  this exact core commit (native build, not cross-compiled) and links
+  successfully, but was **not packaged**: this project has never had an
+  archive format or verification script for a distributable Linux GUI
+  package (only Windows GUI archives have ever been published), so this is
+  local build verification only, not a release artifact.
+  - This corrects a mistaken premise in earlier pre14 notes, which assumed
+    `monzero-gui` was a submodule of this repository that "had not changed
+    since pre13." It is not a submodule (it is listed in `.gitignore`) and
+    its own history had in fact moved substantially past the pre13 baseline.
 - The miner is not a separately compiled artifact; RandomX mining is built
   into `monzerod` and driven by `start-monzero-miner.sh`
   /`stop-monzero-miner.sh`, both unchanged since pre13.
