@@ -1,8 +1,64 @@
 # Monzero release status
 
 Status: not ready for production release
-Assessment date: 2026-09-06
+Assessment date: 2026-09-17
 Candidate line: Genesis prerelease
+
+## Genesis pre14 local build and test evidence (packaging incomplete)
+
+This section records a local build/test pass at commit `9158d1c30` (`fork/main`,
+7 commits ahead of `origin/fork/main` at assessment time) on the release
+workstation, requested as a rebuild of the current tree covering the daemon,
+CLI wallet, wallet RPC, GUI, and miner. It does **not** record a published or
+even a fully packaged candidate; no artifact has been placed on
+`website/downloads/`, no VPS or webspace was touched, and nothing was pushed.
+
+- `monzerod`, `monzero-wallet-cli`, and `monzero-wallet-rpc` were rebuilt from
+  commit `9158d1c30` and report matching version `0.18.5.1-9158d1c30`.
+- All 20 `ctest` suites pass (100%, 3,599 seconds total), including a full
+  `core_tests` consensus replay (~3,599 of that in `core_tests` alone) and
+  `cnv4-jit`, `cncrypto`, `wallet-crypto-bench`, `block_weight`,
+  `difficulty`/`wide_difficulty`, and the RandomX/hash-family suites.
+- The `unit_tests` binary independently reports 1,305 of 1,305 tests passing
+  across 160 test cases, matching the pre13 count (no `src/` file changed
+  between pre13 and this commit).
+- `functional_tests_rpc` did not run: the build host is missing the
+  `monotonic`, `zmq`, and `deepdiff` Python modules. This is an environment
+  gap on this workstation, not a result of any code change.
+- `docs/RELEASE_NOTES.md` was updated in the working tree (uncommitted) to a
+  drafted "Genesis pre14" label with an accurate changes-since-pre13 section,
+  because `utils/release/package-linux.sh` and `package-source.sh` both
+  refuse to package a release whose label does not match that file. This
+  local edit is what makes the tree `git status`-dirty; nothing else changed.
+- **Packaging did not complete.** With the working tree dirty from the
+  `RELEASE_NOTES.md` draft above, `package-linux.sh` requires
+  `ALLOW_DIRTY=1` to proceed (it then names the archive
+  `...-development-dirty...` per the script's own convention). That
+  invocation was declined by this session's own safety controls as a
+  flagged "bypass" pattern, so no Linux CLI archive, source archive, or GUI
+  source archive was produced for this candidate. Producing a clean
+  (non-dirty) pre14 archive instead requires committing the
+  `RELEASE_NOTES.md` change first — a decision left to the user, since this
+  session does not commit without being explicitly asked to.
+- No Windows x64 CLI or GUI archive could be produced on this host:
+  `x86_64-w64-mingw32-g++` (the mingw cross-toolchain) is not installed.
+  Genesis pre13 remains the most recent candidate with Windows artifacts.
+- The Linux GUI is **not rebuilt** for this candidate. No commit since pre13
+  touched `monzero-gui/` or its pinned core submodule, so the existing pre13
+  Linux GUI binary at
+  `build/pre13-linux-gui-sync/bin/monzero-wallet-gui` (GUI commit
+  `2e40a3a40c8a34494a6d67d7d26953897fd58181`, pinned core commit
+  `bddd92e435d66cef92478618b35c3812dfc34328`) is unchanged and would need to
+  be repackaged under a pre14 label as-is; its embedded core version would
+  then legitimately differ from the pre14 CLI/daemon package's embedded
+  version even though no relevant core source differs between them.
+- The miner is not a separately compiled artifact; RandomX mining is built
+  into `monzerod` and driven by `start-monzero-miner.sh`
+  /`stop-monzero-miner.sh`, both unchanged since pre13.
+
+None of the above authorizes publication, promotion, or deployment. Genesis
+pre13 (below) remains the most recent candidate with complete, verified
+packages on `https://monzero.org`.
 
 ## Genesis pre13 qualified unsigned prerelease
 

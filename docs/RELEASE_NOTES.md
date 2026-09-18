@@ -1,8 +1,8 @@
-# Monzero Genesis pre13 release notes
+# Monzero Genesis pre14 release notes
 
-Release label: genesis-pre13
+Release label: genesis-pre14
 
-Genesis pre13 is the next experimental prerelease candidate. It is not a
+Genesis pre14 is the next experimental prerelease candidate. It is not a
 production release. Exact-artifact qualification is recorded separately from
 these source-tree notes; final artifact digests and exact source commits must
 be recorded in the package manifests and matching machine-readable release
@@ -22,59 +22,87 @@ wallet, and wallet RPC. The GUI is distributed separately with matching core
 tools. macOS, Linux ARM, Windows ARM, mobile platforms, and 32-bit systems are
 not qualified by this candidate.
 
-## Changes since Genesis pre12
+## Changes since Genesis pre13
 
-- Removed undefined behavior from circular `Blockchain` and transaction-pool
-  initialization. Pool-to-chain binding is now explicit and checked, and the
-  affected utilities and tests preserve valid destruction order.
-- Prevented a command-line wallet crash when wallet creation is cancelled
-  before a wallet object is returned.
-- Added a package gate that rejects missing or stale release notes when their
-  declared release label does not match the archive.
-- Added pre-extraction archive safety checks to the Linux package and wallet
-  smoke tests, including regression coverage for correctly hashed unsafe archives.
-- Disabled host ICU auto-detection in the depends Boost build, preventing
-  undeclared build-machine libraries from leaking into release dependencies.
-- Fixed a peer synchronization stall after competing forks by keeping inbound
-  block-serving activity separate from the timer for our own outstanding
-  requests. The regression test and two three-node reorganisation, transfer,
-  and wallet-restoration simulations pass with the original sync deadline.
-- Hardened CI to run release archive, notes, signing-subkey, and branding
-  regressions; use Monzero's deterministic source packager and verifier; and
-  collect correctly named Monzero cross-build artifacts.
+- Added isolated, fixture-only DEX-lab preparation tooling (`utils/dex-lab/`)
+  for a separate, air-gapped-from-production VM: preflight checks,
+  Bitcoin-regtest/Monzero-fakechain health validation, disposable settlement
+  and lock-PSBT fixture construction with crash-safe recovery metadata, and a
+  bounded/authenticated live-lab RPC checker. It ships no live adapters, no
+  atomic settlement, and no funds verification, and is not wired into any
+  release package or public network path.
+- Recorded that the `Nightglass-Protocol1/monzero` GitHub mirror has not yet
+  passed this project's own MFA/two-owner, branch-protection, signed-tag, and
+  clean-clone checklist for a canonical forge, so the gap is a documented,
+  deliberate decision rather than a silent one.
+- Updated the website to state plainly that the DEX research GUI under local
+  testing is not part of any published download, that real-money DEX trading,
+  cross-chain settlement, refunds, and fee enforcement remain unimplemented,
+  and to warn against sending funds or disclosing seeds to test it.
+- Corrected `RELEASE_STATUS.md` to name the revised (revision 2) pre13 GUI
+  commit and its Windows GUI archive and GUI source digests, which had still
+  named the superseded revision 1 identifiers.
+- Closed a release-verification gap where a Windows GUI archive could ship
+  binaries built against a different core commit than the one its manifest
+  declared: `verify-windows-gui-package.sh` now checks that
+  `GUI_BUILD_MANIFEST.txt`'s declared core version matches its declared core
+  source commit, and that every packaged executable embeds that exact version
+  string. `tests/phase0/test-gui-package-version.py` exercises both new
+  failure modes against a real, otherwise-valid archive.
+- Added `.gitignore` patterns for wallet key and backup files (`*.keys`,
+  `/Wallet*`) as a backstop against an accidental commit of wallet material
+  alongside the public mirror.
+- Triggered a CI workflow run to verify the GitHub organization's Actions
+  policy; no source, build, or release-script change resulted.
 - No mainnet consensus identity, genesis block, address prefix, port, monetary
   policy, or public hard-fork schedule changed. Monzero Assets remain inactive
-  on every public network.
+  on every public network. No file under `src/` changed since Genesis pre13.
 
 ## Source-tree verification performed
 
-- All 1,304 unit tests pass on the local Linux build.
-- The core-test, block-weight, wallet CLI, and seven affected blockchain
-  utility targets build successfully.
-- The focused transaction-pool binding, long-term block-weight, fee-scaling,
-  and output-distribution suite passes all 20 tests.
-- The branding, hostile-archive, signing-subkey, and release-notes binding
-  regression gates pass locally.
-- All 16 adversarial core tests pass, including transaction-pool and
-  double-spend scenarios involving alternative chains.
-- A local simulation of the CI source-package path produced a recursively
-  complete archive that passed the source-package verifier.
+- All 1,305 unit tests pass on the local Linux build (160 test cases; full
+  `ctest` run 2026-09-17, 3,599 seconds total).
+- All 20 `ctest` suites pass (100%), including `core_tests` (full consensus
+  replay), `unit_tests`, `cnv4-jit`, `cncrypto`, `wallet-crypto-bench`,
+  `block_weight`, `difficulty`/`wide_difficulty`, and the RandomX/hash-family
+  suites.
+- `monzerod`, `monzero-wallet-cli`, and `monzero-wallet-rpc` were rebuilt from
+  this exact commit and report matching version strings.
+- The RPC functional-test suite (`functional_tests_rpc`) could not run on this
+  build host: the `monotonic`, `zmq`, and `deepdiff` Python modules are not
+  installed. This is an environment gap, not a code regression; it was also
+  skipped, for the same reason, in this build.
 
 These are source-tree results. They do not qualify a particular binary archive
 without matching artifact evidence, and they are not an independent security review.
 
 ## Known limitations and safety notices
 
-- Each pre13 artifact must complete the full clean qualification cycle before
+- Each pre14 artifact must complete the full clean qualification cycle before
   publication; consult its exact-hash evidence rather than assuming these
   source-tree test results apply to it.
+- This candidate's Linux CLI archive (`monzerod`, `monzero-wallet-cli`,
+  `monzero-wallet-rpc`) was built with the ordinary system toolchain on the
+  release workstation, not the pinned reproducible-build/depends environment
+  used for prior published candidates; it has not passed strict package
+  verification (`RELEASE_STRICT=1`) or the digest-pinned container smoke test.
+- No Windows x64 CLI or GUI archive was produced for this candidate: the
+  `x86_64-w64-mingw32-g++` cross-toolchain is not installed on this build
+  host. Genesis pre13 remains the most recent candidate with Windows
+  artifacts.
+- The Linux GUI archive for this candidate reuses the exact Genesis pre13 GUI
+  binary and its pinned core commit (`bddd92e435d66cef92478618b35c3812dfc34328`)
+  unchanged, because no commit since pre13 touched `monzero-gui/` or its
+  pinned core submodule. Its embedded core version therefore does not match
+  the pre14 CLI/daemon packages' embedded version, even though no relevant
+  core source differs between them.
 - Packages and release metadata will remain unsigned until the offline release
   signing process is completed.
 - A separately trusted operator has not reproduced and signed the binaries.
 - Consensus, cryptography, and the broader implementation have not completed
   an independent audit.
 - Native Windows CLI and GUI execution testing remains required for the exact
-  candidate archives.
+  candidate archives, once produced.
 - The public network has limited independent infrastructure and hash power.
 - Windows SmartScreen may warn until the executables are code-signed.
 - Never reuse a Monero or other CryptoNote-derived seed, keys, wallet file, or
