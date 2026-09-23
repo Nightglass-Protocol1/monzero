@@ -4,7 +4,7 @@ MONZERO GENESIS PRE15
 Genesis pre15 is experimental, unsigned, and independently unaudited
 prerelease software. It is not a production release.
 
-Core source: 6cc2454b9f8d3421c96da434919d0fd151ac904f
+Core source: 85d922cb09a5731712f69f799a8bd8004ff00a35
 GUI source:  0018a58f2aeb1670ca6ab7c61b7c0de7d07ff9f8
 Network UUID: 94834264-d0b2-41dd-b0f2-0ada675c7710
 Genesis hash: 84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4
@@ -13,15 +13,15 @@ Native currency: XMZ
 PACKAGE SHA-256
 
 Linux x86-64 CLI (glibc 2.35 or newer)
-  748b2e4bd5964610b129fe47619ce5610f85f250a2a3d8b19db2e545b33af093
+  3ec46a0ec9e109368417b6ab7069cfe424f84bd8e9f62e280bdd722dffa881db
 Windows x64 CLI
-  bab2446538170b70e92bb340a8e2ab2d00a6a730c734fef6f4e720214f14a832
+  d4b0521e172e08a8bf36d334c5a094c29591482f4b2eac08fa3dc46cd0c4b4c5
 Windows x64 graphical wallet
-  2b6cf5f84c02701f77408f39b93ff85ebac41cd589ff775d615b27d9425fcbb0
+  1c53188f26a23ed09605d0ed8f1350da5f1f8671a1db1897529f364236e5674b
 Complete core source
-  3c997608a5faaecdbc01518f7766efb135dfbf460e785cf7339ab1ca447d5347
+  ccf724ab267cc7b4cb406d625e0d2622545317b1d9f9c62171097308646de38c
 Graphical-wallet source
-  daebb4fba53dfe072efcc3a2fd9a5edcef8f9f475df8adad13a67ace3da27015
+  7eb869871955fc42adac83ca35e9f836d1884449faa2e6b2d71b831bee413ed1
 
 CHANGES SINCE PRE14
 
@@ -69,6 +69,12 @@ smoke, network/launcher/mining, and wallet-lifecycle tests on Windows 11.
 The graphical wallet was launched on Windows 11, created and reopened
 wallets, repaired a wallet affected by the height bug, and refused a
 Monero wallet file.
+
+A second, from-scratch build of the same commit in the pinned build
+environment reproduced the Linux and Windows command-line packages and the
+Windows graphical wallet's executables byte for byte. This is a
+same-machine check; reproduction by an independent builder is still
+required.
 
 Independent binary reproduction, release signing, code signing, and an
 independent security review remain outstanding. Keep the prior verified
