@@ -1,0 +1,28 @@
+MONZERO @RELEASE_TITLE@ - WINDOWS GRAPHICAL WALLET
+
+Run start-wallet-gui.bat or monzero-wallet-gui.exe. This package includes the
+matching @RELEASE_SHORT@ daemon and command-line tools and uses the Monzero genesis
+network identity.
+
+The graphical wallet starts its managed local daemon in synchronizing mode
+and selects the local RPC endpoint automatically. New users do not need to
+enter 127.0.0.1 or configure a remote node. Bootstrap RPC is only a temporary
+fallback while the local blockchain catches up.
+
+Wallet files: this release opens only wallet files created by Monzero.
+Monero and other CryptoNote wallet files are refused. Wallets created by
+earlier Genesis prereleases open normally, except those that had selected
+the atomic-XMZ display unit; restore those from their recovery seed.
+Amounts are always shown in XMZ with 11 decimal places.
+
+This GUI is unsigned and unaudited prerelease software. It was cross-compiled
+in the static Windows build environment defined by the GUI source's
+Dockerfile.windows. Verify SHA256SUMS before running any executable.
+
+The GUI source is the newest GUI commit whose Qt/wallet_api calls are all
+satisfied by this core source tree. It deliberately excludes later, unmerged
+GUI work (asset transfer/burn and DEX prototypes) that this core does not
+implement.
+
+GUI source:  @GUI_COMMIT@
+Core source: @CORE_COMMIT@
