@@ -31,25 +31,24 @@
 
 #include "file_io_utils.h"
 #include "wallet/wallet2.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "common/util.h"
 
 using namespace boost::filesystem;
 using namespace epee::file_io_utils;
 
-static constexpr const char WALLET_00fd416a_PRIMARY_ADDRESS[] =
-    "FTVmPgMqWacJbqSiUvYfS3BfhEdxZmv8pDt25oW1LzxrZv9Uq6ARagiFViMGUE3gJk5VPWingCXVf1p2tyAy6SUeSJWdykM";
+static constexpr const char WALLET_PRERELEASE_PRIMARY_ADDRESS[] =
+    "FR9UZX754kKBkyjL1TQEsBBNLNmv7eJMv4nFsjCEs8sXT2hGE1BisLiAuT6Epc5REweUtata45REdNHfsmHM8vP6GB3YWsu";
 
 TEST(wallet_storage, store_to_file2file)
 {
-    const path source_wallet_file = unit_test::data_dir / "wallet_00fd416a";
-    const path interm_wallet_file = unit_test::data_dir / "wallet_00fd416a_copy_file2file";
-    const path target_wallet_file = unit_test::data_dir / "wallet_00fd416a_new_file2file";
+    const path source_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease";
+    const path interm_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease_copy_file2file";
+    const path target_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease_new_file2file";
 
-    ASSERT_TRUE(is_file_exist(source_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(source_wallet_file.string() + ".keys"));
 
-    // Rebuild the cache from the portable keys. The bundled upstream cache
-    // correctly fails Monzero's genesis-hash check.
+    // Only the pre-release keys file is bundled; the cache is rebuilt.
     if (is_file_exist(interm_wallet_file.string()))
         remove(interm_wallet_file);
     tools::copy_file(source_wallet_file.string() + ".keys", interm_wallet_file.string() + ".keys");
@@ -79,7 +78,7 @@ TEST(wallet_storage, store_to_file2file)
         w.load(interm_wallet_file.string(), password);
         w.store();
         const std::string primary_address = w.get_address_as_str();
-        EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, primary_address);
         w.store_to(target_wallet_file.string(), password);
         files_are_expected();
     }
@@ -90,7 +89,7 @@ TEST(wallet_storage, store_to_file2file)
         tools::wallet2 w;
         w.load(target_wallet_file.string(), password);
         const std::string primary_address = w.get_address_as_str();
-        EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, primary_address);
         w.store_to("", "");
         files_are_expected();
     }
@@ -137,14 +136,12 @@ TEST(wallet_storage, store_to_mem2file)
 
 TEST(wallet_storage, change_password_same_file)
 {
-    const path source_wallet_file = unit_test::data_dir / "wallet_00fd416a";
-    const path interm_wallet_file = unit_test::data_dir / "wallet_00fd416a_copy_change_password_same";
+    const path source_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease";
+    const path interm_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease_copy_change_password_same";
 
-    ASSERT_TRUE(is_file_exist(source_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(source_wallet_file.string() + ".keys"));
 
-    // Rebuild the cache from the portable keys. The bundled upstream cache
-    // correctly fails Monzero's genesis-hash check.
+    // Only the pre-release keys file is bundled; the cache is rebuilt.
     if (is_file_exist(interm_wallet_file.string()))
         remove(interm_wallet_file);
     tools::copy_file(source_wallet_file.string() + ".keys", interm_wallet_file.string() + ".keys");
@@ -160,7 +157,7 @@ TEST(wallet_storage, change_password_same_file)
         w.load(interm_wallet_file.string(), old_password);
         w.store();
         const std::string primary_address = w.get_address_as_str();
-        EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, primary_address);
         w.change_password(w.get_wallet_file(), old_password, new_password);
     }
 
@@ -168,7 +165,7 @@ TEST(wallet_storage, change_password_same_file)
         tools::wallet2 w;
         w.load(interm_wallet_file.string(), new_password);
         const std::string primary_address = w.get_address_as_str();
-        EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, primary_address);
     }
 
     {
@@ -179,15 +176,13 @@ TEST(wallet_storage, change_password_same_file)
 
 TEST(wallet_storage, change_password_different_file)
 {
-    const path source_wallet_file = unit_test::data_dir / "wallet_00fd416a";
-    const path interm_wallet_file = unit_test::data_dir / "wallet_00fd416a_copy_change_password_diff";
-    const path target_wallet_file = unit_test::data_dir / "wallet_00fd416a_new_change_password_diff";
+    const path source_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease";
+    const path interm_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease_copy_change_password_diff";
+    const path target_wallet_file = unit_test::data_dir / "wallet_monzero_prerelease_new_change_password_diff";
 
-    ASSERT_TRUE(is_file_exist(source_wallet_file.string()));
     ASSERT_TRUE(is_file_exist(source_wallet_file.string() + ".keys"));
 
-    // Rebuild the cache from the portable keys. The bundled upstream cache
-    // correctly fails Monzero's genesis-hash check.
+    // Only the pre-release keys file is bundled; the cache is rebuilt.
     if (is_file_exist(interm_wallet_file.string()))
         remove(interm_wallet_file);
     tools::copy_file(source_wallet_file.string() + ".keys", interm_wallet_file.string() + ".keys");
@@ -210,7 +205,7 @@ TEST(wallet_storage, change_password_different_file)
         w.load(interm_wallet_file.string(), old_password);
         w.store();
         const std::string primary_address = w.get_address_as_str();
-        EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, primary_address);
         w.change_password(target_wallet_file.string(), old_password, new_password);
     }
 
@@ -223,7 +218,7 @@ TEST(wallet_storage, change_password_different_file)
         tools::wallet2 w;
         w.load(target_wallet_file.string(), new_password);
         const std::string primary_address = w.get_address_as_str();
-        EXPECT_EQ(WALLET_00fd416a_PRIMARY_ADDRESS, primary_address);
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, primary_address);
     }
 }
 
@@ -276,4 +271,119 @@ TEST(wallet_storage, change_password_mem2file)
     }
 
     EXPECT_EQ(primary_address_1, primary_address_2);
+}
+
+namespace
+{
+    // Copies a bundled keys file to a scratch name so a test may load it
+    path scratch_keys_copy(const char *fixture, const char *scratch)
+    {
+        const path source = unit_test::data_dir / fixture;
+        const path target = unit_test::data_dir / scratch;
+        if (is_file_exist(target.string()))
+            remove(target);
+        if (is_file_exist(target.string() + ".keys"))
+            remove(target.string() + ".keys");
+        tools::copy_file(source.string() + ".keys", target.string() + ".keys");
+        return target;
+    }
+
+    std::string keys_file_contents(const path &wallet_file)
+    {
+        std::string contents;
+        EXPECT_TRUE(load_file_to_string(wallet_file.string() + ".keys", contents));
+        return contents;
+    }
+}
+
+TEST(wallet_origin, rejects_monero_wallet_keys)
+{
+    const path wallet_file = scratch_keys_copy("wallet_00fd416a", "wallet_origin_monero");
+    const std::string before = keys_file_contents(wallet_file);
+
+    tools::wallet2 w;
+    EXPECT_THROW(w.load(wallet_file.string(), "beepbeep"), tools::error::not_monzero_wallet);
+    EXPECT_EQ(before, keys_file_contents(wallet_file));
+}
+
+TEST(wallet_origin, rejects_monero_testnet_wallet_keys)
+{
+    const path wallet_file = scratch_keys_copy("wallet_9svHk1", "wallet_origin_monero_testnet");
+
+    tools::wallet2 w(cryptonote::TESTNET);
+    EXPECT_THROW(w.load(wallet_file.string(), "test"), tools::error::not_monzero_wallet);
+}
+
+TEST(wallet_origin, wrong_password_is_still_reported_as_such)
+{
+    const path wallet_file = scratch_keys_copy("wallet_00fd416a", "wallet_origin_monero_wrong_password");
+
+    tools::wallet2 w;
+    EXPECT_THROW(w.load(wallet_file.string(), "not the password"), tools::error::invalid_password);
+}
+
+TEST(wallet_origin, upgrades_prerelease_monzero_wallet)
+{
+    const path wallet_file = scratch_keys_copy("wallet_monzero_prerelease", "wallet_origin_prerelease");
+    const std::string original = keys_file_contents(wallet_file);
+
+    {
+        tools::wallet2 w;
+        w.load(wallet_file.string(), "beepbeep");
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, w.get_address_as_str());
+    }
+    const std::string upgraded = keys_file_contents(wallet_file);
+    EXPECT_NE(original, upgraded);
+
+    {
+        tools::wallet2 w;
+        w.load(wallet_file.string(), "beepbeep");
+        EXPECT_EQ(WALLET_PRERELEASE_PRIMARY_ADDRESS, w.get_address_as_str());
+    }
+    // The marker was stored, so a second load has nothing to upgrade
+    EXPECT_EQ(upgraded, keys_file_contents(wallet_file));
+}
+
+TEST(wallet_origin, resets_prerelease_display_unit_to_xmz)
+{
+    const path wallet_file = scratch_keys_copy("wallet_monzero_prerelease_dp8", "wallet_origin_prerelease_dp8");
+    const std::string original = keys_file_contents(wallet_file);
+
+    tools::wallet2 w;
+    w.load(wallet_file.string(), "beepbeep");
+    EXPECT_EQ(CRYPTONOTE_DISPLAY_DECIMAL_POINT, cryptonote::get_default_decimal_point());
+    EXPECT_EQ("XMZ", cryptonote::get_unit());
+    EXPECT_NE(original, keys_file_contents(wallet_file));
+}
+
+TEST(wallet_origin, rejects_atomic_unit_without_marker)
+{
+    // 0 decimals was also a Monero unit, so an unmarked file using it is not
+    // provably a Monzero wallet.
+    const path wallet_file = scratch_keys_copy("wallet_monzero_prerelease_dp0", "wallet_origin_prerelease_dp0");
+
+    tools::wallet2 w;
+    EXPECT_THROW(w.load(wallet_file.string(), "beepbeep"), tools::error::not_monzero_wallet);
+}
+
+TEST(wallet_origin, new_wallets_are_marked)
+{
+    const path wallet_file = unit_test::data_dir / "wallet_origin_new";
+    if (is_file_exist(wallet_file.string()))
+        remove(wallet_file);
+    if (is_file_exist(wallet_file.string() + ".keys"))
+        remove(wallet_file.string() + ".keys");
+
+    std::string address;
+    {
+        tools::wallet2 w;
+        w.generate(wallet_file.string(), "beepbeep");
+        address = w.get_address_as_str();
+    }
+    const std::string stored = keys_file_contents(wallet_file);
+
+    tools::wallet2 w;
+    w.load(wallet_file.string(), "beepbeep");
+    EXPECT_EQ(address, w.get_address_as_str());
+    EXPECT_EQ(stored, keys_file_contents(wallet_file));
 }

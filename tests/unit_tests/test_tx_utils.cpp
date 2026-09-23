@@ -38,7 +38,6 @@
 #include "cryptonote_core/cryptonote_tx_utils.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_config.h"
-#include "misc_language.h"
 
 namespace
 {
@@ -181,15 +180,22 @@ TEST(parse_and_validate_tx_extra, fails_on_wrong_size_in_extra_nonce)
   std::vector<cryptonote::tx_extra_field> tx_extra_fields;
   ASSERT_FALSE(cryptonote::parse_tx_extra(tx.extra, tx_extra_fields));
 }
+TEST(validate_parse_amount_case, only_xmz_decimal_point_is_accepted)
+{
+  ASSERT_EQ(11u, CRYPTONOTE_DISPLAY_DECIMAL_POINT);
+  EXPECT_NO_THROW(cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT));
+  for (const unsigned int decimal_point: {12u, 9u, 8u, 6u, 5u, 3u, 2u, 0u, 10u})
+  {
+    EXPECT_THROW(cryptonote::set_default_decimal_point(decimal_point), std::exception) << decimal_point;
+    EXPECT_THROW(cryptonote::get_unit(decimal_point), std::exception) << decimal_point;
+  }
+  EXPECT_EQ(CRYPTONOTE_DISPLAY_DECIMAL_POINT, cryptonote::get_default_decimal_point());
+  EXPECT_EQ("XMZ", cryptonote::get_unit());
+}
+
 TEST(validate_parse_amount_case, validate_parse_amount)
 {
-  // parse_amount uses the process-wide decimal point, which loading a wallet
-  // file can change. Pin XMZ's 11 decimals and restore the previous value.
-  const unsigned int previous_decimal_point = cryptonote::get_default_decimal_point();
-  cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT);
-  const auto restore_decimal_point = epee::misc_utils::create_scope_leave_handler([previous_decimal_point]{
-    cryptonote::set_default_decimal_point(previous_decimal_point);
-  });
+  ASSERT_EQ(CRYPTONOTE_DISPLAY_DECIMAL_POINT, cryptonote::get_default_decimal_point());
 
   uint64_t res = 0;
   bool r = cryptonote::parse_amount(res, "0.0001");

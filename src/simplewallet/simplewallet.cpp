@@ -2719,29 +2719,12 @@ bool simple_wallet::set_ask_password(const std::vector<std::string> &args/* = st
 bool simple_wallet::set_unit(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   const std::string &unit = args[1];
-  unsigned int decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
 
-  if (unit == "monzero" || unit == "XMZ")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
-  else if (unit == "millizero" || unit == "mXMZ")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 3;
-  else if (unit == "microzero" || unit == "uXMZ")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 6;
-  else if (unit == "nanozero" || unit == "nXMZ")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 9;
-  else if (unit == "atomic-XMZ")
-    decimal_point = 0;
-  else
+  // Amounts are always XMZ with 11 decimal places; sub-units are not offered.
+  if (unit != "monzero" && unit != "XMZ")
   {
-    fail_msg_writer() << tr("invalid unit");
+    fail_msg_writer() << tr("invalid unit: Monzero amounts are always entered and shown in XMZ");
     return true;
-  }
-
-  const auto pwd_container = get_and_verify_password();
-  if (pwd_container)
-  {
-    cryptonote::set_default_decimal_point(decimal_point);
-    m_wallet->rewrite(m_wallet_file, pwd_container->password());
   }
   return true;
 }
@@ -3526,8 +3509,8 @@ simple_wallet::simple_wallet()
                                   "ask-password <0|1|2   (or never|action|decrypt)>\n "
                                   "  action: ask the password before many actions such as transfer, etc\n "
                                   "  decrypt: same as action, but keeps the spend key encrypted in memory when not needed\n "
-                                  "unit <monzero|XMZ|millizero|mXMZ|microzero|uXMZ|nanozero|nXMZ|atomic-XMZ>\n "
-                                  "  Set the default Monzero (sub-)unit.\n "
+                                  "unit <monzero|XMZ>\n "
+                                  "  Amounts are always shown in XMZ (11 decimal places).\n "
                                   "min-outputs-count [n]\n "
                                   "  Try to keep at least that many outputs of value at least min-outputs-value.\n "
                                   "min-outputs-value [n]\n "
@@ -4059,7 +4042,7 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("refresh-type", set_refresh_type, tr("full (slowest, no assumptions); optimize-coinbase (fast, assumes the whole coinbase is paid to a single address); no-coinbase (fastest, assumes we receive no coinbase transaction), default (same as optimize-coinbase)"));
     CHECK_SIMPLE_VARIABLE("priority", set_default_priority, tr("0, 1, 2, 3, or 4, or one of ") << join_priority_strings(", "));
     CHECK_SIMPLE_VARIABLE("ask-password", set_ask_password, tr("0|1|2 (or never|action|decrypt)"));
-    CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("monzero, XMZ, millizero, mXMZ, microzero, uXMZ, nanozero, nXMZ, atomic-XMZ"));
+    CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("monzero, XMZ"));
     CHECK_SIMPLE_VARIABLE("max-reorg-depth", set_max_reorg_depth, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("min-outputs-count", set_min_output_count, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("min-outputs-value", set_min_output_value, tr("amount"));
@@ -5378,6 +5361,12 @@ boost::optional<epee::wipeable_string> simple_wallet::open_wallet(const boost::p
         m_wallet->rewrite(m_wallet_file, password);
       }
     }
+  }
+  catch (const tools::error::not_monzero_wallet& e)
+  {
+    // Removing the cache cannot help: the keys file itself is not Monzero's
+    fail_msg_writer() << tr("failed to load wallet: ") << e.what();
+    return {};
   }
   catch (const std::exception& e)
   {
