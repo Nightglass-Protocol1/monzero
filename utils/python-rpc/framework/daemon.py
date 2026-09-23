@@ -393,6 +393,35 @@ class Daemon(object):
         }
         return self.rpc.send_json_rpc_request(get_output_distribution)
 
+    def get_assets(self, offset = 0, count = 100, client = ""):
+        get_assets = {
+            'method': 'get_assets',
+            'params': {
+                'client': client,
+                'offset': offset,
+                'count': count,
+            },
+            'jsonrpc': '2.0',
+            'id': '0'
+        }
+        return self.rpc.send_json_rpc_request(get_assets)
+
+    def get_asset_outputs(self, asset_id = "", offset = 0, count = 100, indices = [], output_ids = [], client = ""):
+        get_asset_outputs = {
+            'method': 'get_asset_outputs',
+            'params': {
+                'client': client,
+                'asset_id': asset_id,
+                'offset': offset,
+                'count': count,
+                'indices': indices,
+                'output_ids': output_ids,
+            },
+            'jsonrpc': '2.0',
+            'id': '0'
+        }
+        return self.rpc.send_json_rpc_request(get_asset_outputs)
+
     def get_output_histogram(self, amounts = [], min_count = 0, max_count = 0, unlocked = False, recent_cutoff = 0, client = ""):
         get_output_histogram = {
             'method': 'get_output_histogram',
