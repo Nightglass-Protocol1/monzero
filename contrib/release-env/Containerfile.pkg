@@ -1,0 +1,2 @@
+FROM localhost/monzero-build-env:jammy
+RUN apt-get update && apt-get install --no-install-recommends -y zip unzip && rm -rf /var/lib/apt/lists/*
