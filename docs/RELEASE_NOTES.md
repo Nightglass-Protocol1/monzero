@@ -36,6 +36,15 @@ not qualified by this candidate.
   nXMZ, and atomic-XMZ display units are removed; `set unit` accepts only
   `XMZ`. A prerelease wallet that had selected mXMZ, uXMZ, or nXMZ opens and
   is reset to XMZ.
+- **Wallets created before the node is reachable now find their funds.**
+  A new wallet that could not ask a node for the current height estimated it
+  from the date using placeholder hard-fork times, giving a start height near
+  14.9 million on a chain of about 1,000 blocks. The wallet then skipped every
+  block and never showed incoming XMZ; the GUI, which creates wallets while
+  its node is still starting, logged repeated `no_connection_to_daemon`
+  errors. A start height above the node's chain and sync target is now
+  treated as impossible and the wallet scans from block 0. Affected wallets
+  from earlier prereleases are repaired the first time they refresh.
 - The wallet RPC now rejects `relay_tx` when the transaction's pending inputs
   no longer match the open wallet.
 - `stop-mining.bat` and `stop-monzero-miner.sh` wait up to 120 seconds for the
@@ -58,23 +67,21 @@ not qualified by this candidate.
 
 ## Source-tree verification performed
 
-- All 23 `ctest` suites pass (100%) at source commit `e2af2cdbc` on the Linux
-  release workstation, run serially on 2026-09-23 (2,469 seconds total). This
-  includes `core_tests` (full consensus replay, 1,411 seconds),
-  `functional_tests_rpc`, `functional_tests_assets` (activated-regtest assets
-  on regtest only), `check_missing_rpc_methods`, `unit_tests`, and the
-  RandomX, hash-family, difficulty, and block-weight suites.
-- `unit_tests` reports 1,315 passing tests, including 8 new wallet-origin and
-  decimal-point tests; 2 hardware-dependent `is_hdd` tests are skipped.
+- All 23 `ctest` suites pass (100%) at source commit `e1b4adfd2` on the Linux
+  release workstation, run serially on 2026-09-23. This includes `core_tests`
+  (full consensus replay, 1,096 seconds), `functional_tests_rpc`,
+  `functional_tests_assets` (activated-regtest assets on regtest only),
+  `check_missing_rpc_methods`, `unit_tests`, and the RandomX, hash-family,
+  difficulty, and block-weight suites.
+- `unit_tests` reports 1,318 passing tests, including 11 new wallet-origin,
+  decimal-point, and refresh-height tests; 2 hardware-dependent `is_hdd` tests
+  are skipped.
+- On regtest, a wallet created while offline and then paid 80 coinbase
+  outputs found 15,252.95 XMZ after refreshing; the pre15 build before this
+  fix found 0.
 - The functional suites must run one at a time; parallel `ctest -j` runs make
   them collide on local ports. `node_server.race_condition` can abort
   intermittently when run immediately after them; it passes on rerun.
-- Linux and Windows binaries built from this commit in the pinned environment
-  report version `0.18.5.1-e2af2cdbc`. On a clean Ubuntu 24.04 VM the Linux
-  daemon synchronized from the public nodes and the CLI created a wallet. On a
-  clean Windows 11 VM, `start-node.bat` synchronized, `start-mining.bat` and
-  `stop-mining.bat` succeeded, a wallet was created, and a Monero wallet file
-  was refused.
 
 These are source-tree results. They do not qualify a particular binary archive
 without matching artifact evidence, and they are not an independent security review.
