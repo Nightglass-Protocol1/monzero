@@ -36,6 +36,9 @@
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/tx_extra.h"
 #include "cryptonote_core/cryptonote_tx_utils.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
+#include "cryptonote_config.h"
+#include "misc_language.h"
 
 namespace
 {
@@ -180,14 +183,29 @@ TEST(parse_and_validate_tx_extra, fails_on_wrong_size_in_extra_nonce)
 }
 TEST(validate_parse_amount_case, validate_parse_amount)
 {
+  // parse_amount uses the process-wide decimal point, which loading a wallet
+  // file can change. Pin XMZ's 11 decimals and restore the previous value.
+  const unsigned int previous_decimal_point = cryptonote::get_default_decimal_point();
+  cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT);
+  const auto restore_decimal_point = epee::misc_utils::create_scope_leave_handler([previous_decimal_point]{
+    cryptonote::set_default_decimal_point(previous_decimal_point);
+  });
+
   uint64_t res = 0;
   bool r = cryptonote::parse_amount(res, "0.0001");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000000);
+  ASSERT_EQ(res, 10000000);
+
+  r = cryptonote::parse_amount(res, "0.00000000001");
+  ASSERT_TRUE(r);
+  ASSERT_EQ(res, 1);
+
+  r = cryptonote::parse_amount(res, "0.000000000001");
+  ASSERT_FALSE(r);
 
   r = cryptonote::parse_amount(res, "100.0001");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000100000000);
+  ASSERT_EQ(res, 10000010000000);
 
   r = cryptonote::parse_amount(res, "000.0000");
   ASSERT_TRUE(r);
@@ -200,11 +218,11 @@ TEST(validate_parse_amount_case, validate_parse_amount)
 
   r = cryptonote::parse_amount(res, "   100.0001    ");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000100000000);
+  ASSERT_EQ(res, 10000010000000);
 
   r = cryptonote::parse_amount(res, "   100.0000    ");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000000000000);
+  ASSERT_EQ(res, 10000000000000);
 
   r = cryptonote::parse_amount(res, "   100. 0000    ");
   ASSERT_FALSE(r);
