@@ -10,7 +10,7 @@
   "genesis_nonce": 2271206363,
   "genesis_hash": "84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4",
   "published_at": "2026-09-18T14:15:00Z",
-  "revised_at": "2026-09-18T14:15:00Z",
+  "revised_at": "PUBLISH_TIME_UTC",
   "gui_package_revision": 1,
   "security_audit": "not_completed",
   "signing": "unsigned",
@@ -37,8 +37,10 @@
       "filename": "monzero-genesis-pre14-linux-x86_64.tar.gz",
       "size_bytes": 18269959,
       "sha256": "aff64882b80e2b3fd528e071c1d56b5605e73ce311b26a16dbb3eb2a8bcdc0d1",
-      "minimum_glibc": "2.31",
-      "tests": "1305_unit_tests_and_20_ctest_suites_passed_locally_built_with_ordinary_toolchain_not_pinned_depends_environment_container_smoke_test_not_run"
+      "minimum_glibc": "2.38",
+      "tests": "1305_unit_tests_and_20_ctest_suites_passed_locally_built_with_ordinary_toolchain_not_pinned_depends_environment_container_smoke_test_not_run",
+      "withdrawn": true,
+      "withdrawn_reason": "Linked the build host's Boost, libsodium, ZeroMQ, unbound and hidapi libraries and required glibc 2.38; it does not start on Ubuntu 24.04. The earlier minimum_glibc value of 2.31 was incorrect. Use the Genesis pre15 Linux package."
     },
     {
       "platform": "windows-x64",
