@@ -81,6 +81,7 @@ set(unit_tests_sources
   output_distribution.cpp
   parse_amount.cpp
   pending_input_validation.cpp
+  refresh_start_height.cpp
   pruning.cpp
   random.cpp
   rolling_median.cpp

@@ -51,6 +51,7 @@ using namespace epee;
 #include "cryptonote_core/tx_sanity_check.h"
 #include "wallet_rpc_helpers.h"
 #include "wallet2.h"
+#include "refresh_start_height.h"
 #include "wallet_args.h"
 #include "cryptonote_basic/asset_wire.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
@@ -4237,6 +4238,23 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   // pull the first set of blocks
   get_short_chain_history(short_chain_history, (m_first_refresh_done || trusted_daemon) ? 1 : FIRST_REFRESH_GRANULARITY);
   m_run.store(true, std::memory_order_relaxed);
+  if (m_refresh_from_block_height > m_blockchain.size())
+  {
+    std::string err, target_err;
+    const uint64_t daemon_height = get_daemon_blockchain_height(err);
+    const uint64_t target_height = get_daemon_blockchain_target_height(target_err);
+    if (err.empty())
+    {
+      const uint64_t plausible = plausible_refresh_start_height(m_refresh_from_block_height,
+          daemon_height, target_err.empty() ? target_height : 0);
+      if (plausible != m_refresh_from_block_height)
+      {
+        MWARNING("refresh-from-block-height " << m_refresh_from_block_height << " is above the daemon's chain ("
+            << daemon_height << "); scanning from block " << plausible << " instead");
+        m_refresh_from_block_height = plausible;
+      }
+    }
+  }
   if (start_height > m_blockchain.size() || m_refresh_from_block_height > m_blockchain.size() || m_skip_to_height > m_blockchain.size()) {
     if (!start_height)
       start_height = std::max(m_refresh_from_block_height, m_skip_to_height);;
