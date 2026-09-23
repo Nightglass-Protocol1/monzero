@@ -46,6 +46,9 @@ BEGIN_INIT_SIMPLE_FUZZER()
 
   wallet->init("", boost::none, "", 0, true, epee::net_utils::ssl_support_t::e_ssl_support_disabled);
   wallet->set_subaddress_lookahead(1, 1);
+  // Keys encrypted in memory would reach sign_tx without the decryption a
+  // real client performs after asking for the password.
+  wallet->ask_password(tools::wallet2::AskPasswordNever);
   wallet->generate("", "", spendkey, true, false);
 END_INIT_SIMPLE_FUZZER()
 
