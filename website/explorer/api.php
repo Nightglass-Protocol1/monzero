@@ -36,8 +36,9 @@ try {
 
         case 'block':
             $params = ['fill_pow_hash' => true];
-            if (isset($input['height']) && is_numeric($input['height'])) {
-                $params['height'] = max(0, (int)$input['height']);
+            $height = $input['height'] ?? null;
+            if (is_int($height) && $height >= 0 || is_string($height) && ctype_digit($height)) {
+                $params['height'] = (int)$height;
             } elseif (validHash($input['hash'] ?? '')) {
                 $params['hash'] = strtolower($input['hash']);
             } else {
