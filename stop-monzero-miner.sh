@@ -4,7 +4,7 @@ set -euo pipefail
 RPC_PORT="${MONZERO_RPC_PORT:-6175}"
 RPC_URL="http://127.0.0.1:$RPC_PORT"
 
-response="$(curl --silent --show-error --fail --max-time 10 \
+response="$(curl --silent --show-error --fail --max-time 120 \
   --header 'Content-Type: application/json' \
   --data '{}' "$RPC_URL/stop_mining")"
 

@@ -51,6 +51,7 @@ using namespace epee;
 #include "cryptonote_core/tx_sanity_check.h"
 #include "wallet_rpc_helpers.h"
 #include "wallet2.h"
+#include "refresh_start_height.h"
 #include "wallet_args.h"
 #include "cryptonote_basic/asset_wire.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
@@ -127,6 +128,9 @@ using namespace cryptonote;
 
 #define SUBADDRESS_LOOKAHEAD_MAJOR 50
 #define SUBADDRESS_LOOKAHEAD_MINOR 200
+
+// Written to every keys file; a keys file without it must prove Monzero origin
+#define MONZERO_WALLET_FORMAT 1
 
 #define KEY_IMAGE_EXPORT_FILE_MAGIC "Monero key image export\003"
 
@@ -1240,6 +1244,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_is_initialized(false),
   m_kdf_rounds(kdf_rounds),
   is_old_file_format(false),
+  m_keys_file_needs_monzero_marker(false),
   m_watch_only(false),
   m_multisig(false),
   m_multisig_threshold(0),
@@ -4233,6 +4238,23 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   // pull the first set of blocks
   get_short_chain_history(short_chain_history, (m_first_refresh_done || trusted_daemon) ? 1 : FIRST_REFRESH_GRANULARITY);
   m_run.store(true, std::memory_order_relaxed);
+  if (m_refresh_from_block_height > m_blockchain.size())
+  {
+    std::string err, target_err;
+    const uint64_t daemon_height = get_daemon_blockchain_height(err);
+    const uint64_t target_height = get_daemon_blockchain_target_height(target_err);
+    if (err.empty())
+    {
+      const uint64_t plausible = plausible_refresh_start_height(m_refresh_from_block_height,
+          daemon_height, target_err.empty() ? target_height : 0);
+      if (plausible != m_refresh_from_block_height)
+      {
+        MWARNING("refresh-from-block-height " << m_refresh_from_block_height << " is above the daemon's chain ("
+            << daemon_height << "); scanning from block " << plausible << " instead");
+        m_refresh_from_block_height = plausible;
+      }
+    }
+  }
   if (start_height > m_blockchain.size() || m_refresh_from_block_height > m_blockchain.size() || m_skip_to_height > m_blockchain.size()) {
     if (!start_height)
       start_height = std::max(m_refresh_from_block_height, m_skip_to_height);;
@@ -4866,6 +4888,10 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const crypt
   value2.SetInt(cryptonote::get_default_decimal_point());
   json.AddMember("default_decimal_point", value2, json.GetAllocator());
 
+  // Identifies the keys file as a Monzero wallet; see load_keys_buf.
+  value2.SetInt(MONZERO_WALLET_FORMAT);
+  json.AddMember("monzero_wallet_format", value2, json.GetAllocator());
+
   value2.SetInt(m_merge_destinations ? 1 :0);
   json.AddMember("merge_destinations", value2, json.GetAllocator());
 
@@ -5109,6 +5135,16 @@ bool wallet2::load_keys(const std::string& keys_file_name, const epee::wipeable_
       decrypt_keys(keys_to_encrypt.get());
     m_keys_file_locker.reset();
   }
+  // Rewrite a pre-marker Monzero keys file so it carries the marker. The keys
+  // are in their normal loaded state here, as for rewrite(). The rewrite above
+  // already stores the marker, so only one of the two runs.
+  else if (r && m_keys_file_needs_monzero_marker)
+  {
+    if (!store_keys(keys_file_name, password, m_watch_only))
+      MERROR("Error saving keys file with the Monzero wallet marker, not fatal");
+    m_keys_file_locker.reset();
+  }
+  m_keys_file_needs_monzero_marker = false;
   return r;
 }
 //----------------------------------------------------------------------------------------------------
@@ -5123,6 +5159,10 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
   rapidjson::Document json;
   wallet2::keys_file_data keys_file_data;
   bool encrypted_secret_keys = false;
+  // Checked once the password is known to be correct, see below
+  int stored_decimal_point = -1;
+  int stored_monzero_wallet_format = 0;
+  bool pre_json_format = false;
   bool r = ::serialization::parse_binary(keys_buf, keys_file_data);
   THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "internal error: failed to deserialize keys buffer");
   crypto::chacha_key key;
@@ -5152,6 +5192,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
   if (json.Parse(account_data.c_str()).HasParseError())
   {
     is_old_file_format = true;
+    pre_json_format = true;
     m_watch_only = false;
     m_multisig = false;
     m_multisig_threshold = 0;
@@ -5328,8 +5369,10 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_confirm_non_default_ring_size = field_confirm_non_default_ring_size;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, ask_password, AskPasswordType, Int, false, AskPasswordToDecrypt);
     m_ask_password = field_ask_password;
-    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, default_decimal_point, int, Int, false, CRYPTONOTE_DISPLAY_DECIMAL_POINT);
-    cryptonote::set_default_decimal_point(field_default_decimal_point);
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, default_decimal_point, int, Int, false, -1);
+    stored_decimal_point = field_default_decimal_point;
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, monzero_wallet_format, int, Int, false, 0);
+    stored_monzero_wallet_format = field_monzero_wallet_format;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, max_reorg_depth, uint64_t, Uint64, false, ORPHANED_BLOCKS_MAX_COUNT);
     m_max_reorg_depth = field_max_reorg_depth;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, min_output_count, uint32_t, Uint, false, 0);
@@ -5482,6 +5525,35 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
   r = epee::serialization::load_t_from_binary(m_account, account_data);
   THROW_WALLET_EXCEPTION_IF(!r, error::invalid_password);
+
+  // The password is correct, so the file's contents can be trusted to be what
+  // was stored. Only open keys files that Monzero wrote: a file carrying the
+  // Monzero marker, or a pre-marker Monzero file identified by a decimal point
+  // that only Monzero ever stored (11, or the former 8/5/2 display units).
+  // Monero and other CryptoNote wallets store 12/9/6/3/0 or the pre-JSON
+  // format, and must be rejected rather than silently reinterpreted.
+  bool needs_monzero_marker = false;
+  m_keys_file_needs_monzero_marker = false;
+  if (pre_json_format)
+  {
+    THROW_WALLET_EXCEPTION(error::not_monzero_wallet);
+  }
+  else if (stored_monzero_wallet_format == MONZERO_WALLET_FORMAT)
+  {
+    THROW_WALLET_EXCEPTION_IF(stored_decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT, error::not_monzero_wallet);
+  }
+  else
+  {
+    THROW_WALLET_EXCEPTION_IF(stored_monzero_wallet_format != 0, error::not_monzero_wallet);
+    THROW_WALLET_EXCEPTION_IF(stored_decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT
+      && stored_decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT - 3
+      && stored_decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT - 6
+      && stored_decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT - 9, error::not_monzero_wallet);
+    needs_monzero_marker = !m_is_background_wallet;
+  }
+  cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT);
+  m_keys_file_needs_monzero_marker = needs_monzero_marker;
+
   if (m_key_device_type == hw::device::device_type::LEDGER || m_key_device_type == hw::device::device_type::TREZOR) {
     LOG_PRINT_L0("Account on device. Initing device...");
     hw::device &hwdev = lookup_device(m_device_name);

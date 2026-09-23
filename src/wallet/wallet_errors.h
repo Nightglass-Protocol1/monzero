@@ -61,6 +61,7 @@ namespace tools
     //       file_read_error
     //       file_save_error
     //       invalid_password
+    //       not_monzero_wallet
     //       invalid_priority
     //       invalid_multisig_seed
     //       invalid_spend_key
@@ -283,6 +284,16 @@ namespace tools
     {
       explicit invalid_password(std::string&& loc)
         : wallet_logic_error(std::move(loc), "invalid password")
+      {
+      }
+
+      std::string to_string() const { return wallet_logic_error::to_string(); }
+    };
+    struct not_monzero_wallet : public wallet_logic_error
+    {
+      explicit not_monzero_wallet(std::string&& loc)
+        : wallet_logic_error(std::move(loc), "this wallet file was not created by Monzero and cannot be opened. "
+            "Never reuse a Monero or other CryptoNote wallet with Monzero; create a new Monzero wallet instead")
       {
       }
 

@@ -1259,22 +1259,11 @@ namespace cryptonote
   //---------------------------------------------------------------
   void set_default_decimal_point(unsigned int decimal_point)
   {
-    switch (decimal_point)
-    {
-      case 11:
-      case 8:
-      case 5:
-      case 2:
-      case 12:
-      case 9:
-      case 6:
-      case 3:
-      case 0:
-        default_decimal_point = decimal_point;
-        break;
-      default:
-        ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
-    }
+    // XMZ amounts are only ever entered and displayed with 11 decimal places.
+    // Accepting any other scale would make parse_amount misread user input.
+    if (decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT)
+      ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
+    default_decimal_point = decimal_point;
   }
   //---------------------------------------------------------------
   unsigned int get_default_decimal_point()
@@ -1286,29 +1275,9 @@ namespace cryptonote
   {
     if (decimal_point == (unsigned int)-1)
       decimal_point = default_decimal_point;
-    switch (decimal_point)
-    {
-      case 11:
-        return "XMZ";
-      case 8:
-        return "mXMZ";
-      case 5:
-        return "uXMZ";
-      case 2:
-        return "nXMZ";
-      case 0:
-        return "atomic XMZ";
-      case 12:
-        return "monero";
-      case 9:
-        return "millinero";
-      case 6:
-        return "micronero";
-      case 3:
-        return "nanonero";
-      default:
-        ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
-    }
+    if (decimal_point != CRYPTONOTE_DISPLAY_DECIMAL_POINT)
+      ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
+    return "XMZ";
   }
   //---------------------------------------------------------------
   static void insert_money_decimal_point(std::string &s, unsigned int decimal_point)

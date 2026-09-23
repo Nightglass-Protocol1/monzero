@@ -694,11 +694,11 @@ TEST(Serialization, portability_wallet)
     w.load(wallet_file.string(), password);
     r = true;
   }
-  catch (const tools::error::wallet_internal_error&)
+  catch (const tools::error::not_monzero_wallet&)
   {
-    // This fixture contains the upstream genesis hash. Rejecting it is the
-    // required cross-network safety behavior; a Monzero portability fixture
-    // will replace it without weakening the check.
+    // This is an upstream Monero wallet. Refusing to open it is the required
+    // cross-network safety behavior; a Monzero portability fixture will
+    // replace it without weakening the check.
     return;
   }
   catch (const exception& e)

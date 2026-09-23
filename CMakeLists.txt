@@ -798,6 +798,9 @@ else()
     # mingw doesn't support LTO (multiple definition errors at link time)
     set(USE_LTO_DEFAULT false)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack,10485760")
+    # ld otherwise stamps the export table with the link time, so independent
+    # builds of the same commit can never produce identical executables.
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-insert-timestamp")
     if(NOT BUILD_64)
       add_definitions(-DWINVER=0x0600 -D_WIN32_WINNT=0x0600)
     endif()

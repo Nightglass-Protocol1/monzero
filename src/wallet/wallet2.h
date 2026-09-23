@@ -2131,6 +2131,7 @@ private:
     uint64_t m_kdf_rounds;
     std::string seed_language; /*!< Language of the mnemonics (seed). */
     bool is_old_file_format; /*!< Whether the wallet file is of an old file format */
+    bool m_keys_file_needs_monzero_marker; /*!< Whether load_keys must rewrite a pre-marker Monzero keys file */
     bool m_watch_only; /*!< no spend key */
     bool m_multisig; /*!< if > 1 spend secret key will not match spend public key */
     uint32_t m_multisig_threshold;

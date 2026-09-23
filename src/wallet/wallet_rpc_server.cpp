@@ -39,6 +39,7 @@ using namespace epee;
 
 #include "version.h"
 #include "wallet_rpc_server.h"
+#include "pending_input_validation.h"
 #include "wallet/wallet_args.h"
 #include "common/command_line.h"
 #include "common/i18n.h"
@@ -147,7 +148,7 @@ namespace
   const command_line::arg_descriptor<std::size_t> arg_rpc_max_connections = {"rpc-max-connections", "Max RPC connections permitted", DEFAULT_RPC_MAX_CONNECTIONS};
   const command_line::arg_descriptor<std::size_t> arg_rpc_response_soft_limit = {"rpc-response-soft-limit", "Max response bytes that can be queued, enforced at next response attempt", DEFAULT_RPC_SOFT_LIMIT_SIZE};
 
-  constexpr const char default_rpc_username[] = "monero";
+  constexpr const char default_rpc_username[] = "monzero";
 
   boost::optional<tools::password_container> password_prompter(const char *prompt, bool verify)
   {
@@ -2145,6 +2146,14 @@ namespace tools
 
     try
     {
+      // RPC handlers and auto-refresh share the single server thread.
+      if (!pending_inputs_match_wallet(ptx.tx, ptx.selected_transfers, m_wallet->get_num_transfer_details(),
+          [this](size_t idx) -> const wallet2::transfer_details& { return m_wallet->get_transfer_details(idx); }))
+      {
+        er.code = WALLET_RPC_ERROR_CODE_BAD_TX_METADATA;
+        er.message = "Pending transaction inputs do not match the open wallet.";
+        return false;
+      }
       m_wallet->commit_tx(ptx);
     }
     catch(const std::exception &e)

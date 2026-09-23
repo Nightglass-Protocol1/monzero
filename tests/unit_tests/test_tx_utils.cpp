@@ -36,6 +36,8 @@
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/tx_extra.h"
 #include "cryptonote_core/cryptonote_tx_utils.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
+#include "cryptonote_config.h"
 
 namespace
 {
@@ -178,16 +180,38 @@ TEST(parse_and_validate_tx_extra, fails_on_wrong_size_in_extra_nonce)
   std::vector<cryptonote::tx_extra_field> tx_extra_fields;
   ASSERT_FALSE(cryptonote::parse_tx_extra(tx.extra, tx_extra_fields));
 }
+TEST(validate_parse_amount_case, only_xmz_decimal_point_is_accepted)
+{
+  ASSERT_EQ(11u, CRYPTONOTE_DISPLAY_DECIMAL_POINT);
+  EXPECT_NO_THROW(cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT));
+  for (const unsigned int decimal_point: {12u, 9u, 8u, 6u, 5u, 3u, 2u, 0u, 10u})
+  {
+    EXPECT_THROW(cryptonote::set_default_decimal_point(decimal_point), std::exception) << decimal_point;
+    EXPECT_THROW(cryptonote::get_unit(decimal_point), std::exception) << decimal_point;
+  }
+  EXPECT_EQ(CRYPTONOTE_DISPLAY_DECIMAL_POINT, cryptonote::get_default_decimal_point());
+  EXPECT_EQ("XMZ", cryptonote::get_unit());
+}
+
 TEST(validate_parse_amount_case, validate_parse_amount)
 {
+  ASSERT_EQ(CRYPTONOTE_DISPLAY_DECIMAL_POINT, cryptonote::get_default_decimal_point());
+
   uint64_t res = 0;
   bool r = cryptonote::parse_amount(res, "0.0001");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000000);
+  ASSERT_EQ(res, 10000000);
+
+  r = cryptonote::parse_amount(res, "0.00000000001");
+  ASSERT_TRUE(r);
+  ASSERT_EQ(res, 1);
+
+  r = cryptonote::parse_amount(res, "0.000000000001");
+  ASSERT_FALSE(r);
 
   r = cryptonote::parse_amount(res, "100.0001");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000100000000);
+  ASSERT_EQ(res, 10000010000000);
 
   r = cryptonote::parse_amount(res, "000.0000");
   ASSERT_TRUE(r);
@@ -200,11 +224,11 @@ TEST(validate_parse_amount_case, validate_parse_amount)
 
   r = cryptonote::parse_amount(res, "   100.0001    ");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000100000000);
+  ASSERT_EQ(res, 10000010000000);
 
   r = cryptonote::parse_amount(res, "   100.0000    ");
   ASSERT_TRUE(r);
-  ASSERT_EQ(res, 100000000000000);
+  ASSERT_EQ(res, 10000000000000);
 
   r = cryptonote::parse_amount(res, "   100. 0000    ");
   ASSERT_FALSE(r);
