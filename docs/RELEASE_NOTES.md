@@ -58,6 +58,10 @@ not qualified by this candidate.
   C library. The pre14 Linux archive linked the build host's Boost, libsodium,
   ZeroMQ, unbound, and hidapi libraries, required glibc 2.38, and did not
   start on Ubuntu 24.04.
+- Windows executables no longer embed their link time, so independent builds
+  of the same commit produce identical Windows packages. A from-scratch
+  rebuild reproduced the Linux package byte for byte; before this change the
+  Windows executables differed only in that timestamp.
 - Test fixes: the amount-parsing test uses 11 decimals, the Python RPC test
   framework covers `get_assets` and `get_asset_outputs`, and wallet storage
   tests use Monzero wallet fixtures.
@@ -67,7 +71,8 @@ not qualified by this candidate.
 
 ## Source-tree verification performed
 
-- All 23 `ctest` suites pass (100%) at source commit `e1b4adfd2` on the Linux
+- All 23 `ctest` suites pass (100%) at source commit `e1b4adfd2` (later
+  commits change only documentation and the Windows linker flags) on the Linux
   release workstation, run serially on 2026-09-23. This includes `core_tests`
   (full consensus replay, 1,096 seconds), `functional_tests_rpc`,
   `functional_tests_assets` (activated-regtest assets on regtest only),
