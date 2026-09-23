@@ -31,6 +31,13 @@ Options -Indexes
   ForceType application/zip
 </FilesMatch>
 
+# Checksum files are named after their archive (for example .tar.gz.sha256).
+# Without this, Apache takes the type from the .gz/.zip part of the name and
+# nosniff then makes browsers treat the checksum as a binary download.
+<FilesMatch "\.sha256$">
+  ForceType "text/plain; charset=utf-8"
+</FilesMatch>
+
 <FilesMatch "\.ps1$">
   ForceType text/plain
   <IfModule mod_headers.c>
