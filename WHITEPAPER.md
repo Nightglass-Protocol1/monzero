@@ -1,6 +1,6 @@
 # Monzero: An Independent Privacy-Preserving Digital Currency
 
-**Protocol paper, draft 1.3 — 11 September 2026**
+**Protocol paper, draft 1.4 — 26 September 2026**
 
 ## Abstract
 
@@ -263,18 +263,24 @@ activity.
 
 ## 9. Peer-to-peer exchange research
 
-The graphical-wallet source contains an opt-in, private DEX research build.
-Its intended first market family is BTC/XMZ, LTC/XMZ, and BCH/XMZ. External
-coins provide trade principal and pay their own native miner fees; the Monzero
-protocol fee is denominated only in XMZ. A user buying XMZ may begin with no
-XMZ, because a successful acquisition can deduct the disclosed protocol and
-Monzero network fees from the XMZ being delivered. For external-coin-to-
-external-coin trades through this protocol, the trader must separately obtain
-enough XMZ for the disclosed protocol fee. This policy applies only to this
-protocol and cannot impose fees on activity conducted elsewhere.
+The graphical-wallet source contains an opt-in DEX research build, separate
+from published wallet packages. BTC/XMZ is the existing foundation. The market
+registry also represents LTC, BCH, XMR, DOGE, ETH and native THORChain RUNE;
+selecting a coin or displaying a quote does not authorize execution. All public
+market activation gates remain closed.
 
-The current prototype implements non-executable security evidence rather than
-a live exchange. It includes canonical Ed25519-signed offers, cancellations
+The initial application trading fee is zero, separate from network fees. The
+current exact-payment policy delivers the signed XMZ principal in full: a
+separate buyer-funded reserve covers its network fee and unused reserve returns
+to the agreed address. Earlier proposals to deduct fees from quoted proceeds
+are superseded by this policy. Future application-fee rules, price references,
+cancellation-fee responsibility and reserve funding for buyers without XMZ
+still require decisions and implementation. A quote cannot guarantee liquidity
+or impose prices or fees on activity outside this protocol.
+
+### 9.1 Signed market evidence and message recovery
+
+The market-facing prototype implements non-executable security evidence. It includes canonical Ed25519-signed offers, cancellations
 and settlement quotes; a validating persistent order book; deterministic
 crossing and crash-safe fill reservations; replay-resistant quote and relay
 stores; read-only chain and wallet observations; Bitcoin SegWit-v0 sighash,
@@ -321,15 +327,78 @@ extended, oversized, noncanonical, mutated, expired, or cross-deployment frames
 before returning opaque evidence. The codec does not open a socket or discover a
 peer.
 
-Every prototype result remains `executable=false`. The build contains no live
-signing or transaction-broadcast authority, and its activation checks remain
-closed. Complete chain adapters, peer transport, production fee estimation,
-liquidity mechanisms, end-to-end isolated-network execution and recovery,
-adversarial multi-party testing, independent cryptographic and implementation
-review, reproducible packages, release signing, and applicable legal review
-remain prerequisites for activation. The local Linux development build passed
-38 focused DEX tests on 11 September 2026, but it is not the published Genesis
-pre13 binary and must not be represented as a working or production DEX.
+### 9.2 Settlement evidence as of 26 September 2026
+
+Native execution controllers now sign and relay transactions in controlled,
+disposable test networks. This is distinct from the non-executable market
+interface; it does not enable real-money trading. Test results remain
+`executable=false`, and complete recovery coverage remains unverified.
+
+| Market | Implemented and verified | Remaining scope |
+| --- | --- | --- |
+| BTC/XMZ | Existing isolated exact-payment and recovery foundation, including lost-reply and wrong-wallet checks | Complete GUI workflow, broad adversarial coverage and release acceptance |
+| LTC/XMZ | Authenticated key exchange, signed payout/reserve terms, durable execution journals, complete isolated success path and cancellation/refund path | Broader interruption and reorganisation coverage, GUI execution and independent review |
+| DOGE | Eight-decimal preview; actual isolated P2SH timelock and refund primitive on two Linux hosts | Dogecoin-compatible cross-chain protocol, production signing and complete settlement/recovery |
+| ETH | Exact 18-decimal previews with 256-bit wei amounts | Contract settlement, gas/nonce handling, recovery and contract tests |
+| XMR | Twelve-decimal preview; explicit sequential routing in scope | Route execution, separate per-leg fees, failure handling and recovery |
+| Native RUNE | Eight-decimal preview for native THORChain RUNE | Native-chain route integration, execution and recovery; no ERC-20 substitution |
+| BCH | Retained market representation | Its own settlement and recovery acceptance before activation |
+
+The Litecoin success fixture uses the production controllers with isolated
+Litecoin regtest and XMZ fakechain nodes. It verifies both funding legs,
+Litecoin redemption, adaptor-based native key recovery, restored spend-wallet
+access, exact native principal delivery, unused reserve return and funding-fee
+accounting. Complete cancellation/refund fixtures passed on both Linux hosts:
+premature Litecoin cancellation is rejected, a mature cancellation/refund is
+confirmed, and the recovered XMZ balance is paid to the signed refund address
+within its fee ceiling. In the recorded refund fixture, a 2 XMZ lock yields
+1.9903552 XMZ to the recipient and a 0.0096448 XMZ network fee. These amounts
+describe that test, not a fixed fee schedule.
+
+Persistence retains exact prepared transactions and private proof material
+before relay. Focused tests cover uncertain broadcast replies, deliberate
+retransmission, missing or altered committed records, offline reloads,
+confirmation loss and wallet-cache reconstruction. Subaddress payments,
+coincident principal/reserve destinations, zero reserve returns and rejection
+of a substituted watch-only wallet have isolated test evidence. Passing these
+cases does not prove every crash, peer failure or chain reorganisation safe.
+
+Dogecoin fixtures passed on both hosts using disposable Dogecoin 1.14.9 regtest
+nodes. A 10 DOGE lock rejects early refund and an incorrect transaction
+locktime; the mature refund pays 9.99 DOGE with a 0.01 DOGE fee. This validates
+a timelock primitive only. No DOGE/XMZ swap, production signer, adaptor protocol
+or mainnet compatibility claim follows from that result.
+
+### 9.3 GUI boundary and unfinished validation
+
+A native read-only Litecoin journal helper and a GUI saved-trade panel are
+implemented. Full GUI builds, focused C++ checks and seven QML presentation
+checks passed on both Linux hosts. The actual helper also read a completed
+refund journal successfully. Saved journal state is explicitly not a fresh
+chain confirmation and cannot grant execution authority.
+
+The full actual Qt-to-helper handoff remains unverified. An initial integration
+run correctly rejected a hardlinked build executable; the fixture now installs
+a private single-link copy without weakening the executable check. Its rerun
+was interrupted at the development stopping point before a result.
+
+A new native refund-review API binds the reviewed destination, amount, fee,
+trade, journal state and send-versus-retry action to the retained payment.
+Focused commitment tests and compilation passed on both hosts. Its expanded
+controller cases and complete actual-chain approval-bound refund reruns remain
+unfinished; the latter were stopped before completion. A review token alone
+does not prove user consent. Actual GUI send/retry controls and a deliberate
+approval gesture are still required.
+
+Explicit XMZ-to-BTC-to-XMR or other supported routes are intended as sequential
+trades, with separate quotes, fees, intermediate holdings and recovery for each
+leg. They are not an atomic all-or-nothing swap across the entire route. No XMR
+or native RUNE route is executable at this snapshot.
+
+Public peer discovery and transport, liquidity, pricing policy, complete
+per-market recovery, platform validation, independent security review and
+release acceptance remain prerequisites for activation. No new downloadable
+DEX release or completed audit is announced by this paper.
 
 ## 10. Security assumptions and limitations
 
@@ -422,25 +491,38 @@ package.
 
 ## 12. Status and roadmap
 
-The current project is an unsigned, unaudited prerelease. Genesis pre13 GUI
-revision 2 is the latest published candidate. It retains the chain identity
-introduced by Genesis pre10 and adds automatic synchronization for the managed
-local GUI daemon. Its exact Linux archive passed clean-container, multi-node,
-reorganization, transfer, and wallet-lifecycle testing; the Windows CLI passed
-native daemon testing, while interactive Windows GUI testing remains pending.
-The in-development DEX prototype described in Section 9 postdates those
-published binaries and is not part of the pre13 release. Compilation, focused
-tests, and checksum generation alone do not qualify either project for
-production.
+The project remains an unsigned, independently unaudited prerelease. The
+published Genesis pre15 manifest, dated 23 September 2026, pins core source
+`85d922cb09a5731712f69f799a8bd8004ff00a35` and GUI source
+`0018a58f2aeb1670ca6ab7c61b7c0de7d07ff9f8` (GUI package revision 1). It retains
+the pre10–pre14 chain identity. Release notes describe Monzero-only wallet-file
+acceptance, consistent 11-decimal XMZ amounts, repair of affected initial scan
+heights and a Linux glibc 2.35 baseline. Package evidence includes 23 CTest
+suites, 1,318 unit tests and documented Linux/Windows checks. Internal clean-room
+rebuilds are not independent reproduction or security review.
 
-The published release manifest pins core source
-`bddd92e435d66cef92478618b35c3812dfc34328` and GUI source
-`2e40a3a40c8a34494a6d67d7d26953897fd58181`. Its GUI package revision is 2,
-dated 7 September 2026. Exact filenames, sizes, and SHA-256 digests are recorded
-in [`website/releases/genesis-pre13.json`](website/releases/genesis-pre13.json).
-These identifiers describe the distributed packages, not the newer private DEX
-development tree. Updating this paper does not rebuild or replace those
-packages, and does not enable DEX trading in them.
+Exact package names, hashes and limitations are recorded in the
+[pre15 manifest](https://monzero.org/releases/genesis-pre15.json) and
+[release notes](https://monzero.org/releases/genesis-pre15-notes.txt).
+The newer DEX work in Section 9 is not included in those published packages.
+Updating this paper neither replaces binaries nor activates trading.
+
+The current DEX delivery sequence is:
+
+1. extend the verified Litecoin success/refund paths across interruption,
+   reorganisation and adversarial recovery scenarios;
+2. finish approval-bound refund validation and the actual GUI journal handoff,
+   then connect explicit funding, settlement and recovery controls;
+3. implement and verify each additional chain or sequential route independently;
+4. establish authenticated public test-network peers, available counterparties
+   and explicit price, fee and route policies; and
+5. complete platform, reproducibility and independent security review gates
+   before a separately approved release.
+
+The [public roadmap](https://monzero.org/roadmap/) distinguishes implemented
+components, isolated test evidence and unfinished acceptance gates. Development
+stopped after this documentation checkpoint on 26 September; interrupted tests
+are not recorded as passes. There is no committed live-trading launch date.
 
 Immediate work remains operational rather than promotional:
 
@@ -451,8 +533,8 @@ Immediate work remains operational rather than promotional:
 5. keep experimental asset and DEX work isolated until their separate
    activation gates are satisfied.
 
-Genesis pre13 and the public nodes use the network UUID, genesis nonce, and
-genesis hash recorded in Section 6. Pre10 through pre13 share that chain;
+Genesis pre15 retains the network UUID, genesis nonce, and
+genesis hash recorded in Section 6. Pre10 through pre15 share that chain;
 pre9 used a superseded identity and its balances and transaction history do
 not carry into the current genesis history. A network UUID is not a wallet
 recovery seed and changing it does not modify wallet keys, but users migrating
