@@ -75,13 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $installationId = $input['installation_id'] ?? '';
     $hashrate = filter_var($input['hashrate'] ?? null, FILTER_VALIDATE_FLOAT);
     $blocks = filter_var($input['blocks_found'] ?? null, FILTER_VALIDATE_INT);
+    // Older reporters omitted active; a positive speed is their only evidence
+    // of mining. New reporters can explicitly withdraw a stopped miner.
+    $active = $input['active'] ?? ($hashrate !== false && $hashrate > 0);
+    if (!is_bool($active)) fail(400, 'INVALID_ACTIVE_STATUS');
     if (!is_string($installationId) || !preg_match('/^[a-f0-9-]{32,64}$/i', $installationId)) fail(400, 'INVALID_INSTALLATION_ID');
     if ($hashrate === false || $hashrate < 0 || $hashrate > 1000000000000) fail(400, 'INVALID_HASHRATE');
     if ($blocks === false || $blocks < 0 || $blocks > 1000000000) fail(400, 'INVALID_BLOCK_COUNT');
 
     $privateId = hash_hmac('sha256', strtolower($installationId), $secret);
     $records[$privateId] = [
-        'hashrate' => round((float)$hashrate, 2),
+        'active' => $active,
+        'hashrate' => $active ? round((float)$hashrate, 2) : 0,
         'blocks_found' => (int)$blocks,
         'updated_at' => $now,
     ];
@@ -109,13 +114,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 $miners = [];
 foreach ($records as $id => $record) {
-    $active = (int)$record['updated_at'] >= $now - ACTIVE_SECONDS;
+    $active = (int)$record['updated_at'] >= $now - ACTIVE_SECONDS
+        && ($record['active'] ?? ((float)$record['hashrate'] > 0)) === true;
     if (!$active) continue;
     $miners[] = [
         'name' => 'Miner ' . strtoupper(substr($id, 0, 8)),
         'hashrate' => (float)$record['hashrate'],
         'blocks_found' => (int)$record['blocks_found'],
         'active' => true,
+        'last_seen' => (int)$record['updated_at'],
     ];
 }
 usort($miners, static fn(array $a, array $b): int => $b['hashrate'] <=> $a['hashrate']);
