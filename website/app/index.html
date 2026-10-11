@@ -3,111 +3,207 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Monzero beta asset, NFT and non-custodial swap workspace.">
+  <meta name="description" content="Create NFTs, editions, collections and tokens for Monzero. Your files stay in your browser; you get verifiable metadata and the exact wallet command.">
   <meta name="theme-color" content="#0b1118">
-  <title>Monzero Studio — Assets, NFTs and swaps</title>
-  <link rel="icon" href="../assets/monzero-xmz-coin.png">
-  <link rel="stylesheet" href="styles.css?v=20261011-nav">
-  <link rel="stylesheet" href="../theme.css?v=20261011-nav">
+  <title>Monzero Studio</title>
+  <link rel="icon" href="../assets/monzero-xmz-coin-96.webp" type="image/webp">
+  <link rel="stylesheet" href="styles.css?v=20261011-studio2">
+  <link rel="stylesheet" href="../theme.css?v=20261011-hero">
+  <link rel="stylesheet" href="studio.css?v=20261011-studio2">
 </head>
 <body data-page="studio">
-  <a class="skip-link" href="#workspace">Skip to Studio workspace</a>
+  <a class="skip-link" href="#create">Skip to the creator</a>
   <header class="site-header">
     <a class="brand" href="../" aria-label="Monzero home"><span>MZ</span><span>MONZERO <small>STUDIO</small></span></a>
     <nav aria-label="Primary navigation"><a href="../">Home</a><a href="../explorer/">Explorer</a><a href="./" aria-current="page">Studio</a><a href="../roadmap/">Roadmap</a><a href="../WHITEPAPER.md?rev=1.4-20260926">Whitepaper</a><a href="../security/">Security</a></nav>
     <a class="header-cta" href="../#download">Download <span aria-hidden="true">↗</span></a>
   </header>
 
-  <main>
-    <section class="intro">
+  <main class="st">
+    <section class="st-hero">
       <div>
-        <p class="eyebrow">Protocol laboratory · Local drafts only</p>
-        <h1>Design the intent.<br><em>Keep control.</em></h1>
-        <p>Shape fixed-supply tokens, NFTs, collections, and atomic-swap offers without handing over funds or keys. Studio exports inspectable local drafts; on-chain submission remains locked until activation and audit gates are satisfied.</p>
-        <div class="intro-badges"><span>No wallet connection</span><span>No custody</span><span>No submission</span></div>
+        <p class="eyebrow">Monzero Studio</p>
+        <h1>Mint something<br><em>worth keeping.</em></h1>
+        <p class="st-lead">Create NFTs, numbered editions, collections and fixed-supply tokens. Your artwork never leaves your browser. You get a verifiable metadata file and the exact wallet command to issue it.</p>
+        <div class="st-hero-actions">
+          <a class="st-btn" href="#create">Start creating</a>
+          <a class="st-btn ghost" href="#verify">Verify an NFT</a>
+        </div>
       </div>
-      <aside class="network-card">
-        <span class="label">Current public node</span>
-        <strong><i id="node-dot"></i><span id="node-state">Checking…</span></strong>
+      <aside class="st-status" aria-live="polite">
+        <div class="st-status-top"><i id="node-dot"></i><span id="node-state">Checking network…</span></div>
         <dl>
-          <div><dt>Height</dt><dd id="height">—</dd></div>
-          <div><dt>Peers</dt><dd id="peers">—</dd></div>
-          <div><dt>Chain tip</dt><dd id="tip">—</dd></div>
-          <div><dt>Asset protocol</dt><dd class="amber">Inactive</dd></div>
+          <div><dt>Block height</dt><dd id="height">—</dd></div>
+          <div><dt>On-chain assets</dt><dd id="asset-count">—</dd></div>
+          <div><dt>Asset protocol</dt><dd id="asset-state" class="amber">Not yet active</dd></div>
         </dl>
+        <p>Drafts you make today are ready to issue the moment assets activate. <a href="#activation">What's left before activation</a></p>
       </aside>
     </section>
 
-    <section class="workspace" id="workspace">
-      <div class="tabs" role="tablist" aria-label="Studio tools">
-        <button role="tab" aria-selected="true" data-panel="token">Token creator</button>
-        <button role="tab" aria-selected="false" data-panel="nft">NFT studio</button>
-        <button role="tab" aria-selected="false" data-panel="collections">Collections</button>
-        <button role="tab" aria-selected="false" data-panel="swap">Atomic swap</button>
+    <section class="st-create" id="create" aria-labelledby="create-title">
+      <div class="st-section-head">
+        <p class="eyebrow">Create</p>
+        <h2 id="create-title">What are you making?</h2>
+      </div>
+      <div class="st-kinds" role="radiogroup" aria-label="Asset type">
+        <button type="button" role="radio" aria-checked="true" data-kind="nft"><strong>NFT</strong><span>One of one</span></button>
+        <button type="button" role="radio" aria-checked="false" data-kind="edition"><strong>Edition</strong><span>Numbered copies</span></button>
+        <button type="button" role="radio" aria-checked="false" data-kind="collection"><strong>Collection</strong><span>Groups NFTs together</span></button>
+        <button type="button" role="radio" aria-checked="false" data-kind="fungible"><strong>Token</strong><span>Fixed supply</span></button>
       </div>
 
-      <article class="panel active" id="token" role="tabpanel">
-        <div class="panel-copy"><p class="eyebrow">Fixed supply</p><h2>Issue a token</h2><p>Supply is created once. No administrator mint, freeze, blacklist or clawback authority exists in V1.</p></div>
-        <form class="studio-form" data-type="token">
-          <label>Name <input name="name" type="text" maxlength="64" placeholder="Example Token" value="Nightshade Credit"></label>
-          <label>Symbol <input name="symbol" type="text" maxlength="12" placeholder="EXM" value="NSC"></label>
-          <div class="split"><label>Atomic supply <input name="atomic_supply" type="number" min="1" placeholder="1000000" value="1000000"></label><label>Decimals <input name="decimals" type="number" min="0" max="11" value="8"></label></div>
-          <label>Metadata content hash <input name="metadata_hash" type="text" maxlength="64" pattern="[0-9a-fA-F]{64}" placeholder="64 hexadecimal characters"></label>
-          <button type="submit">Download token draft</button>
-        </form>
-      </article>
+      <div class="st-workbench">
+        <form class="st-form" id="creator" novalidate>
+          <fieldset>
+            <legend><span>1</span> <span data-label-art>Artwork</span></legend>
+            <label class="st-drop" id="dropzone">
+              <input type="file" id="art-input" accept="image/png,image/jpeg,image/webp,image/gif,image/avif">
+              <span class="st-drop-icon" aria-hidden="true">＋</span>
+              <span class="st-drop-text"><span><strong>Drop an image</strong> or click to choose</span><small>PNG, JPEG, WebP, GIF or AVIF · up to 25 MB · stays on your device</small></span>
+            </label>
+            <p class="st-file-info" id="art-info" hidden></p>
+          </fieldset>
 
-      <article class="panel" id="nft" role="tabpanel" hidden>
-        <div class="panel-copy"><p class="eyebrow">One indivisible unit</p><h2>Mint an NFT</h2><p>Only a bounded metadata hash is committed to consensus. Images and descriptions remain off-chain and untrusted.</p></div>
-        <form class="studio-form" data-type="nft">
-          <label>Title <input name="title" type="text" maxlength="96" placeholder="Artifact 001" value="Nightshade Artifact 001"></label>
-          <label>Collection ID <input name="collection_id" type="text" maxlength="64" placeholder="Optional 64-character asset ID"></label>
-          <label>Metadata URI <input name="metadata_uri" type="text" maxlength="512" placeholder="ipfs://…"></label>
-          <label>Metadata content hash <input name="metadata_hash" type="text" maxlength="64" pattern="[0-9a-fA-F]{64}" placeholder="64 hexadecimal characters"></label>
-          <button type="submit">Download NFT draft</button>
-        </form>
-      </article>
+          <fieldset>
+            <legend><span>2</span> Details</legend>
+            <label>Name <input name="name" maxlength="80" required placeholder="Nightshade #001" autocomplete="off"></label>
+            <div class="st-split" data-only="fungible">
+              <label>Symbol <input name="symbol" maxlength="12" placeholder="NSC" autocomplete="off"></label>
+              <label>Decimals <input name="decimals" type="number" min="0" max="11" value="8"></label>
+            </div>
+            <label data-only="fungible">Total supply <input name="supply" inputmode="decimal" placeholder="1000000" autocomplete="off"></label>
+            <label data-only="edition">Number of copies <input name="edition_size" type="number" min="2" max="1000000" value="100"></label>
+            <label>Description <textarea name="description" maxlength="2000" rows="3" placeholder="What is it, and why does it exist?"></textarea></label>
+            <div class="st-split">
+              <label>Creator <input name="creator" maxlength="80" placeholder="Your name or handle" autocomplete="off"></label>
+              <label>License
+                <select name="license">
+                  <option value="All rights reserved">All rights reserved</option>
+                  <option value="CC BY 4.0">CC BY 4.0</option>
+                  <option value="CC BY-SA 4.0">CC BY-SA 4.0</option>
+                  <option value="CC BY-NC 4.0">CC BY-NC 4.0</option>
+                  <option value="CC0 1.0">CC0 (public domain)</option>
+                </select>
+              </label>
+            </div>
+            <label>Website <input name="external_url" type="url" maxlength="200" placeholder="https://" autocomplete="off"></label>
+            <label data-hide="fungible collection">Part of collection <input name="collection" maxlength="64" placeholder="Collection asset ID (optional)" autocomplete="off" spellcheck="false"></label>
+            <div class="st-traits" data-hide="fungible">
+              <div class="st-traits-head"><span>Traits</span><button type="button" class="st-link" id="add-trait">+ Add trait</button></div>
+              <div id="traits"></div>
+            </div>
+          </fieldset>
 
-      <article class="panel" id="collections" role="tabpanel" hidden>
-        <div class="panel-copy"><p class="eyebrow">Authenticated membership</p><h2>Create a collection</h2><p>Members require a signature from the collection controller over the exact member asset ID.</p></div>
-        <form class="studio-form" data-type="collection">
-          <label>Collection name <input name="collection_name" type="text" maxlength="96" placeholder="Monzero Originals" value="Monzero Originals"></label>
-          <label>Metadata URI <input name="metadata_uri" type="text" maxlength="512" placeholder="ipfs://…"></label>
-          <label>Metadata content hash <input name="metadata_hash" type="text" maxlength="64" pattern="[0-9a-fA-F]{64}" placeholder="64 hexadecimal characters"></label>
-          <button type="submit">Download collection draft</button>
-        </form>
-      </article>
+          <fieldset>
+            <legend><span>3</span> Hosting</legend>
+            <p class="st-help">Upload your image and the metadata file anywhere: IPFS, Arweave or your own website. The hashes prove they haven't been changed, so the host doesn't need to be trusted.</p>
+            <label>Image address <input name="image" maxlength="200" placeholder="ipfs://… or https://…" autocomplete="off" spellcheck="false"></label>
+            <label>Metadata address <input name="metadata_uri" maxlength="256" placeholder="ipfs://… or https://… (where metadata.json will live)" autocomplete="off" spellcheck="false"></label>
+          </fieldset>
 
-      <article class="panel" id="swap" role="tabpanel" hidden>
-        <div class="panel-copy"><p class="eyebrow">Non-custodial only</p><h2>Atomic swap</h2><p>No deposits and no operator custody. Swap activation requires an audited protocol ensuring either both sides settle or neither side does.</p></div>
-        <form class="studio-form" data-type="swap">
-          <div class="split"><label>You offer <input name="offer" type="text" maxlength="160" placeholder="Amount and asset ID"></label><label>You request <input name="request" type="text" maxlength="160" placeholder="Amount and asset ID"></label></div>
-          <label>Counterparty or public offer <input name="counterparty" type="text" maxlength="256" placeholder="Optional public counterparty identifier"></label>
-          <label>Expiry height <input name="expiry_height" type="number" min="1" placeholder="Block height"></label>
-          <button type="submit">Download swap draft</button>
+          <fieldset>
+            <legend><span>4</span> Export</legend>
+            <ul class="st-checks" id="checks"></ul>
+            <div class="st-hash"><span>Metadata hash</span><code id="metadata-hash">—</code></div>
+            <div class="st-export-actions">
+              <button type="button" class="st-btn" id="download-metadata">Download metadata.json</button>
+              <button type="button" class="st-btn ghost" id="save-draft">Save to my drafts</button>
+            </div>
+            <div class="st-cmd">
+              <div class="st-cmd-head"><span>Create the signed asset file now <small>(monzero-wallet-cli)</small></span><button type="button" class="st-link" data-copy="cmd-create">Copy</button></div>
+              <pre id="cmd-create">—</pre>
+            </div>
+            <div class="st-cmd">
+              <div class="st-cmd-head"><span>Issue it on chain <small>(after assets activate)</small></span><button type="button" class="st-link" data-copy="cmd-issue">Copy</button></div>
+              <pre id="cmd-issue">—</pre>
+            </div>
+          </fieldset>
         </form>
-      </article>
-      <aside class="draft-preview" aria-live="polite">
-        <div class="draft-topline"><span id="draft-type">TOKEN</span><strong id="draft-state">Not submitted</strong></div>
-        <div class="draft-card"><small>LOCAL DRAFT</small><h3 id="draft-title">Untitled draft</h3><p id="draft-detail">Local preview only</p></div>
-        <details><summary>Inspect draft JSON</summary><pre id="draft-json"></pre></details>
-        <p class="draft-warning">Draft files are descriptive and unsigned. They are not transactions, assets, orders, or promises of future activation.</p>
-      </aside>
+
+        <aside class="st-preview" aria-label="Live preview">
+          <div class="st-card" id="card">
+            <div class="st-card-media" id="card-media"><span>Your artwork</span></div>
+            <div class="st-card-body">
+              <div class="st-card-kicker"><span id="card-kind">NFT</span><span id="card-edition"></span></div>
+              <h3 id="card-name">Untitled</h3>
+              <p id="card-creator" class="st-card-creator"></p>
+              <p id="card-desc" class="st-card-desc"></p>
+              <ul id="card-traits" class="st-card-traits"></ul>
+              <div class="st-card-foot"><span>Fingerprint</span><code id="card-print">—</code></div>
+            </div>
+          </div>
+          <p class="st-preview-note">This is how wallets and galleries will show it. Galleries must check the metadata against its hash before displaying it.</p>
+        </aside>
+      </div>
     </section>
 
-    <section class="gate">
-      <p class="eyebrow">Activation gates</p>
-      <h2>What remains before funds are accepted.</h2>
+    <section class="st-drafts" aria-labelledby="drafts-title">
+      <div class="st-section-head row">
+        <div><p class="eyebrow">My drafts</p><h2 id="drafts-title">Saved in this browser</h2></div>
+        <p class="st-help">Only you can see these. Clearing your browser data removes them, so keep your metadata files.</p>
+      </div>
+      <div class="st-grid" id="drafts"></div>
+    </section>
+
+    <section class="st-verify" id="verify" aria-labelledby="verify-title">
+      <div class="st-section-head">
+        <p class="eyebrow">Verify</p>
+        <h2 id="verify-title">Is this NFT what it claims to be?</h2>
+        <p class="st-help">Drop an asset's metadata file and its image. Studio checks them against the hashes, entirely in your browser.</p>
+      </div>
+      <div class="st-verify-grid">
+        <label class="st-drop small"><input type="file" id="verify-meta" accept="application/json,.json"><span class="st-drop-text"><strong>Metadata file</strong><small>metadata.json</small></span></label>
+        <label class="st-drop small"><input type="file" id="verify-image" accept="image/*"><span class="st-drop-text"><strong>Image file</strong><small>optional</small></span></label>
+        <label class="st-verify-hash">Expected metadata hash <input id="verify-expected" maxlength="64" placeholder="64-character hash from the asset" spellcheck="false" autocomplete="off"></label>
+      </div>
+      <ul class="st-results" id="verify-results" aria-live="polite"></ul>
+    </section>
+
+    <section class="st-onchain" aria-labelledby="onchain-title">
+      <div class="st-section-head row">
+        <div><p class="eyebrow">On chain</p><h2 id="onchain-title">Issued assets</h2></div>
+        <a class="st-link" href="../explorer/">Open the explorer →</a>
+      </div>
+      <div class="st-grid" id="onchain"><p class="st-empty">Loading…</p></div>
+    </section>
+
+    <section class="st-gates" id="activation" aria-labelledby="gates-title">
+      <div class="st-section-head">
+        <p class="eyebrow">Activation</p>
+        <h2 id="gates-title">What's left before assets go live.</h2>
+        <p class="st-help">Assets switch on with a network upgrade (hard fork 17), and only after these steps. Nobody, including the founder, can mint, freeze or edit assets after launch.</p>
+      </div>
       <ol>
         <li class="done"><span>01</span><div><strong>Persistent, reorg-safe asset state</strong><small>Implemented and covered by activation-gated tests</small></div></li>
-        <li class="done"><span>02</span><div><strong>Confidential ownership and conservation proofs</strong><small>Implemented; independent cryptographic review remains required</small></div></li>
+        <li class="done"><span>02</span><div><strong>Confidential ownership and conservation proofs</strong><small>Implemented; independent cryptographic review still required</small></div></li>
         <li class="done"><span>03</span><div><strong>Wallet scanning, restoration and signing</strong><small>CLI and RPC paths implemented and tested</small></div></li>
-        <li><span>04</span><div><strong>Adversarial testnet and independent review</strong><small>Required before activation or funds are accepted</small></div></li>
+        <li><span>04</span><div><strong>Public testnet and independent review</strong><small>Required before activation or any funds are accepted</small></div></li>
       </ol>
+      <p class="st-help">Trading happens through atomic swaps in the wallet: no deposits, no custody. <a href="../roadmap/">See the DEX roadmap →</a></p>
+    </section>
+
+    <section class="st-standard" aria-labelledby="standard-title">
+      <details>
+        <summary><span class="eyebrow">For developers</span> <strong id="standard-title">The monzero-metadata/1 standard</strong></summary>
+        <div class="st-standard-body">
+          <p>The metadata hash committed on chain is the SHA-256 of the exact bytes of <code>metadata.json</code>. Studio writes the file canonically (keys sorted, no extra whitespace, UTF-8), so the same inputs always produce the same hash.</p>
+          <ul>
+            <li><code>standard</code>: always <code>"monzero-metadata/1"</code></li>
+            <li><code>class</code>: <code>nft</code>, <code>edition</code>, <code>collection</code> or <code>fungible</code></li>
+            <li><code>name</code>, <code>description</code>, <code>creator</code>, <code>license</code>, <code>external_url</code></li>
+            <li><code>image</code>, plus <code>image_sha256</code>, <code>image_mime</code>, <code>image_bytes</code>, <code>image_width</code>, <code>image_height</code></li>
+            <li><code>attributes</code>: a list of <code>{"trait_type", "value"}</code></li>
+            <li><code>edition_size</code> (editions), <code>symbol</code> and <code>decimals</code> (tokens), <code>collection</code> (member NFTs)</li>
+          </ul>
+          <p>Galleries must download the metadata, check its SHA-256 against the on-chain hash, then check the image against <code>image_sha256</code> before showing anything. Treat every field as untrusted text. Never render SVG or HTML from metadata.</p>
+        </div>
+      </details>
     </section>
   </main>
 
-  <footer><span>Monzero Studio preview</span><span>No deposits · No custody · No active issuance</span><a href="../security/">Security</a></footer>
-  <script src="app.js?v=20260823-nightshade"></script>
+  <footer><span>Monzero Studio</span><span>Your files stay on your device · No custody</span><a href="../security/">Security</a></footer>
+  <div class="st-toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js?v=20261011-studio2"></script>
 </body>
 </html>
