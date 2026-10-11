@@ -1,0 +1,77 @@
+MONZERO GENESIS PRE16
+=====================
+
+Genesis pre16 is experimental, unsigned, and independently unaudited
+prerelease software. It is not a production release.
+
+Core source: 7c1c89a36fecdee6b7ffdbd3de1b9cf5eb8a7305
+GUI source:  7953dc003cd2d1ef3dbf83336735131b105e816f
+Network UUID: 94834264-d0b2-41dd-b0f2-0ada675c7710
+Genesis hash: 84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4
+Native currency: XMZ
+
+PACKAGE SHA-256
+
+Linux x86-64 CLI (glibc 2.35 or newer)
+  6c26b3119d6056a675a85acfba39eb8726237cfaa16674e86ba06923d5ac0cca
+Windows x64 CLI
+  61cc365c8b466a5621e76c00e1dbb8b884d6a7bd84cc8ff20049530f7dc349be
+Windows x64 graphical wallet
+  750ffb00d9608451b607bc0432c9b87b310b25de89c8e37c49af63ed8ce304e2
+Complete core source
+  747c4ebc7daa3a233a119d7d9f4e04ba760833473857896b29cf13eefb2a07fc
+Graphical-wallet source
+  1618a547ba80051703095fa575f83013fa4735b3a72cb9107ca3620e46044766
+
+CHANGES SINCE PRE15
+
+- Wallets no longer fail on unmixable early outputs. Monzero's first three
+  blocks paid old-style (pre-RingCT) rewards in fixed amounts that exist
+  only a few times on chain. A wallet holding one could pick it for a
+  transfer, and every transfer then failed with "not enough outputs for
+  specified ring size = 16". The wallet now leaves such outputs out of
+  transfers and sweeps. It works with the public node and does not reveal
+  which amounts the wallet holds.
+- The graphical wallet's Assets & NFT Studio matches monzero.org/app.
+  Choose NFT, edition, collection or token, add artwork (fingerprinted on
+  your computer, never uploaded), details and traits, see a live preview,
+  save metadata.json and copy the wallet command. A verify panel checks a
+  metadata file and image against their hashes. Metadata is identical to
+  what the website produces for the same inputs. Issuing stays disabled
+  until assets activate (hard fork 17).
+- Everything in pre15 is included. Consensus identity and chain rules are
+  unchanged from pre10 through pre15.
+
+KNOWN LIMITATIONS
+
+- A prerelease wallet that had selected the atomic-XMZ display unit cannot
+  be opened; restore it from its recovery seed.
+- The wallet file check cannot detect a Monero seed or private keys typed
+  into Monzero's restore options. Never reuse them.
+- The graphical wallet is built from GUI commit 0018a58f plus the Studio
+  rework, the newest GUI code compatible with this core. Real-money DEX
+  trading, cross-chain settlement, and native asset transfer/burn are
+  unavailable.
+
+TEST STATUS
+
+All 23 ctest suites passed, including the full consensus replay and the
+RPC functional tests; 1,318 unit tests passed. The wallet fix was used on
+mainnet through the public node for single-recipient, multi-recipient and
+multi-input transfers and a sweep, all confirmed. The Linux package passed
+strict package checks (except the independent-reproduction attestation),
+the digest-pinned container smoke test, and on Ubuntu 24.04 synced the
+live chain through its launcher and refreshed a wallet created offline.
+The Windows command-line package passed the native smoke,
+network/launcher/mining, and wallet-lifecycle tests on Windows 11. The
+graphical wallet package verified and launched on Windows 11; its Studio
+page was tested separately.
+
+Every archive was packaged twice with identical results, and a rebuild of
+the core build directories reproduced the command-line executables byte
+for byte. This is a same-machine check; reproduction by an independent
+builder is still required.
+
+Independent binary reproduction, release signing, code signing, and an
+independent security review remain outstanding. Keep the prior verified
+installation available for rollback.

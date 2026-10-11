@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "project": "Monzero",
+  "release": "Genesis pre16",
+  "channel": "prerelease",
+  "production_ready": false,
+  "source_commit": "7c1c89a36fecdee6b7ffdbd3de1b9cf5eb8a7305",
+  "gui_source_commit": "7953dc003cd2d1ef3dbf83336735131b105e816f",
+  "network_uuid": "94834264-d0b2-41dd-b0f2-0ada675c7710",
+  "genesis_nonce": 2271206363,
+  "genesis_hash": "84f9ebdac8924806f037482ec16fd59b271e954d3e00363dd6c7e4ce9dd659e4",
+  "published_at": "2026-10-11T21:22:52Z",
+  "revised_at": "2026-10-11T21:22:52Z",
+  "gui_package_revision": 1,
+  "security_audit": "not_completed",
+  "signing": "unsigned",
+  "independent_reproducibility": "unverified",
+  "release_tests": "23_ctest_suites_and_1318_unit_tests_passed_serially_unmixable_pre_ringct_fix_exercised_on_mainnet_through_restricted_public_node_packages_identical_across_two_packaging_runs",
+  "migration": "same_chain_as_genesis_pre10_through_pre15",
+  "source": {
+    "filename": "monzero-genesis-pre16-source.tar.gz",
+    "size_bytes": 21317619,
+    "sha256": "747c4ebc7daa3a233a119d7d9f4e04ba760833473857896b29cf13eefb2a07fc"
+  },
+  "gui_source": {
+    "filename": "monzero-genesis-pre16-gui-source.tar.gz",
+    "size_bytes": 35971178,
+    "sha256": "1618a547ba80051703095fa575f83013fa4735b3a72cb9107ca3620e46044766",
+    "gui_source_commit": "7953dc003cd2d1ef3dbf83336735131b105e816f",
+    "core_source_commit": "7c1c89a36fecdee6b7ffdbd3de1b9cf5eb8a7305",
+    "recursive_submodules_included": true,
+    "note": "GUI source is monzero-gui 0018a58f plus the Assets Studio rework, the newest GUI code whose wallet_api calls are satisfied by this release's core; unmerged asset transfer/burn and DEX work is excluded."
+  },
+  "artifacts": [
+    {
+      "platform": "linux-x86_64",
+      "filename": "monzero-genesis-pre16-linux-x86_64.tar.gz",
+      "size_bytes": 26884140,
+      "sha256": "6c26b3119d6056a675a85acfba39eb8726237cfaa16674e86ba06923d5ac0cca",
+      "minimum_glibc": "2.35",
+      "tests": "built_in_pinned_depends_container_strict_checks_pass_except_reproducibility_container_smoke_passed_ubuntu_24_04_launcher_sync_and_offline_wallet_passed"
+    },
+    {
+      "platform": "windows-x64",
+      "filename": "monzero-genesis-pre16-windows-x64.zip",
+      "size_bytes": 23975724,
+      "sha256": "61cc365c8b466a5621e76c00e1dbb8b884d6a7bd84cc8ff20049530f7dc349be",
+      "tests": "native_windows_11_smoke_network_launcher_mining_and_wallet_harnesses_passed"
+    },
+    {
+      "platform": "windows-gui-x64",
+      "filename": "monzero-genesis-pre16-windows-gui-x64.zip",
+      "size_bytes": 55628027,
+      "sha256": "750ffb00d9608451b607bc0432c9b87b310b25de89c8e37c49af63ed8ce304e2",
+      "tests": "gui_manifest_archive_pe_checks_passed_native_windows_11_launch_tested_studio_page_tested_offscreen"
+    }
+  ]
+}
