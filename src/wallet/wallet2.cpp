@@ -11427,12 +11427,18 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // gather all dust and non-dust outputs belonging to specified subaddresses
   size_t num_nondust_outputs = 0;
   size_t num_dust_outputs = 0;
+  const std::unordered_set<size_t> unmixable = use_rct ? get_unmixable_pre_rct_transfers(fake_outs_count + 1) : std::unordered_set<size_t>();
   for (size_t i = 0; i < m_transfers.size(); ++i)
   {
     const transfer_details& td = m_transfers[i];
     if (m_ignore_fractional_outputs && td.amount() < fractional_threshold)
     {
       MDEBUG("Ignoring output " << i << " of amount " << print_money(td.amount()) << " which is below fractional threshold " << print_money(fractional_threshold));
+      continue;
+    }
+    if (unmixable.count(i))
+    {
+      MDEBUG("Ignoring unmixable pre-RingCT output " << i << " of amount " << print_money(td.amount()));
       continue;
     }
     if (!is_spent(td, false) && !td.m_frozen && !td.m_key_image_partial && (use_rct ? true : !td.is_rct()) && is_transfer_unlocked(td) && td.m_subaddr_index.major == subaddr_account && subaddr_indices.count(td.m_subaddr_index.minor) == 1)
@@ -12021,12 +12027,18 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_all(uint64_t below
 
   // gather all dust and non-dust outputs of specified subaddress (if any) and below specified threshold (if any)
   bool fund_found = false;
+  const std::unordered_set<size_t> unmixable = use_rct ? get_unmixable_pre_rct_transfers(fake_outs_count + 1) : std::unordered_set<size_t>();
   for (size_t i = 0; i < m_transfers.size(); ++i)
   {
     const transfer_details& td = m_transfers[i];
     if (m_ignore_fractional_outputs && td.amount() < fractional_threshold)
     {
       MDEBUG("Ignoring output " << i << " of amount " << print_money(td.amount()) << " which is below threshold " << print_money(fractional_threshold));
+      continue;
+    }
+    if (unmixable.count(i))
+    {
+      MDEBUG("Ignoring unmixable pre-RingCT output " << i << " of amount " << print_money(td.amount()));
       continue;
     }
     if (!is_spent(td, false) && !td.m_frozen && !td.m_key_image_partial && (use_rct ? true : !td.is_rct()) && is_transfer_unlocked(td) && td.m_subaddr_index.major == subaddr_account && (subaddr_indices.empty() || subaddr_indices.count(td.m_subaddr_index.minor) == 1))
@@ -12554,6 +12566,54 @@ std::vector<size_t> wallet2::select_available_unmixable_outputs()
 {
   // request all outputs with less instances than the min ring size
   return select_available_outputs_from_histogram(get_min_ring_size(), false, true, false);
+}
+//----------------------------------------------------------------------------------------------------
+std::unordered_set<size_t> wallet2::get_unmixable_pre_rct_transfers(size_t ring_size)
+{
+  // Monzero's first blocks paid pre-RingCT coinbase outputs whose amounts exist only a
+  // handful of times on chain, so they can never fill a ring. Leave them out of normal
+  // coin selection instead of failing the whole transaction on them.
+  std::unordered_set<size_t> unmixable;
+  if (m_light_wallet)
+    return unmixable;
+  const bool have_pre_rct = std::any_of(m_transfers.begin(), m_transfers.end(), [this](const transfer_details &td) {
+    return !td.is_rct() && !is_spent(td, false) && !td.m_frozen;
+  });
+  if (!have_pre_rct)
+    return unmixable;
+
+  // Ask about every standard denomination rather than the amounts we hold: restricted
+  // (public) nodes refuse a full histogram, and a list of our own amounts would tell the
+  // node which outputs are ours. Anything not reported as mixable is treated as unmixable.
+  cryptonote::COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request req_t = AUTO_VAL_INIT(req_t);
+  cryptonote::COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response resp_t = AUTO_VAL_INIT(resp_t);
+  for (uint64_t power = 1; ; power *= 10)
+  {
+    for (uint64_t digit = 1; digit <= 9 && power <= std::numeric_limits<uint64_t>::max() / digit; ++digit)
+      req_t.amounts.push_back(digit * power);
+    if (power > std::numeric_limits<uint64_t>::max() / 10)
+      break;
+  }
+  req_t.min_count = ring_size;
+  req_t.max_count = 0;
+  req_t.unlocked = true;
+  req_t.recent_cutoff = 0;
+  {
+    const boost::lock_guard<boost::recursive_mutex> lock{m_daemon_rpc_mutex};
+    uint64_t pre_call_credits = m_rpc_payment_state.credits;
+    req_t.client = get_client_signature();
+    bool r = net_utils::invoke_http_json_rpc("/json_rpc", "get_output_histogram", req_t, resp_t, *m_http_client, rpc_timeout);
+    THROW_ON_RPC_RESPONSE_ERROR(r, {}, resp_t, "get_output_histogram", error::get_histogram_error, resp_t.status);
+    check_rpc_cost("get_output_histogram", resp_t.credits, pre_call_credits, COST_PER_OUTPUT_HISTOGRAM * req_t.amounts.size());
+  }
+  std::unordered_set<uint64_t> mixable;
+  for (const auto &entry: resp_t.histogram)
+    mixable.insert(entry.amount);
+  for (size_t idx: select_available_outputs([&mixable](const transfer_details &td) {
+         return !td.is_rct() && mixable.find(td.amount()) == mixable.end();
+       }))
+    unmixable.insert(idx);
+  return unmixable;
 }
 //----------------------------------------------------------------------------------------------------
 std::vector<size_t> wallet2::select_available_mixable_outputs()
