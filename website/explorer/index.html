@@ -4,25 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Monzero blockchain explorer">
-  <meta name="theme-color" content="#0c0911">
+  <meta name="theme-color" content="#0b1118">
   <title>Monzero Explorer</title>
   <link rel="icon" href="../assets/monzero-xmz-coin.png">
-  <link rel="stylesheet" href="styles.css?v=20260823-nightshade">
+  <link rel="stylesheet" href="styles.css?v=20261011-nav">
+  <link rel="stylesheet" href="../theme.css?v=20261011-nav">
 </head>
-<body>
-  <header>
-    <a class="brand" href="./">
-      <span class="mark">MZ</span>
-      <span><strong>MONZERO</strong><small>CHAIN EXPLORER</small></span>
-    </a>
-    <div class="header-actions">
-      <a class="site-link" href="#/assets">Assets &amp; NFTs</a>
-      <a class="site-link" href="../">Monzero home</a>
-      <div class="node-pill"><span id="node-dot"></span><span id="node-label">Connecting</span></div>
-    </div>
+<body data-page="explorer">
+  <a class="skip-link" href="#main">Skip to explorer</a>
+  <header class="site-header">
+    <a class="brand" href="./"><span class="mark">MZ</span><span><strong>MONZERO</strong><small>CHAIN EXPLORER</small></span></a>
+    <nav aria-label="Primary navigation"><a href="../">Home</a><a href="./" aria-current="page">Explorer</a><a href="../app/">Studio</a><a href="../roadmap/">Roadmap</a><a href="../WHITEPAPER.md?rev=1.4-20260926">Whitepaper</a><a href="../security/">Security</a></nav>
+    <div class="header-actions"><a class="site-link" href="#/assets">Assets &amp; NFTs</a><div class="node-pill"><span id="node-dot"></span><span id="node-label">Connecting</span></div></div>
   </header>
 
-  <main>
+  <main id="main">
     <section class="hero">
       <p class="eyebrow">Independent chain · XMZ</p>
       <h1>Verify the chain.<br><em>Block by block.</em></h1>
