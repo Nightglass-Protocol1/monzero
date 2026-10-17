@@ -46,6 +46,9 @@
 #define CURRENT_BLOCK_MAJOR_VERSION                     1
 #define CURRENT_BLOCK_MINOR_VERSION                     0
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*60*2
+// From HF_VERSION_LWMA_DIFFICULTY: N*T/20 seconds, so a block cannot claim a
+// far-future time to pull the LWMA difficulty down.
+#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2           360
 #define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             10
 
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               60
@@ -83,6 +86,8 @@
 #define DIFFICULTY_LAG                                  15  // !!!
 #define DIFFICULTY_CUT                                  60  // timestamps to cut after sorting
 #define DIFFICULTY_BLOCKS_COUNT                         DIFFICULTY_WINDOW + DIFFICULTY_LAG
+// LWMA-1 (zawy12) window from HF_VERSION_LWMA_DIFFICULTY: the newest 60 solve times.
+#define DIFFICULTY_LWMA_WINDOW                          60
 
 
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1   DIFFICULTY_TARGET_V1 * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
@@ -192,7 +197,8 @@
 #define HF_VERSION_BULLETPROOF_PLUS             15
 #define HF_VERSION_VIEW_TAGS                    15
 #define HF_VERSION_2021_SCALING                 15
-#define HF_VERSION_MONZERO_ASSETS               17
+#define HF_VERSION_LWMA_DIFFICULTY              17
+#define HF_VERSION_MONZERO_ASSETS               18
 
 #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
 #define CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES 2

@@ -239,6 +239,42 @@ namespace cryptonote {
     return res.convert_to<difficulty_type>();
   }
 
+  difficulty_type next_difficulty_lwma(std::vector<uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds) {
+    assert(timestamps.size() == cumulative_difficulties.size());
+    if (timestamps.size() > DIFFICULTY_LWMA_WINDOW + 1)
+    {
+      const size_t drop = timestamps.size() - (DIFFICULTY_LWMA_WINDOW + 1);
+      timestamps.erase(timestamps.begin(), timestamps.begin() + drop);
+      cumulative_difficulties.erase(cumulative_difficulties.begin(), cumulative_difficulties.begin() + drop);
+    }
+    const uint64_t n = timestamps.size() - (timestamps.empty() ? 0 : 1);
+    if (n == 0)
+      return 1;
+    const uint64_t t = target_seconds;
+    // Out-of-order timestamps count as one second, and any single solve time
+    // is capped at 6T, so neither can swing the result by much.
+    uint64_t weighted = 0, previous = timestamps[0];
+    for (uint64_t i = 1; i <= n; ++i)
+    {
+      const uint64_t current = timestamps[i] > previous ? timestamps[i] : previous + 1;
+      weighted += i * std::min<uint64_t>(6 * t, current - previous);
+      previous = current;
+    }
+    weighted = std::max<uint64_t>(weighted, n * n * t / 20);
+    const difficulty_type average = (cumulative_difficulties[n] - cumulative_difficulties[0]) / n;
+    // next = average * T * n(n+1)/2 / weighted, times 0.99 (zawy12's tuning).
+    const boost::multiprecision::uint256_t next = boost::multiprecision::uint256_t(average) * (n * (n + 1) * t * 99) / (200 * weighted);
+    if (next > max128bit)
+      return 0;
+    return next == 0 ? difficulty_type(1) : next.convert_to<difficulty_type>();
+  }
+
+  difficulty_type next_difficulty_for_version(std::vector<uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds, uint8_t hf_version) {
+    if (hf_version >= HF_VERSION_LWMA_DIFFICULTY)
+      return next_difficulty_lwma(std::move(timestamps), std::move(cumulative_difficulties), target_seconds);
+    return next_difficulty(std::move(timestamps), std::move(cumulative_difficulties), target_seconds);
+  }
+
   std::string hex(difficulty_type v)
   {
     static const char chars[] = "0123456789abcdef";

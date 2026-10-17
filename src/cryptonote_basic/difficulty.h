@@ -58,6 +58,16 @@ namespace cryptonote
     bool check_hash_128(const crypto::hash &hash, difficulty_type difficulty);
     bool check_hash(const crypto::hash &hash, difficulty_type difficulty);
     difficulty_type next_difficulty(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds);
+    /**
+     * @brief LWMA-1 (zawy12): linearly weighted average of the newest
+     * DIFFICULTY_LWMA_WINDOW solve times, newest weighted most.
+     *
+     * Takes the same oldest-first window as next_difficulty and uses only its
+     * newest DIFFICULTY_LWMA_WINDOW + 1 entries, without lag or sorting.
+     */
+    difficulty_type next_difficulty_lwma(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds);
+    // The difficulty rule for a block of hard-fork version hf_version.
+    difficulty_type next_difficulty_for_version(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds, uint8_t hf_version);
 
     std::string hex(difficulty_type v);
 }
