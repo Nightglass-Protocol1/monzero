@@ -189,41 +189,41 @@
     <section class="download section" id="download">
       <div class="download-card">
         <div>
-          <p class="eyebrow">Genesis pre16</p>
+          <p class="eyebrow">Monzero v1.0.0 · stable release</p>
           <h2>Download Monzero</h2>
-          <p class="release-note" id="dex-testing-status"><strong>DEX development status — 6 October 2026:</strong> Isolated Litecoin–XMZ success and refund paths pass, with role-specific recovery controls in the app. BCH/XMZ funding, signing and recovery now have offline/mock test evidence; peer integration and real-node settlement remain unfinished. Dogecoin requires a complete protocol, and direct XMZ/XMR remains under review. These development changes are not included in pre16 downloads; real-money DEX trading remains disabled. See the <a href="roadmap/">roadmap</a> for current progress and remaining gates.</p>
-          <p>Experimental Windows graphical wallet and command-line builds for Windows and Linux x86-64. Packages include the matching node, checksums, <a href="WHITEPAPER.md?rev=1.5-20261017">protocol whitepaper</a>, release status, and upgrade guidance. The recursively complete source archive contains the exact pinned core commit and submodules.</p>
-          <p class="release-note">Unsigned and independently unaudited experimental prerelease software. Pre16 stays on the pre10–pre15 chain; consensus identity and chain rules are unchanged. Wallets no longer fail when they hold the old-style rewards from the first three blocks, and the graphical wallet's Assets &amp; NFT Studio now matches the <a href="app/">website Studio</a>: artwork fingerprinted on your computer, verifiable metadata, and the exact wallet command. All 23 ctest suites passed; the Windows command-line package passed native Windows 11 tests, the graphical wallet was verified and launched on Windows 11, and the Linux package synced the live chain on Ubuntu 24.04. Independent reproduction, signing, and an external audit remain outstanding.</p>
-          <p class="release-metadata">Core source <code>7c1c89a36fecdee6b7ffdbd3de1b9cf5eb8a7305</code> · GUI source <code>069c0089602fed7279e762d64b139bae9a890184</code> · GUI revision 2 · network UUID <code>94834264-d0b2-41dd-b0f2-0ada675c7710</code> · <a href="releases/genesis-pre16.json">machine-readable metadata</a> · <a href="releases/genesis-pre16-notes.txt">release notes and limitations</a></p>
+          <p class="release-note"><strong>Upgrade before block 21,000.</strong> v1.0.0 switches difficulty to LWMA at block 21,000 (hard fork 17). It is not a chain reset: coins, wallets and seeds are unchanged. Anyone running their own node, including solo miners, must upgrade before that block. Wallets on a public node and pool miners need do nothing.</p>
+          <p>Windows graphical wallet and command-line builds for Windows and Linux x86-64. Packages include the matching node, checksums, the <a href="WHITEPAPER.md?rev=1.5-20261017">protocol whitepaper</a>, release notes and the <a href="releases/v1.0.0-notes.txt">upgrade guide</a>.</p>
+          <p class="release-note">Signed release: the <a href="releases/v1.0.0.json">release file</a> lists every download's SHA-256 and is signed (<a href="releases/v1.0.0.json.asc">signature</a>, <a href="releases/monzero-release-public.asc">release key</a>, fingerprint <code>4C37C618789F86D81FEF28DF390AEFB735F270D6</code>). Not yet independently audited; report issues to security@monzero.org.</p>
+          <p class="release-metadata">Core source <code>c4165784db57d8ae410fc8af58861e4178ee1a42</code> · GUI source <code>44eef24d48ebbcf02a2781a56ae2e56f96037052</code> · network UUID <code>94834264-d0b2-41dd-b0f2-0ada675c7710</code></p>
           <p><a class="button secondary" href="https://github.com/Nightglass-Protocol1/monzero" target="_blank" rel="noopener noreferrer">View source code on GitHub</a></p>
         </div>
         <div class="download-action">
           <div class="release-download">
-            <a class="button primary wide" href="downloads/monzero-genesis-pre16-windows-gui-x64.zip" download>Windows graphical wallet <span>56 MB · ZIP</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre16-windows-gui-x64.zip.sha256" download>Windows GUI SHA-256 checksum</a>
-            <code class="hash">e7694b1330f352c916b7478ae5cf8334b4ef7a9ce791dbb4fca49d67dc33e8c5</code>
+            <a class="button primary wide" href="downloads/monzero-v1.0.0-windows-gui-x64.zip" download>Windows graphical wallet <span>56 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-v1.0.0-windows-gui-x64.zip.sha256" download>SHA-256 checksum</a>
+            <code class="hash">6be94574fd731e7c58fa40fcb22a3202db9a38f2a38b6801ae6929b44c204ad2</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre16-windows-x64.zip" download>Windows command line <span>24 MB · ZIP</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre16-windows-x64.zip.sha256" download>Windows SHA-256 checksum</a>
-            <code class="hash">61cc365c8b466a5621e76c00e1dbb8b884d6a7bd84cc8ff20049530f7dc349be</code>
+            <a class="button secondary wide" href="downloads/monzero-v1.0.0-windows-x64.zip" download>Windows command line <span>24 MB · ZIP</span></a>
+            <a class="checksum-link" href="downloads/monzero-v1.0.0-windows-x64.zip.sha256" download>SHA-256 checksum</a>
+            <code class="hash">bcdd7005e1368916635b2c6611c02c8194a95aa951a066fc3d8d119f73e3acd5</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre16-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.35+ <span>27 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre16-linux-x86_64.tar.gz.sha256" download>Linux SHA-256 checksum</a>
-            <code class="hash">6c26b3119d6056a675a85acfba39eb8726237cfaa16674e86ba06923d5ac0cca</code>
+            <a class="button secondary wide" href="downloads/monzero-v1.0.0-linux-x86_64.tar.gz" download>Linux x86-64 · GLIBC 2.35+ <span>27 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-v1.0.0-linux-x86_64.tar.gz.sha256" download>SHA-256 checksum</a>
+            <code class="hash">5931364f536b654553b8e72d550ceec63c8c99ffe4d94c4e28f6a3cccdd3cece</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre16-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre16-source.tar.gz.sha256" download>Source SHA-256 checksum</a>
-            <code class="hash">747c4ebc7daa3a233a119d7d9f4e04ba760833473857896b29cf13eefb2a07fc</code>
+            <a class="button secondary wide" href="downloads/monzero-v1.0.0-source.tar.gz" download>Complete source <span>21 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-v1.0.0-source.tar.gz.sha256" download>SHA-256 checksum</a>
+            <code class="hash">b238a2a16242e453b69dc21d95e344798f38c9ebce572cd30eb30df85052a404</code>
           </div>
           <div class="release-download">
-            <a class="button secondary wide" href="downloads/monzero-genesis-pre16-gui-source.tar.gz" download>Graphical-wallet source <span>36 MB · TAR.GZ</span></a>
-            <a class="checksum-link" href="downloads/monzero-genesis-pre16-gui-source.tar.gz.sha256" download>GUI source SHA-256 checksum</a>
-            <code class="hash">2fbc34ceaf0fcb865c78a17d1ec3c1819fb43e8e78d3f52bea966ed6995bc128</code>
+            <a class="button secondary wide" href="downloads/monzero-v1.0.0-gui-source.tar.gz" download>Graphical-wallet source <span>36 MB · TAR.GZ</span></a>
+            <a class="checksum-link" href="downloads/monzero-v1.0.0-gui-source.tar.gz.sha256" download>SHA-256 checksum</a>
+            <code class="hash">73c3c382e3037a85d98882de66aa4a8840e7fa1ac245b930d7d7db6e07024622</code>
           </div>
-          <p class="unsigned-note">Windows binaries are currently unsigned. Windows SmartScreen may show an unknown-publisher warning; verify the published SHA-256 checksum before running them.</p>
+          <p class="unsigned-note">Windows executables are not code-signed, so Windows SmartScreen may show an unknown-publisher warning. Check the SHA-256 against the signed release file before running them.</p>
         </div>
       </div>
     </section>
@@ -237,7 +237,7 @@
         <details><summary>Why is my mining balance still zero?</summary><p>With solo mining you receive a coinbase reward only when your machine finds a block; simply hashing does not create a gradual balance. A found reward remains locked for 60 blocks. For smaller, regular payouts, mine at <a href="https://pool.monzero.org/">pool.monzero.org</a> instead.</p></details>
         <details><summary>Is Monzero the same network as Monero?</summary><p>No. Monzero is an independent experimental chain with a different genesis block, network ID, ports, address prefixes, ticker, and monetary policy.</p></details>
         <details><summary>Can I reuse my existing seed?</summary><p>No. Create a new wallet and seed exclusively for Monzero. Reusing keys across forks can seriously damage privacy.</p></details>
-        <details><summary>Is this a production release?</summary><p>No. Genesis pre16 is experimental, unsigned, and unaudited prerelease software. It uses the pre10–pre15 chain and is incompatible with pre9 chain data.</p></details>
+        <details><summary>Is this a stable release?</summary><p>Yes. Monzero v1.0.0 is the first stable release. It continues the pre10–pre16 chain (no reset) and switches difficulty to LWMA at block 21,000, so anyone running their own node must upgrade before then. It has not yet been independently audited; report problems to security@monzero.org.</p></details>
       </div>
     </section>
   </main>
