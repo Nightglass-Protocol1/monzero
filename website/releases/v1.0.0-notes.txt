@@ -10,8 +10,15 @@ change, a hard fork to a faster difficulty algorithm at block **21,000**.
 **Every node operator must upgrade before block 21,000.** This includes solo
 miners, pool operators, exchanges, explorers, and anyone running their own
 `monzerod`. A node still running pre16 or older stops following the main chain
-at that block. Wallets using a public or upgraded node, and miners on a pool,
-need to do nothing; their keys, balances and addresses do not change.
+at that block.
+
+**Every wallet must also be updated to v1.0.0 before block 21,000** (GUI, CLI
+and wallet RPC), including wallets that use a public node. A pre16 wallet
+checks each block's version against its own fork table and stops syncing at
+the first version-17 block with "Unexpected hard fork version v17". No coins
+are at risk: open the same wallet file, or restore the same seed, in v1.0.0
+and it syncs normally. Miners on a pool need to do nothing; their payout
+address and balance do not change.
 
 ## Packaged platforms
 
