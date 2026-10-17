@@ -62,14 +62,28 @@ unscheduled on every public network.
 
 ## Verification performed
 
-- Unit tests cover the new rule: steady difficulty at a constant hash rate,
-  settling after hundredfold rises and falls (and the old rule's slower
+- All 23 `ctest` suites pass on the Linux release workstation, run serially on
+  17 October 2026, including `core_tests` (full consensus replay, 2,141
+  seconds), `functional_tests_rpc` (18 of 18), `functional_tests_assets`,
+  `check_missing_rpc_methods`, `unit_tests`, and the RandomX, hash-family,
+  difficulty and block-weight suites.
+- `unit_tests` runs 1,324 tests: 1,322 pass and 2 hardware-dependent `is_hdd`
+  tests are skipped. Tests that need local ports or the internet were run
+  where those were available (an isolated network namespace for port-bound
+  tests, the normal network for DNS tests); the `mining` functional test used
+  its fixed timeouts (`MINING_NO_MEASUREMENT`) because the workstation was
+  also mining.
+- New unit tests cover the LWMA rule: steady difficulty at a constant hash
+  rate, settling after hundredfold rises and falls (and the old rule's slower
   response), out-of-order and far-future timestamps, empty windows, the
   version-17 switch, the 360-second limit and the protected fork schedule.
 - On Monzero's private test network, two upgraded nodes mined through the fork
   at block 1,345. Every block from the fork on had version 17 and exactly the
   difficulty an independent LWMA calculation gives. A third node left on pre16
-  split off at the fork, as an un-upgraded node will on mainnet.
+  stopped at block 1,345 and did not follow the upgraded chain, as an
+  un-upgraded node will on mainnet.
+- Release testing found and fixed one v1.0.0 issue: the daemon's version-string
+  check required four-part versions and rejected `1.0.0`.
 
 These are source and test-network results. They are not an independent
 security review; see the limitations below.
