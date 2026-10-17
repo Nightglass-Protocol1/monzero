@@ -91,15 +91,25 @@
     }
 
     // Goals fill in order: the first takes everything up to its target.
-    let left = received;
+    const percent = (part, whole) => {
+      const value = whole > 0 ? Math.min(100, part / whole * 100) : 0;
+      return (value > 0 && value < 1 ? value.toFixed(1) : Math.floor(value).toString()) + "%";
+    };
+    let left = received, allTargets = 0;
     for (const bar of document.querySelectorAll(".goal-bar")) {
       const target = Number(bar.dataset.target);
+      allTargets += target;
       const raised = Math.min(left, target);
       left -= raised;
-      bar.style.width = (raised / target * 100).toFixed(1) + "%";
+      bar.style.width = Math.min(100, raised / target * 100).toFixed(1) + "%";
       const label = document.querySelector('.goal-raised[data-goal="' + bar.dataset.goal + '"]');
       if (label) label.textContent = usd.format(raised);
+      const share = document.querySelector('.goal-percent[data-goal="' + bar.dataset.goal + '"]');
+      if (share) share.textContent = percent(raised, target) + (raised >= target ? " · goal reached" : "");
     }
+    document.getElementById("overall-percent").textContent = percent(received, allTargets);
+    document.getElementById("overall-target").textContent = usd.format(allTargets);
+    document.getElementById("overall-bar").style.width = Math.min(100, received / allTargets * 100).toFixed(1) + "%";
 
     status.classList.remove("pending");
     status.textContent = "Updated " + ago(data.updatedAt) + " from public block explorers. US dollar values use today's prices." +

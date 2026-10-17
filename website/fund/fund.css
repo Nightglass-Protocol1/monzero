@@ -34,3 +34,8 @@
 .wallet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0.6rem 0 0; font-size: 14px; }
 .copy { padding: 0.35rem 0.75rem; border: 1px solid var(--accent, #6fd6c1); background: transparent; color: var(--accent, #6fd6c1); font: inherit; cursor: pointer; }
 .copy:hover, .copy:focus-visible { background: var(--accent, #6fd6c1); color: var(--bg, #0b1118); }
+.goal-percent { font-weight: 600; color: var(--accent, #6fd6c1); }
+.overall { margin: 0 0 1.25rem; padding: 1rem 1.2rem; border: 1px solid var(--line, #293b49); }
+.overall .goal-figures { font-size: 15px; }
+.overall strong { font-size: 18px; color: var(--accent, #6fd6c1); }
+.bar-large { height: 10px; }
