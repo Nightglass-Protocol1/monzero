@@ -1,18 +1,19 @@
 # Monzero (XMZ)
 
-Monzero is an independent, experimental privacy-coin network derived from
+Monzero is an independent privacy-coin network derived from
 Monero. It has its own genesis block, network identity, ports, address
 prefixes, monetary policy, and native currency (XMZ). Monzero is not affiliated
 with or endorsed by the Monero Project.
 
-The current software is pre-release and unaudited. Do not use it for funds you
-cannot afford to lose, and never reuse a Monero wallet file, private key, or
-recovery seed with Monzero.
+Monzero v1.0.0 is the current stable release. It has not been independently
+audited, so do not use it for funds you cannot afford to lose, and never reuse
+a Monero wallet file, private key, or recovery seed with Monzero.
 
 ## Current status
 
 - Mainnet block target: 120 seconds
 - Proof of work: RandomX
+- Difficulty: LWMA-1 over 60 blocks from block 21,000 (hard fork 17); upgrade nodes before then
 - Native currency: XMZ, with 11 decimal places
 - Target primary emission: 100,000,000 XMZ
 - Permanent tail emission: 3.26 XMZ per block
@@ -49,7 +50,7 @@ sudo apt install build-essential cmake pkg-config libboost-all-dev \
 ```
 
 Build the release binaries from this source tree. A public clone URL is not
-currently published, so prerelease source should be obtained as a verified
+currently published, so source should be obtained as a verified
 archive from a maintainer and unpacked first:
 
 ```bash
@@ -79,7 +80,7 @@ In another terminal, create a new Monzero-only wallet:
 ```
 
 Record the new recovery seed offline. Do not import a seed used on another
-CryptoNote-derived network. For packaged prerelease controls and mining
+CryptoNote-derived network. For packaged controls and mining
 instructions, follow the README included in the release archive.
 
 ## Test

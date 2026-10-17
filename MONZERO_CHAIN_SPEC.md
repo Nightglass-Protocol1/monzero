@@ -54,6 +54,18 @@ mine the initial blocks for network testing. Before public launch, publish:
 The inherited protocol revisions activate over blocks 1 through 16. Public
 launch should occur only after block 16 so all public mining uses v16/RandomX.
 
+## Hard fork 17: LWMA difficulty (v1.0.0)
+
+From block 21,000 on mainnet (stagenet 21,000; private testnet 1,345), the
+next block's difficulty is LWMA-1 (zawy12) over the newest 60 solve times:
+out-of-order solve times count as 1 second, each solve time is capped at
+6 × 120 seconds, the weighted sum is at least 60² × 120 / 20, and the result
+is the average difficulty × 0.99 × 120 × 60 × 61 / (2 × weighted sum). From
+the same height a block may be timestamped at most 360 seconds after the
+validating node's clock (previously 7,200). Blocks before the fork keep the
+inherited Monero rule (720-block window, 15-block lag, 60-timestamp cut).
+The Monzero Assets research fork is version 18 and is not scheduled.
+
 ## Items intentionally pending
 
 - Public launch date and UTC time

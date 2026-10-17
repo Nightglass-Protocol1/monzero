@@ -33,11 +33,11 @@ if [[ -n $(git -C "$source_root" status --porcelain --untracked-files=normal) ]]
 fi
 
 for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
-  strings "$build_bin/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || {
+  strings "$build_bin/$binary" | grep -F "1.0.0-$source_short" >/dev/null || {
     echo "Binary version does not match source commit: $binary" >&2; exit 1;
   }
 done
-binary_version="Monzero 'Genesis' (core v0.18.5.1-${source_short})"
+binary_version="Monzero 'Genesis' (core v1.0.0-${source_short})"
 
 package_name="monzero-${version}-windows-x64"
 mkdir -p "$output_dir"

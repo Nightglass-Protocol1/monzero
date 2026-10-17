@@ -58,7 +58,7 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
       echo "Required PE mitigation $mitigation is missing: $binary" >&2; exit 1;
     }
   done
-  strings "$root/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || { echo "Version mismatch: $binary" >&2; exit 1; }
+  strings "$root/$binary" | grep -F "1.0.0-$source_short" >/dev/null || { echo "Version mismatch: $binary" >&2; exit 1; }
   while read -r library; do
     case ${library^^} in
       ADVAPI32.DLL|BCRYPT.DLL|CRYPT32.DLL|IPHLPAPI.DLL|KERNEL32.DLL|MSVCRT.DLL|MSWSOCK.DLL|SHELL32.DLL|USER32.DLL|WS2_32.DLL) ;;
@@ -66,7 +66,7 @@ for binary in monzerod.exe monzero-wallet-cli.exe monzero-wallet-rpc.exe; do
     esac
   done < <(x86_64-w64-mingw32-objdump -p "$root/$binary" | sed -n 's/^\s*DLL Name: //p')
 done
-grep -Fqx "binary_version=Monzero 'Genesis' (core v0.18.5.1-${source_short})" "$root/BUILD-MANIFEST.txt" || {
+grep -Fqx "binary_version=Monzero 'Genesis' (core v1.0.0-${source_short})" "$root/BUILD-MANIFEST.txt" || {
   echo "Binary version does not match manifest" >&2; exit 1;
 }
 

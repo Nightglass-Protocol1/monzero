@@ -31,9 +31,9 @@ def main():
         sums_name = root + '/SHA256SUMS'
         sums = original.read(sums_name).decode()
         cases = (
-            ({'core_version': '0.18.5.1-000000000'},
+            ({'core_version': '1.0.0-000000000'},
              'GUI manifest core version does not match its source commit'),
-            ({'core_source_commit': '0' * 40, 'core_version': '0.18.5.1-000000000'},
+            ({'core_source_commit': '0' * 40, 'core_version': '1.0.0-000000000'},
              'Embedded core version does not match GUI manifest'),
         )
         with tempfile.TemporaryDirectory(prefix='monzero-gui-version-') as directory:

@@ -41,7 +41,7 @@ if [[ -x "$build_bin/monzero-wallet-rpc" ]]; then
 fi
 for binary in monzerod monzero-wallet-cli monzero-wallet-rpc; do
   [[ ! -x "$build_bin/$binary" ]] ||
-    strings "$build_bin/$binary" | grep -F "0.18.5.1-$source_short" >/dev/null || {
+    strings "$build_bin/$binary" | grep -F "1.0.0-$source_short" >/dev/null || {
       echo "Binary version does not match source commit: $binary" >&2
       exit 1
     }

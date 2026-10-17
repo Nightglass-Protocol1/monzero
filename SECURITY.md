@@ -72,7 +72,7 @@ Upstream Monero services, third-party exchanges, mining pools, hosting
 providers, and user-operated infrastructure are outside the project's control;
 report those issues to their respective operators.
 
-Genesis pre13 is the currently published candidate. It remains an
-experimental, unsigned, independently unreproduced, and unaudited prerelease.
-This program does not replace an independent security audit and does not imply
-that any remaining production gate has passed.
+Monzero v1.0.0 is the current stable release. It has not been independently
+audited; security review continues with public use, and reports under this
+policy are part of that review. This program does not replace an independent
+security audit.

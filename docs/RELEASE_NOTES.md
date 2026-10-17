@@ -1,12 +1,17 @@
-# Monzero Genesis pre16 release notes
+# Monzero v1.0.0 release notes
 
-Release label: genesis-pre16
+Release label: v1.0.0
 
-Genesis pre16 is the next experimental prerelease candidate. It is not a
-production release. Exact-artifact qualification is recorded separately from
-these source-tree notes; final artifact digests and exact source commits must
-be recorded in the package manifests and matching machine-readable release
-metadata. Packaging alone does not authorize publication or deployment.
+Monzero v1.0.0 is the first stable release. It continues the same chain as the
+Genesis pre10–pre16 prereleases: no reset, no new genesis block, and every
+existing block, coin and wallet stays valid. It schedules one consensus
+change, a hard fork to a faster difficulty algorithm at block **21,000**.
+
+**Every node operator must upgrade before block 21,000.** This includes solo
+miners, pool operators, exchanges, explorers, and anyone running their own
+`monzerod`. A node still running pre16 or older stops following the main chain
+at that block. Wallets using a public or upgraded node, and miners on a pool,
+need to do nothing; their keys, balances and addresses do not change.
 
 ## Packaged platforms
 
@@ -17,97 +22,82 @@ metadata. Packaging alone does not authorize publication or deployment.
 | Windows x64 GUI | 64-bit Windows graphical environment |
 | Complete source | Exact repository commit and recursive pinned submodules |
 
-The binary archives are intended to contain `monzerod`, the command-line
-wallet, and wallet RPC. The GUI is distributed separately with matching core
-tools. macOS, Linux ARM, Windows ARM, mobile platforms, and 32-bit systems are
-not qualified by this candidate.
+The binary archives contain `monzerod`, the command-line wallet and wallet RPC.
+The GUI is distributed separately with matching core tools. macOS, Linux ARM,
+Windows ARM, mobile platforms and 32-bit systems are not covered by this release.
 
-## Changes since Genesis pre15
+## Consensus change: LWMA difficulty from block 21,000 (hard fork 17)
 
-- **Wallets no longer fail on unmixable early outputs.** Monzero's first three
-  blocks paid pre-RingCT coinbase outputs in fixed denominations that exist
-  only a few times on chain. Normal coin selection could pick one of them, and
-  every transfer from that wallet then failed with "not enough outputs for
-  specified ring size = 16". The wallet now asks the node which pre-RingCT
-  amounts have enough unlocked outputs for a full ring and leaves the rest
-  out, for ordinary transfers and for sweeps. The request lists every standard
-  denomination, so it works with restricted public nodes and does not reveal
-  which amounts the wallet holds. Wallets without pre-RingCT outputs make no
-  extra request.
-- **The GUI's Assets & NFT Studio matches monzero.org/app.** Choose NFT,
-  edition, collection or token; the GUI fingerprints the artwork locally
-  (SHA-256, size, type and dimensions), builds canonical
-  `monzero-metadata/1` JSON whose SHA-256 is the asset's metadata hash, shows
-  a live preview, checks the descriptor against consensus limits, saves
-  `metadata.json`, and copies the matching `asset_create` command. A verify
-  panel checks a metadata file and image against their hashes. The metadata
-  is byte-identical to what the website produces for the same inputs.
-  Issuance stays disabled until hard fork 17 activates.
-- All changes listed for Genesis pre15 are included.
-- No mainnet consensus identity, genesis block, address prefix, port, monetary
-  policy, or public hard-fork schedule changed. Monzero Assets remain inactive
-  on every public network.
+Until now Monzero used Monero's original difficulty rule, which averages 720
+blocks and ignores the newest 15. It suits a network with large, steady hash
+power, but it follows a big change slowly: about 670 blocks after the hash
+rate rises or falls a hundredfold. On Monzero this meant blocks every ~57
+seconds for a day and a half after the pool opened (issuing coins twice as
+fast as planned), and gaps of up to ten hours when large miners left.
 
-## Source-tree verification performed
+From block 21,000 the next block's difficulty is LWMA-1 (zawy12), a linearly
+weighted average of the newest 60 solve times, as used by many CryptoNote coins:
 
-- All 23 `ctest` suites pass (100%) at source commit `5ba344a16` (the
-  release commit adds only these notes) on the Linux release workstation,
-  run serially on 2026-10-11. This includes `core_tests` (full consensus
-  replay, 1,306 seconds), `functional_tests_rpc`, `functional_tests_assets`
-  (activated-regtest assets on regtest only), `check_missing_rpc_methods`,
-  `unit_tests`, and the RandomX, hash-family, difficulty, and block-weight
-  suites.
-- `unit_tests` reports 1,318 passing tests; 2 hardware-dependent `is_hdd`
-  tests are skipped.
-- On mainnet, a wallet holding the 18 pre-RingCT coinbase outputs of blocks
-  1–3 could not build any transfer before this fix. With the fix, and with
-  none of those outputs frozen, it built and sent single-recipient,
-  three-recipient, and six-input transfers through the restricted public
-  node, all with 16-member rings, and confirmed in block 5,963. A wallet
-  created offline completed a transfer and a sweep.
-- The functional suites must run one at a time; parallel `ctest -j` runs make
-  them collide on local ports.
+- Difficulty settles within about 106 blocks after a hundredfold rise in hash
+  rate and 145 blocks after a hundredfold fall, instead of about 670.
+- A solve time out of order counts as one second, and any single solve time
+  counts as at most six target block times, so bad timestamps cannot swing
+  difficulty far.
+- From the same block, a block's timestamp may be at most 360 seconds ahead of
+  a node's clock (previously two hours), so a block cannot claim a far-future
+  time to lower difficulty. **Keep node clocks synchronized (NTP).**
 
-These are source-tree results. They do not qualify a particular binary archive
-without matching artifact evidence, and they are not an independent security review.
+Unchanged: the 120-second target, RandomX proof of work, the emission curve,
+the 3.26 XMZ tail emission, address formats, ports and network identity.
+
+The Monzero Assets research feature moves from hard fork 17 to 18 and remains
+unscheduled on every public network.
+
+## Other changes since Genesis pre16
+
+- The core reports version `1.0.0` (previously Monero's base version
+  `0.18.5.1`), and packages are named `monzero-v1.0.0-…`.
+- All changes listed for Genesis pre16 are included, including the wallet fix
+  for unmixable early outputs.
+
+## Verification performed
+
+- Unit tests cover the new rule: steady difficulty at a constant hash rate,
+  settling after hundredfold rises and falls (and the old rule's slower
+  response), out-of-order and far-future timestamps, empty windows, the
+  version-17 switch, the 360-second limit and the protected fork schedule.
+- On Monzero's private test network, two upgraded nodes mined through the fork
+  at block 1,345. Every block from the fork on had version 17 and exactly the
+  difficulty an independent LWMA calculation gives. A third node left on pre16
+  split off at the fork, as an un-upgraded node will on mainnet.
+
+These are source and test-network results. They are not an independent
+security review; see the limitations below.
 
 ## Known limitations and safety notices
 
-- Each pre16 artifact must complete the full clean qualification cycle before
-  publication; consult its exact-hash evidence rather than assuming these
-  source-tree test results apply to it.
+- Consensus, cryptography and the wider implementation have not been
+  independently audited. Security review continues with public use; report
+  issues privately to `security@monzero.org`.
 - **A prerelease wallet that had selected the atomic-XMZ display unit cannot
   be opened**, because that setting was also used by Monero wallets and does
-  not prove the file was created by Monzero. Restore it from its recovery
-  seed. No other prerelease wallet is affected.
-- The wallet file check cannot detect a Monero seed or private keys typed
-  into Monzero's restore options. Never reuse them.
-- The Windows GUI archive is built from GUI commit `0018a58f` plus the Studio
-  rework, the newest GUI code compatible with this core's wallet API; unmerged
-  asset transfer/burn and DEX work on the GUI development tip is not included.
-- Packages and release metadata will remain unsigned until the offline release
-  signing process is completed.
-- A separately trusted operator has not reproduced and signed the binaries.
-- Consensus, cryptography, and the broader implementation have not completed
-  an independent audit.
-- The public network has limited independent infrastructure and hash power.
+  not prove the file was created by Monzero. Restore it from its recovery seed.
+- The wallet file check cannot detect a Monero seed or private keys typed into
+  Monzero's restore options. Never reuse them.
+- The public network still has limited independent infrastructure and hash
+  power.
 - Windows SmartScreen may warn until the executables are code-signed.
-- Never reuse a Monero or other CryptoNote-derived seed, keys, wallet file, or
+- Never reuse a Monero or other CryptoNote-derived seed, keys, wallet file or
   data directory with Monzero.
 
 ## Upgrade and rollback
 
-Read `UPGRADE.md` before replacing binaries. Stop wallets, miners, and the
-daemon cleanly; back up wallet files, seeds, node configuration, and the data
-directory; verify the archive and its internal manifest; and extract into a
-new directory. Keep the previous verified binaries and matching data backup
-until the upgraded node has synchronized and remained healthy.
+Read `UPGRADE.md` before replacing binaries, and upgrade before block 21,000.
 
 ## Verification and reporting
 
-Compare downloads with the SHA-256 values in the final published JSON metadata
-and adjacent `.sha256` files. Review `BUILD-MANIFEST.txt` or
-`SOURCE-MANIFEST.txt` inside the archive before use. Current evidence and
-unresolved gates are recorded in `RELEASE_STATUS.md` and
-`RELEASE_CHECKLIST.md`. Report security issues privately to
-`security@monzero.org`; never include wallet seeds or private keys.
+Verify the release signature and compare downloads with the SHA-256 values in
+the signed release metadata and the adjacent `.sha256` files. Review
+`BUILD-MANIFEST.txt` or `SOURCE-MANIFEST.txt` inside the archive before use.
+Report security issues privately to `security@monzero.org`; never include
+wallet seeds or private keys.

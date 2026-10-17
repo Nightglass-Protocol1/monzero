@@ -33,7 +33,7 @@ gui_commit=$(sed -n 's/^gui_source_commit=//p' "$root/GUI_BUILD_MANIFEST.txt")
 core_commit=$(sed -n 's/^core_source_commit=//p' "$root/GUI_BUILD_MANIFEST.txt")
 [[ $gui_commit =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid GUI source commit" >&2; exit 1; }
 [[ $core_commit =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid core source commit" >&2; exit 1; }
-expected_core_version="0.18.5.1-${core_commit:0:9}"
+expected_core_version="1.0.0-${core_commit:0:9}"
 [[ $(sed -n 's/^core_version=//p' "$root/GUI_BUILD_MANIFEST.txt") == "$expected_core_version" ]] || {
   echo "GUI manifest core version does not match its source commit" >&2; exit 1;
 }

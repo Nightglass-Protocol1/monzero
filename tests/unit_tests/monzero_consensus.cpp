@@ -86,7 +86,7 @@ TEST(monzero_consensus, protected_hard_fork_schedule)
   }};
 
   // v1.0.0: LWMA difficulty from version 17 at these heights.
-  const std::array<uint64_t, 3> lwma_heights{{21000, 1460, 21000}};
+  const std::array<uint64_t, 3> lwma_heights{{21000, 1345, 21000}};
   for (size_t network = 0; network < schedules.size(); ++network)
   {
     const auto& schedule = schedules[network];
