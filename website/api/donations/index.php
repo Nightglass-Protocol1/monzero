@@ -31,7 +31,7 @@ const WALLETS = [
      'address' => 'ltc1qjsmmr8f92pt3k8ztmvg8tc0veu08whc8pklm5x',
      'addressUrl' => 'https://litecoinspace.org/address/', 'txUrl' => 'https://litecoinspace.org/tx/'],
     ['id' => 'bch', 'name' => 'Bitcoin Cash', 'symbol' => 'BCH', 'decimals' => 8, 'price' => 'bitcoin-cash',
-     'address' => 'bitcoincash:qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe',
+     'address' => 'qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe',
      'addressUrl' => 'https://blockchair.com/bitcoin-cash/address/', 'txUrl' => 'https://blockchair.com/bitcoin-cash/transaction/'],
     ['id' => 'doge', 'name' => 'Dogecoin', 'symbol' => 'DOGE', 'decimals' => 8, 'price' => 'dogecoin',
      'address' => 'DQGNxF1SEyh9cXH11mgns749frKwq7Xo1e',
@@ -128,7 +128,8 @@ function bitcoinCash(array $wallet): array
     foreach (fetchJson($base . '/transactions/full?limit=' . RECENT_PER_COIN) as $tx) {
         $amount = 0;
         foreach ($tx['outputs'] as $out) {
-            if (($out['address'] ?? '') === $wallet['address']) $amount += (int)$out['value'];
+            // Haskoin reports outputs in prefixed CashAddr form.
+            if (($out['address'] ?? '') === 'bitcoincash:' . $wallet['address']) $amount += (int)$out['value'];
         }
         if ($amount > 0) {
             $recent[] = received('bch', $tx['txid'], (string)$amount, $tx['time'] ?? null,
