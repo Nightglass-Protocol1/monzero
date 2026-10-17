@@ -279,6 +279,10 @@ block 21,000 on mainnet changes only the difficulty rule and the future
 timestamp limit (Section 4.4). It is not a chain reset; every earlier block,
 output and wallet remains valid. Nodes must run v1.0.0 or later before that
 height; a node that does not upgrade stops following the main chain there.
+Wallets must be updated as well: the inherited wallet checks each block's
+version against its own fork table and stops syncing at the first version-17
+block until it runs v1.0.0. No funds are affected; the same wallet file or seed
+syncs normally in the updated software.
 
 Consensus upgrades require a new rule version, implementation review, tests,
 release coordination, and broad operator adoption. Nodes that enforce

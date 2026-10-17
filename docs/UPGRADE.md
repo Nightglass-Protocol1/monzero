@@ -12,7 +12,7 @@ blocks, coins, wallets, seeds and addresses are unchanged.
 
 | You run | What to do |
 | --- | --- |
-| A wallet (GUI or CLI) connected to a public or upgraded node | Nothing. Upgrading the wallet is recommended but not required for the fork. |
+| A wallet (GUI, CLI or wallet RPC), on any node | Update the wallet to v1.0.0 before block 21,000. A pre16 wallet stops syncing at that block ("Unexpected hard fork version v17"); open the same wallet file in v1.0.0 to continue. No coins are lost. |
 | Your own `monzerod` (including solo mining) | Upgrade to v1.0.0 before block 21,000. |
 | XMRig on a pool | Nothing; the pool operator upgrades its node. |
 | A pool, explorer, exchange or service | Upgrade every node before block 21,000. |
