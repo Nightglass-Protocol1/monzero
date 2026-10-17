@@ -289,3 +289,6 @@ nav a[aria-current] { color: var(--accent); }
   .hero-actions .button { flex: 1 1 100%; }
   [data-page="home"] .hero h1 { font-size: 40px; }
 }
+/* Mining pool callout (home, #pool) */
+.mine-copy h3 { margin: 28px 0 8px; font-size: 18px; }
+.mine-copy code { color: var(--text, #e8eef3); font: 13px/1.6 var(--mono); overflow-wrap: anywhere; }
