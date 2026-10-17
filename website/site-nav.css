@@ -1,0 +1,26 @@
+/* Shared site header for every page, loaded after the page's own styles:
+   the same links everywhere; below 1100px they fold into the Menu button. */
+.site-header { position: relative !important; }
+.site-header .menu-toggle { display: none; padding: 8px 14px !important; border: 1px solid var(--line, #293b49) !important; border-radius: 8px !important; background: transparent !important; color: var(--ink, #e8eef3) !important; font: 500 14px/1.2 var(--sans, system-ui, sans-serif) !important; box-shadow: none !important; }
+/* Explorer: its node status sits in the header too, so drop the duplicate links there. */
+[data-page="explorer"] .site-header .header-cta, [data-page="explorer"] .site-header .site-link { display: none; }
+[data-page="explorer"] .site-header nav { gap: 18px; }
+.site-header nav a[aria-current="page"] { color: var(--ink, #e8eef3); }
+@media (max-width: 1100px) {
+  .site-header { position: relative; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 16px; }
+  .site-header .menu-toggle { display: block; margin-left: auto; cursor: pointer; }
+  .site-header nav { display: none !important; position: absolute; top: 100%; left: 0; right: 0; z-index: 40; width: auto; padding: 16px 20px; flex-direction: column; align-items: stretch; gap: 4px; background: var(--surface, #101a24); border: 1px solid var(--line, #293b49); border-radius: 0 0 12px 12px; }
+  .site-header nav.open { display: flex !important; }
+  .site-header nav a { padding: 10px 4px !important; margin: 0 !important; font-size: 15px; line-height: 1.4; }
+  .site-header .header-cta { display: none; }
+  [data-page="explorer"] .site-header .header-actions { position: static !important; margin-left: auto; order: 2; }
+  [data-page="explorer"] .site-header .menu-toggle { margin-left: 0; order: 3; }
+}
+@media (max-width: 600px) {
+  [data-page="explorer"] #node-label { display: none; }
+}
+@media print { .site-header { position: relative !important; }
+.site-header .menu-toggle { display: none; padding: 8px 14px !important; border: 1px solid var(--line, #293b49) !important; border-radius: 8px !important; background: transparent !important; color: var(--ink, #e8eef3) !important; font: 500 14px/1.2 var(--sans, system-ui, sans-serif) !important; box-shadow: none !important; }
+/* Explorer: its node status sits in the header too, so drop the duplicate links there. */
+[data-page="explorer"] .site-header .header-cta, [data-page="explorer"] .site-header .site-link { display: none; }
+[data-page="explorer"] .site-header nav { gap: 18px; } }

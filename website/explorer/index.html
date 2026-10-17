@@ -9,13 +9,16 @@
   <link rel="icon" href="../assets/monzero-xmz-coin-96.webp" type="image/webp">
   <link rel="stylesheet" href="styles.css?v=20261011-hero">
   <link rel="stylesheet" href="../theme.css?v=20261011-hero">
+  <link rel="stylesheet" href="../site-nav.css?v=20261017">
 </head>
 <body data-page="explorer">
   <a class="skip-link" href="#main">Skip to explorer</a>
   <header class="site-header">
     <a class="brand" href="./"><span class="mark">MZ</span><span><strong>MONZERO</strong><small>CHAIN EXPLORER</small></span></a>
-    <nav aria-label="Primary navigation"><a href="../">Home</a><a href="./" aria-current="page">Explorer</a><a href="../app/">Studio</a><a href="../roadmap/">Roadmap</a><a href="../WHITEPAPER.md?rev=1.4-20260926">Whitepaper</a><a href="../security/">Security</a></nav>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Primary navigation"><a href="../">Home</a><a href="../explorer/" aria-current="page">Explorer</a><a href="../app/">Studio</a><a href="../roadmap/">Roadmap</a><a href="../WHITEPAPER.md?rev=1.4-20260926">Whitepaper</a><a href="../#mine">Mining</a><a href="https://pool.monzero.org/">Pool</a><a href="../founder/">Founder</a><a href="../fund/">Donate</a><a href="../security/">Security</a></nav>
     <div class="header-actions"><a class="site-link" href="#/assets">Assets &amp; NFTs</a><div class="node-pill"><span id="node-dot"></span><span id="node-label">Connecting</span></div></div>
+    <a class="header-cta" href="../#download">Download <span aria-hidden="true">↗</span></a>
   </header>
 
   <main id="main">
@@ -56,5 +59,6 @@
     <div class="empty"><strong>Nothing found</strong><p>The value could not be resolved on the current Monzero chain.</p><a href="#/">Return to recent blocks</a></div>
   </template>
   <script src="app.js?v=20260823-nightshade"></script>
+  <script src="../site-nav.js?v=20261017" defer></script>
 </body>
 </html>

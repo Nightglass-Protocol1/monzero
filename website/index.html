@@ -9,6 +9,8 @@
   <link rel="icon" href="assets/monzero-xmz-coin-96.webp" type="image/webp">
   <link rel="stylesheet" href="styles.css?v=20261011-hero">
   <link rel="stylesheet" href="theme.css?v=20261017-pool">
+  <link rel="stylesheet" href="site-nav.css?v=20261017">
+  <link rel="stylesheet" href="fund/summary.css?v=20261017">
 </head>
 <body data-page="home">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -19,19 +21,8 @@
       <span>MONZERO</span>
     </a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
-    <nav id="site-nav" aria-label="Primary navigation">
-      <a href="#network">Network</a>
-      <a href="explorer/">Explorer</a>
-      <a href="app/">Studio</a>
-      <a href="roadmap/">DEX roadmap</a>
-      <a href="WHITEPAPER.md?rev=1.4-20260926">Whitepaper</a>
-      <a href="#about">About</a>
-      <a href="#mine">Mine</a>
-      <a href="https://pool.monzero.org/">Pool</a>
-      <a href="fund/">Donate</a>
-      <a href="#faq">FAQ</a>
-      <a class="nav-download" href="#download">Download</a>
-    </nav>
+    <nav id="site-nav" aria-label="Primary navigation"><a href="#top">Home</a><a href="explorer/">Explorer</a><a href="app/">Studio</a><a href="roadmap/">Roadmap</a><a href="WHITEPAPER.md?rev=1.4-20260926">Whitepaper</a><a href="#mine">Mining</a><a href="https://pool.monzero.org/">Pool</a><a href="founder/">Founder</a><a href="fund/">Donate</a><a href="security/">Security</a></nav>
+    <a class="header-cta" href="#download">Download <span aria-hidden="true">↗</span></a>
   </header>
 
   <main id="main">
@@ -171,6 +162,30 @@
       </ol>
     </section>
 
+    <section class="support section" id="support">
+      <div class="support-copy">
+        <p class="eyebrow">Support the project</p>
+        <h2>Help get XMZ listed.</h2>
+        <p>Several exchanges have approached us about listing XMZ, and our first goal is a listing on Biconomy. Monzero has no premine, ICO or developer fee, so donations pay for the listing fee and starting funds. Every donation is read live from the public blockchains.</p>
+        <p class="support-actions"><a class="button primary" href="fund/">Donate <span aria-hidden="true">→</span></a> <a class="support-link" href="fund/#live">See every donation</a></p>
+      </div>
+      <div class="support-card" aria-live="polite">
+        <div class="support-figures">
+          <div><span>Raised so far</span><strong id="support-raised">–</strong></div>
+          <div><span>Transactions</span><strong id="support-count">–</strong></div>
+        </div>
+        <div class="support-goal">
+          <div class="support-goal-top"><span>Listing on Biconomy</span><span><strong id="support-goal-percent">0%</strong> of $15,000</span></div>
+          <div class="support-bar"><span id="support-goal-bar"></span></div>
+        </div>
+        <div class="support-goal">
+          <div class="support-goal-top"><span>All goals</span><span><strong id="support-all-percent">0%</strong> of $20,000</span></div>
+          <div class="support-bar"><span id="support-all-bar"></span></div>
+        </div>
+        <p class="support-note" id="support-status">Live figures load from public block explorers.</p>
+      </div>
+    </section>
+
     <section class="download section" id="download">
       <div class="download-card">
         <div>
@@ -234,6 +249,8 @@
   </footer>
 
   <div class="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=20261011-hero"></script>
+  <script src="app.js?v=20261017-nav"></script>
+  <script src="site-nav.js?v=20261017" defer></script>
+  <script src="fund/summary.js?v=20261017" defer></script>
 </body>
 </html>
