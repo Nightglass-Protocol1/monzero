@@ -1,6 +1,6 @@
 # Monzero: An Independent Privacy-Preserving Digital Currency
 
-**Protocol paper, draft 1.4 — 26 September 2026**
+**Protocol paper, version 1.5 — 17 October 2026 (Monzero v1.0.0)**
 
 ## Abstract
 
@@ -15,10 +15,11 @@ premine or stake allocation.
 Monzero has a distinct genesis block, network identifiers, address prefixes,
 ports, monetary policy, and chain history. It targets 100 million XMZ through a
 smooth primary-emission curve and then maintains a permanent subsidy of 3.26
-XMZ per two-minute block. This paper describes the protocol represented by the
-current source tree, its security assumptions, and its limitations. Monzero is
-experimental, unaudited software; this document is not an investment
-prospectus or a claim that the system is production-ready.
+XMZ per two-minute block. This paper describes the protocol of Monzero v1.0.0,
+the first stable release, including the LWMA difficulty rule that activates at
+block 21,000, together with its security assumptions and limitations. The
+implementation has not been independently audited; security review continues
+with public use. This document is not an investment prospectus.
 
 ## 1. Motivation and design goals
 
@@ -140,8 +141,8 @@ proof of work satisfy consensus. Among competing valid histories, nodes follow
 the chain with the greatest cumulative difficulty.
 
 The target interval is 120 seconds. Difficulty adjusts from recent block
-history to keep the long-run interval near that target despite changing hash
-rate. Short-term block times remain stochastic.
+history to keep the interval near that target as hash rate changes (Section
+4.4). Short-term block times remain stochastic.
 
 ### 4.2 RandomX
 
@@ -169,6 +170,40 @@ maximum base subsidy permitted by the monetary parameters. This bound is tied
 at compile time to the 120-second block target so a target change cannot
 silently retain the old assumption.
 
+### 4.4 Difficulty adjustment
+
+Before block 21,000, Monzero uses the inherited Monero rule: the timestamps of
+the last 735 blocks are sorted, the newest 15 are ignored (the lag), and the
+60 earliest and latest of the remaining 720 are cut before total work is
+divided by the remaining time span. That rule suits a large, steady network.
+On a small one it follows a large change in hash rate slowly: in simulation it
+needs about 670 blocks to settle after a hundredfold rise or fall. On Monzero
+in October 2026 this produced blocks about every 57 seconds for a day and a
+half after the public pool opened, issuing coins at twice the planned rate, and
+earlier gaps of up to ten hours when large miners left.
+
+From hard fork 17 (block 21,000), the difficulty of the next block is LWMA-1, a
+linearly weighted moving average of the newest \(N = 60\) solve times
+introduced for CryptoNote chains by zawy12. With target \(T = 120\) seconds,
+solve times \(t_1, \dots, t_N\) from oldest to newest and \(\bar D\) the mean
+difficulty of those \(N\) blocks,
+
+\[
+L = \max\left(\sum_{i=1}^{N} i \cdot \min(t_i, 6T),\; \frac{N^2 T}{20}\right),
+\qquad
+D_{next} = \left\lfloor \frac{\bar D \cdot 0.99 \cdot T \cdot N(N+1)}{2L} \right\rfloor .
+\]
+
+A block whose timestamp is not later than its predecessor's counts as a one
+second solve, and no solve time counts for more than six targets, so a single
+misdated block moves the result by only a few percent. Newer blocks carry more
+weight, so difficulty settles within about 106 blocks after a hundredfold rise
+in hash rate and about 145 blocks after a hundredfold fall. From the same
+block, a block may be timestamped at most \(N T / 20 = 360\) seconds ahead of
+the validating node's clock (previously two hours), which stops a miner from
+claiming a far-future time to lower difficulty. Node operators should keep
+their clocks synchronized.
+
 ## 5. Monetary policy
 
 One XMZ is divided into \(10^{11}\) atomic units. Eleven decimal places are the
@@ -194,11 +229,13 @@ the percentage issuance rate trends toward zero, while the absolute subsidy
 continues funding proof-of-work security. Transaction fees are paid in XMZ and
 are added to the miner reward.
 
-There is no hard-coded premine. Coins produced during any private bootstrap or
-test period are nevertheless real chain issuance. The project commits to
-publishing the public-launch height and time, team-controlled addresses and
-balances, total privately mined amount and intended use before representing
-the network as publicly launched.
+There is no hard-coded premine. Coins produced during the private bootstrap and
+test period are nevertheless real chain issuance. On 16 October 2026 the
+founder published their mined holdings (about one fifth of the XMZ mined by
+then), how they were mined, and binding commitments on their use at
+[monzero.org/founder](https://monzero.org/founder/). The current circulating
+supply, which equals the total mined, is published at
+[monzero.org/api/supply](https://monzero.org/api/supply/).
 
 ## 6. Network identity and parameters
 
@@ -212,6 +249,8 @@ Monzero is not a Monero test network and does not share Monero's ledger.
 | Primary-emission target | 100,000,000 XMZ |
 | Tail subsidy | 3.26 XMZ per block |
 | Proof of work | RandomX at protocol v16 |
+| Difficulty | Inherited rule to block 20,999; LWMA-1 over 60 blocks from block 21,000 |
+| Future timestamp limit | 2 hours; 360 seconds from block 21,000 |
 | Transaction version | 2 |
 | Ring size | 16 at the active protocol |
 | Coinbase unlock | 60 blocks (about 120 minutes) |
@@ -235,6 +274,12 @@ steady-state public protocol is version 16 rather than a replay of Monero's
 historical activation timeline. Public mining should begin only after those
 bootstrap revisions have activated.
 
+Monzero v1.0.0 schedules the first post-bootstrap upgrade: hard fork 17 at
+block 21,000 on mainnet changes only the difficulty rule and the future
+timestamp limit (Section 4.4). It is not a chain reset; every earlier block,
+output and wallet remains valid. Nodes must run v1.0.0 or later before that
+height; a node that does not upgrade stops following the main chain there.
+
 Consensus upgrades require a new rule version, implementation review, tests,
 release coordination, and broad operator adoption. Nodes that enforce
 incompatible rules can split into separate networks. The source code and
@@ -250,8 +295,9 @@ amounts. XMZ would remain the only currency for fees and mining rewards.
 
 This feature is **not active**. Asset transactions are not serialized or
 accepted by current public consensus, wallets do not provide active asset
-support, transaction version remains 2, and proposed hard-fork version 17 has
-no activation height. Descriptor, authorization, conservation, registry, and
+support, transaction version remains 2, and proposed hard-fork version 18 has
+no activation height. (It was version 17 until v1.0.0 assigned that version to
+the difficulty upgrade.) Descriptor, authorization, conservation, registry, and
 ownership-proof code exists only as a reviewable research scaffold.
 
 Activation must not occur without Phase 0 stabilization, an independently
@@ -400,6 +446,18 @@ per-market recovery, platform validation, independent security review and
 release acceptance remain prerequisites for activation. No new downloadable
 DEX release or completed audit is announced by this paper.
 
+### 9.4 Status as of 17 October 2026
+
+LTC/XMZ is the first pair; work on other pairs is paused until it runs as a
+capped test with invited participants. On the public Litecoin test network
+(against a private XMZ test network), complete swaps have succeeded, including
+one funded from the wallet's built-in Litecoin light wallet with no Litecoin
+node, and an interrupted trade was recovered through its timelocked refund.
+The trading apps now reconnect by themselves when their connection drops,
+including during settlement, and the light wallet reads Litecoin MWEB
+transactions. Live trading remains disabled in released software; mainnet
+trading requires its own approval, caps, an operator kill switch and review.
+
 ## 10. Security assumptions and limitations
 
 Monzero's safety depends on more than correct cryptographic primitives:
@@ -425,7 +483,12 @@ Monzero's safety depends on more than correct cryptographic primitives:
   cryptography plus correct verification software.
 - **Network maturity.** A small peer and miner population provides weaker
   resilience, censorship resistance, and practical privacy than a large,
-  diverse network.
+  diverse network. In October 2026 most hash rate reaches the chain through
+  one public pool, which is a point of concentration until more pools and
+  solo miners take part.
+- **Clocks.** From block 21,000 a node rejects blocks dated more than 360
+  seconds after its own clock. A node with a badly wrong clock can fall
+  behind until its clock is corrected.
 
 Users should verify release hashes and signatures when available, keep seeds
 offline, use a newly generated Monzero-only wallet, and run a full node where
@@ -486,62 +549,42 @@ The GUI resource bundle uses Monzero-specific application,
 title-bar, mining-status, and mined-transfer artwork on Linux, Windows, and
 macOS packaging paths. Required upstream copyright notices, research names,
 and compatibility identifiers remain unchanged because branding does not
-erase provenance. These changes are included in the current Genesis pre13 GUI
-package.
+erase provenance. These changes are included in the current GUI package.
 
 ## 12. Status and roadmap
 
-The project remains an unsigned, independently unaudited prerelease. The
-published Genesis pre15 manifest, dated 23 September 2026, pins core source
-`85d922cb09a5731712f69f799a8bd8004ff00a35` and GUI source
-`0018a58f2aeb1670ca6ab7c61b7c0de7d07ff9f8` (GUI package revision 1). It retains
-the pre10–pre14 chain identity. Release notes describe Monzero-only wallet-file
-acceptance, consistent 11-decimal XMZ amounts, repair of affected initial scan
-heights and a Linux glibc 2.35 baseline. Package evidence includes 23 CTest
-suites, 1,318 unit tests and documented Linux/Windows checks. Internal clean-room
-rebuilds are not independent reproduction or security review.
+Monzero v1.0.0 is the first stable release. It continues the chain used by the
+Genesis pre10–pre16 prereleases (the network UUID, genesis nonce and genesis
+hash in Section 6) and schedules hard fork 17 at block 21,000. Pre9 used a
+superseded identity; its balances and history do not carry into the current
+chain. Exact package names, hashes, signatures and limitations are recorded in
+the release metadata and notes published at
+[monzero.org](https://monzero.org/). Each release's test evidence (unit,
+consensus-replay and functional suites, and a live fork test on the private
+test network) is evidence about the tested implementation, not an independent
+security review.
 
-Exact package names, hashes and limitations are recorded in the
-[pre15 manifest](https://monzero.org/releases/genesis-pre15.json) and
-[release notes](https://monzero.org/releases/genesis-pre15-notes.txt).
-The newer DEX work in Section 9 is not included in those published packages.
-Updating this paper neither replaces binaries nor activates trading.
+Public infrastructure in October 2026 comprises two public nodes (Europe and
+the United States), a block explorer, a public RandomX mining pool
+([pool.monzero.org](https://pool.monzero.org/)), a circulating-supply
+endpoint, and a donation page ([monzero.org/fund](https://monzero.org/fund/))
+whose balances are read live from the public blockchains of the donated coins.
 
-The current DEX delivery sequence is:
+Immediate work:
 
-1. extend the verified Litecoin success/refund paths across interruption,
-   reorganisation and adversarial recovery scenarios;
-2. finish approval-bound refund validation and the actual GUI journal handoff,
-   then connect explicit funding, settlement and recovery controls;
-3. implement and verify each additional chain or sequential route independently;
-4. establish authenticated public test-network peers, available counterparties
-   and explicit price, fee and route policies; and
-5. complete platform, reproducibility and independent security review gates
-   before a separately approved release.
+1. upgrade every public node and the pool to v1.0.0 well before block 21,000,
+   and confirm the fork on mainnet;
+2. obtain independent consensus, cryptography and implementation review, and
+   independent reproduction of the release binaries;
+3. broaden the network: more independent nodes, pools and solo miners;
+4. complete the LTC/XMZ exchange's remaining gates (signed operator control,
+   a relay for peers on different machines, caps) before a capped beta; and
+5. keep the asset research isolated until its separate activation gates are
+   satisfied.
 
 The [public roadmap](https://monzero.org/roadmap/) distinguishes implemented
-components, isolated test evidence and unfinished acceptance gates. Development
-stopped after this documentation checkpoint on 26 September; interrupted tests
-are not recorded as passes. There is no committed live-trading launch date.
-
-Immediate work remains operational rather than promotional:
-
-1. obtain independent consensus, cryptography, and implementation review;
-2. complete independent binary reproduction and platform testing;
-3. establish a diverse, synchronized public peer and mining network;
-4. disclose bootstrap issuance and launch conditions; and
-5. keep experimental asset and DEX work isolated until their separate
-   activation gates are satisfied.
-
-Genesis pre15 retains the network UUID, genesis nonce, and
-genesis hash recorded in Section 6. Pre10 through pre15 share that chain;
-pre9 used a superseded identity and its balances and transaction history do
-not carry into the current genesis history. A network UUID is not a wallet
-recovery seed and changing it does not modify wallet keys, but users migrating
-from the superseded chain must rescan the current chain from height zero.
-
-No roadmap item is a promise of delivery or authorization to weaken a release
-gate.
+components, test evidence and unfinished gates. No roadmap item is a promise of
+delivery or authorization to weaken a release gate.
 
 ## 13. References and provenance
 
