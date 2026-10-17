@@ -8,7 +8,8 @@
   <link rel="icon" href="../assets/monzero-xmz-coin-96.webp" type="image/webp">
   <link rel="stylesheet" href="../styles.css?v=20261011-hero">
   <link rel="stylesheet" href="../theme.css?v=20261017-pool">
-  <link rel="stylesheet" href="fund.css?v=20261017">
+  <link rel="stylesheet" href="fund.css?v=20261017-live">
+  <script src="fund.js?v=20261017-live" defer></script>
 </head>
 <body data-page="fund">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -20,32 +21,54 @@
 
   <main id="main">
     <section class="section">
-      <p class="draft-banner"><strong>DRAFT, not published.</strong> Addresses, targets and dates below are placeholders. Do not send anything to this page until it is live at monzero.org/fund/ and the signed address statement is published.</p>
+      <p class="draft-banner"><strong>DRAFT, not published.</strong> Do not send anything until this page is live at monzero.org/fund/ and the signed address statement is published.</p>
       <div class="section-heading compact">
         <p class="eyebrow">Support the project · draft of 17 October 2026</p>
         <h1>Help fund an independent, CPU-mined privacy coin.</h1>
-        <p>Monzero has no premine, no ICO and no developer fee, so nothing pays for exchange listings or bug bounties except the people who want it to exist. This page lists what money is needed for, where to send it, and how every coin received and spent will be reported. A donation is a gift to the project. It does not buy XMZ, a share, a vote or any future return.</p>
+        <p>Monzero has no premine, no ICO and no developer fee, so nothing pays for exchange listings or bug bounties except the people who want it to exist. This page lists what money is needed for, where to send it, and every donation received, live from the public blockchains. Several exchanges have already approached Monzero about listing XMZ. A donation is a gift to the project. It does not buy XMZ, a share, a vote or any future return.</p>
       </div>
+    </section>
+
+    <section class="section" id="live">
+      <div class="section-heading compact">
+        <p class="eyebrow">Live donations</p>
+        <h2>Every donation, as the blockchains record it.</h2>
+        <p>These figures are read from public block explorers every 10 minutes. Nothing here is typed in by hand. Every number links to the explorer, where anyone can check it.</p>
+      </div>
+      <div class="live-totals">
+        <div><span class="live-label">Received so far</span><strong id="total-received">–</strong></div>
+        <div><span class="live-label">Held now</span><strong id="total-held">–</strong></div>
+        <div><span class="live-label">Transactions</span><strong id="total-count">–</strong></div>
+      </div>
+      <p class="live-status" id="live-status">Loading live figures… If this does not change, check the addresses directly on the explorer links below.</p>
+      <div class="table-scroll">
+        <table class="figures" id="coin-table">
+          <thead><tr><th scope="col">Coin</th><th scope="col" class="num">Received</th><th scope="col" class="num">Held now</th><th scope="col" class="num">Transactions</th><th scope="col" class="num">Check</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <h3 class="recent-title">Latest donations</h3>
+      <ul class="recent" id="recent"><li class="recent-empty">No donations yet. The first one will appear here within 10 minutes of being sent.</li></ul>
     </section>
 
     <section class="section">
       <div class="section-heading compact">
         <p class="eyebrow">What the money is for</p>
         <h2>Two goals, funded and reported separately.</h2>
-        <p>Every goal has its own target. Money is spent only on the goal it was raised for. When a goal is full, any extra goes to the next goal in this list, and the move is reported.</p>
+        <p>Donations fill the goals in order: when a goal is full, the rest goes to the next one. Money is spent only on the goal it was raised for. The bars below update with the live total, valued in US dollars at today's prices.</p>
       </div>
       <ol class="goals">
         <li>
           <h3>1. Exchange listings</h3>
-          <p>Most exchanges charge a listing fee, and a new market also needs starting funds so people can actually trade. Those starting funds are the project's own XMZ and coins, which are reported. Applications are made only once the network meets the readiness checks published with the application, and every fee paid is shown in the spending report with the exchange's name.</p>
-          <div class="goal-figures"><span>Raised: $0</span><span class="pending">Target: $15,000 (draft)</span></div>
-          <div class="bar" aria-hidden="true"><span></span></div>
+          <p>Several exchanges have already approached Monzero about listing XMZ. Most charge a listing fee, and a new market also needs starting funds so people can actually trade. Those starting funds are the project's own XMZ and coins, which are reported. We only apply once the network passes the readiness checks published with the application, and every fee paid is shown in the spending report with the exchange's name.</p>
+          <div class="goal-figures"><span>Raised: <span class="goal-raised" data-goal="0">$0</span></span><span>Target: $15,000</span></div>
+          <div class="bar" aria-hidden="true"><span class="goal-bar" data-goal="0" data-target="15000"></span></div>
         </li>
         <li>
           <h3>2. Bug bounties</h3>
           <p>Rewards for security problems reported privately to security@monzero.org, paid according to published rules.</p>
-          <div class="goal-figures"><span>Raised: $0</span><span class="pending">Target: $5,000 (draft)</span></div>
-          <div class="bar" aria-hidden="true"><span></span></div>
+          <div class="goal-figures"><span>Raised: <span class="goal-raised" data-goal="1">$0</span></span><span>Target: $5,000</span></div>
+          <div class="bar" aria-hidden="true"><span class="goal-bar" data-goal="1" data-target="5000"></span></div>
         </li>
       </ol>
     </section>
@@ -54,34 +77,53 @@
       <div class="section-heading compact">
         <p class="eyebrow">Where to send</p>
         <h2>One wallet per coin, used only for donations.</h2>
-        <p>The Bitcoin, Litecoin, Monero and Ethereum addresses are on a hardware wallet. None of these wallets is used for anything else, so everything they receive is a donation and everything they send is a reported spend.</p>
+        <p>The Bitcoin, Litecoin, Bitcoin Cash, Dogecoin, Ethereum and Solana addresses belong to a hardware wallet. The XMZ address is a separate project wallet, not the founder's. None of them is used for anything else. So everything they receive is a donation, and everything they send is a reported spend. Check the address on the signed statement below before you send.</p>
       </div>
       <div class="wallets">
         <div class="wallet">
           <h3>Bitcoin (BTC)</h3>
-          <p class="wallet-note">Bitcoin network · hardware wallet</p>
-          <p class="address pending">bc1q… to be filled in</p>
+          <p class="wallet-note">Bitcoin network only</p>
+          <p class="address" data-address="bc1pzsjv3e7mcst6khqr3msq85wlq67hnh48yjrm6eepycvze4htazyqyruvng">bc1pzsjv3e7mcst6khqr3msq85wlq67hnh48yjrm6eepycvze4htazyqyruvng</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="bc1pzsjv3e7mcst6khqr3msq85wlq67hnh48yjrm6eepycvze4htazyqyruvng">Copy address</button> <a href="https://mempool.space/address/bc1pzsjv3e7mcst6khqr3msq85wlq67hnh48yjrm6eepycvze4htazyqyruvng" rel="noopener">View on explorer</a></p>
         </div>
         <div class="wallet">
           <h3>Litecoin (LTC)</h3>
-          <p class="wallet-note">Litecoin network · hardware wallet</p>
-          <p class="address pending">ltc1q… to be filled in</p>
+          <p class="wallet-note">Litecoin network only</p>
+          <p class="address" data-address="ltc1qjsmmr8f92pt3k8ztmvg8tc0veu08whc8pklm5x">ltc1qjsmmr8f92pt3k8ztmvg8tc0veu08whc8pklm5x</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="ltc1qjsmmr8f92pt3k8ztmvg8tc0veu08whc8pklm5x">Copy address</button> <a href="https://litecoinspace.org/address/ltc1qjsmmr8f92pt3k8ztmvg8tc0veu08whc8pklm5x" rel="noopener">View on explorer</a></p>
         </div>
         <div class="wallet">
-          <h3>Monero (XMR)</h3>
-          <p class="wallet-note">Monero network · hardware wallet · view key published below</p>
-          <p class="address pending">4… to be filled in</p>
+          <h3>Bitcoin Cash (BCH)</h3>
+          <p class="wallet-note">Bitcoin Cash network only</p>
+          <p class="address" data-address="bitcoincash:qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe">bitcoincash:qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="bitcoincash:qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe">Copy address</button> <a href="https://blockchair.com/bitcoin-cash/address/bitcoincash:qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe" rel="noopener">View on explorer</a></p>
         </div>
         <div class="wallet">
-          <h3>Ethereum, USDT, USDC</h3>
-          <p class="wallet-note">Ethereum mainnet only (ERC-20) · hardware wallet</p>
-          <p class="address pending">0x… to be filled in</p>
-          <p class="wallet-note">Do not send from other networks such as Tron, BSC or Arbitrum; coins sent on the wrong network cannot be recovered.</p>
+          <h3>Dogecoin (DOGE)</h3>
+          <p class="wallet-note">Dogecoin network only</p>
+          <p class="address" data-address="DQGNxF1SEyh9cXH11mgns749frKwq7Xo1e">DQGNxF1SEyh9cXH11mgns749frKwq7Xo1e</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="DQGNxF1SEyh9cXH11mgns749frKwq7Xo1e">Copy address</button> <a href="https://blockchair.com/dogecoin/address/DQGNxF1SEyh9cXH11mgns749frKwq7Xo1e" rel="noopener">View on explorer</a></p>
+        </div>
+        <div class="wallet">
+          <h3>Ethereum (ETH)</h3>
+          <p class="wallet-note">Ethereum mainnet only</p>
+          <p class="address" data-address="0xD0Eb7C50Db766c897B085A492387135123f0A6b9">0xD0Eb7C50Db766c897B085A492387135123f0A6b9</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="0xD0Eb7C50Db766c897B085A492387135123f0A6b9">Copy address</button> <a href="https://etherscan.io/address/0xD0Eb7C50Db766c897B085A492387135123f0A6b9" rel="noopener">View on explorer</a></p>
+          <p class="wallet-note">ETH only. Do not send from other networks such as Arbitrum, Base or BNB Chain; coins sent on the wrong network may be lost.</p>
+        </div>
+        <div class="wallet">
+          <h3>USDT on Solana</h3>
+          <p class="wallet-note">Solana network only (SPL token)</p>
+          <p class="address" data-address="5LpU8TxNqWvs5ACyhxCXNVFXNMq6mnvvK1YvMGkBWXog">5LpU8TxNqWvs5ACyhxCXNVFXNMq6mnvvK1YvMGkBWXog</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="5LpU8TxNqWvs5ACyhxCXNVFXNMq6mnvvK1YvMGkBWXog">Copy address</button> <a href="https://solscan.io/account/5LpU8TxNqWvs5ACyhxCXNVFXNMq6mnvvK1YvMGkBWXog" rel="noopener">View on explorer</a></p>
+          <p class="wallet-note">USDT on Solana only. Do not send USDT on Ethereum or Tron to this address.</p>
         </div>
         <div class="wallet">
           <h3>Monzero (XMZ)</h3>
-          <p class="wallet-note">Monzero network · project fund wallet · view key published below</p>
-          <p class="address pending">F… to be filled in</p>
+          <p class="wallet-note">Monzero network only · project fund wallet</p>
+          <p class="address">FY8hgp14NjQ2U2Hv5kCcfiPFPrbsr4jZwSD3Y6Xd8oUiZgdfvnSEf97STYzsY4Ys6Ubc9Ks8LMPCs2UYU3ynphEeML3Z55g</p>
+          <p class="wallet-actions"><button type="button" class="copy" data-copy="FY8hgp14NjQ2U2Hv5kCcfiPFPrbsr4jZwSD3Y6Xd8oUiZgdfvnSEf97STYzsY4Ys6Ubc9Ks8LMPCs2UYU3ynphEeML3Z55g">Copy address</button></p>
+          <p class="wallet-note">XMZ payments are private by design, so they cannot be read from the chain like the coins above. XMZ totals will be shown once this wallet's view key is published here.</p>
         </div>
       </div>
     </section>
@@ -94,7 +136,7 @@
       <div class="download-card">
         <div>
           <h2>Signed address statement</h2>
-          <p>The full list of donation addresses is signed with the Bitcoin donation address's key and published in three places: this page, the project's Bitcointalk thread and the GitHub repository. The three copies must match exactly. If they do not, do not send anything, and report it to security@monzero.org.</p>
+          <p>The full list of donation addresses is signed with the Ethereum donation address's key, which anyone can check with Etherscan's signature verifier. The statement is published in three places: this page, the project's Bitcointalk thread and the GitHub repository. The three copies must match exactly. If they do not, do not send anything, and report it to security@monzero.org.</p>
           <p class="pending">The signed statement will be published here before the page goes live.</p>
         </div>
         <div>
@@ -112,9 +154,9 @@
       <div class="download-card">
         <div>
           <h2>What anyone can check</h2>
-          <p><strong>Bitcoin, Litecoin and Ethereum</strong> balances and payments are public on their block explorers.</p>
-          <p><strong>Monero and XMZ</strong> are private by design, so their view keys will be published here. A view key lets anyone see what a wallet received, but it cannot spend anything. Spends from those wallets will be listed with their transaction IDs and proofs.</p>
-          <p class="pending">View keys: to be published before launch.</p>
+          <p>All six donation wallets are on public blockchains: Bitcoin, Litecoin, Bitcoin Cash, Dogecoin, Ethereum and Solana. Anyone can see every payment in and out on a block explorer, without asking us. The live figures above are read from those same explorers.</p>
+          <p><strong>XMZ</strong> is private by design. To make the XMZ donation wallet checkable, its view key will be published here. A view key lets anyone see what the wallet received, but it cannot spend anything.</p>
+          <p class="pending">XMZ view key: to be published.</p>
         </div>
         <div>
           <h2>Monthly report</h2>
