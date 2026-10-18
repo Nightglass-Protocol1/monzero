@@ -32,3 +32,6 @@
 /* Homepage brand banner */
 .brand-banner { margin: 0; padding: 8px var(--gutter) 0; }
 .brand-banner img { display: block; width: 100%; height: auto; border-radius: var(--radius, 12px); border: 1px solid var(--line); }
+
+/* Supplied Monzero coin artwork. */
+.brand .brand-coin { display: block; width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; border: 0; border-radius: 50%; }
