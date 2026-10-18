@@ -94,3 +94,19 @@ miner has opted into reporting.
 On Windows the daemon's default data and mining log directory is
 `%PROGRAMDATA%\monzero`; the reporter diagnostic log remains under
 `%APPDATA%\Monzero`.
+
+### Mainnet network statistics
+
+`/stats/` shows the latest 720 mainnet block headers, with 120/360/720-block
+windows for estimated hashrate (difficulty / current target interval), difficulty,
+block intervals and non-coinbase transaction counts. The GET-only `stats/api.php`
+uses the fixed public node, a shared 60-second public-data cache and serialized
+refreshes. It returns an error when mainnet data cannot be obtained; the browser
+labels any retained snapshot with its original update time. No analytics SDK,
+wallet identity collection, or fabricated user-growth series is included.
+The existing opt-in miner endpoint supplies current reporting installations only.
+
+Validation: PHP syntax, JavaScript syntax and real mainnet API retrieval; Chromium
+checks at 1440px and 390px, 720/120-block selection, retained-snapshot and first-load
+outage states. Wine mainnet GUI screenshots use a separate empty demonstration
+wallet connected to the public remote node, without mining or transfers.
