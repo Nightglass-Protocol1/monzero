@@ -28,3 +28,7 @@
 /* Third-party listings (e.g. Chainquiry) */
 .chainquiry-badge { display: inline-block; max-width: 100%; line-height: 0; margin-top: 22px; }
 .chainquiry-badge img { display: block; max-width: 100%; height: auto; border: 0; }
+
+/* Homepage brand banner */
+.brand-banner { margin: 0; padding: 8px var(--gutter) 0; }
+.brand-banner img { display: block; width: 100%; height: auto; border-radius: var(--radius, 12px); border: 1px solid var(--line); }
