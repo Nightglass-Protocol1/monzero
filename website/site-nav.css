@@ -26,6 +26,5 @@
 [data-page="explorer"] .site-header nav { gap: 18px; } }
 
 /* Third-party listings (e.g. Chainquiry) */
-.listed-on { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 14px; text-decoration: none; }
-.listed-on strong { color: var(--ink); font-weight: 600; }
-.listed-on:hover, .listed-on:focus-visible { border-color: var(--accent); color: var(--ink); }
+.chainquiry-badge { display: inline-block; max-width: 100%; line-height: 0; margin-top: 22px; }
+.chainquiry-badge img { display: block; max-width: 100%; height: auto; border: 0; }
