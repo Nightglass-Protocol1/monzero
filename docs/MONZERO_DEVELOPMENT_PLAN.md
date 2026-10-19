@@ -1184,3 +1184,34 @@ against `COMMAND_RPC_GET_ASSETS`/`COMMAND_RPC_GET_ASSET_OUTPUTS` and
 `on_get_assets` in the core source. Actual-PHP fixture checks cover malformed,
 busy, inconsistent-activation and valid empty output pages; full website runner
 passes. No builds, mining or deployment ran.
+
+### Payment request tool and merchant guide — 2026-10-19 (Claude)
+
+Owner asked Claude to continue the plan (web wallet still excluded). Added
+`/payments/request/`: in-browser address validation mirroring
+`get_account_address_from_str` (Monero-style base58, original Keccak-256 checksum,
+mainnet/testnet/stagenet standard/integrated/subaddress prefixes 86–88/111–113/
+131–133, exact key length, canonical ed25519 `check_key` decompression), amounts
+per `parse_amount`/`print_money` (11 decimals, uint64 bound), and `monzero:` URIs
+per `make_uri`. Text fields escape every reserved byte because the wallet's own
+encoder leaves `=`/`?` unescaped and its parser then rejects them. Payment IDs
+appear only inside integrated addresses; name/description are labelled as
+payer-wallet notes, not on-chain references. Self-contained QR encoder (byte mode,
+level M, v1–40) with SVG/PNG download, copy and Web Share. No network requests,
+storage, keys or signing.
+
+Verification: Keccak vectors match pycryptodome; wallet-generated vectors from a
+throwaway offline `monzero-wallet-cli` (release-v1 host build) for primary,
+subaddress and integrated addresses; generated URIs (including `= ? / + %`, UTF-8
+and the uint64 maximum) were parsed exactly by offline `monzero-wallet-rpc`
+`parse_uri`, and `make_uri` output matched byte-for-byte. QR output decodes with
+zbarimg at every version 1–40; the browser test scans the on-page QR and the
+downloaded PNG. Desktop/mobile/no-JS and 18-route navigation pass.
+
+Added `/developers/payments/`: view-only wallet, loopback wallet RPC with digest
+login, per-invoice `create_address`, `make_uri`, `get_transfers` confirmation
+tracking (pool vs in, double_spend_seen, 10-block spendable age, reorg recheck),
+expiry/late payments and HMAC callback verification. Flags/methods checked in
+source; create_address/make_uri/digest-401 exercised offline. `get_transfers`
+needs a daemon and was verified from source only. Homepage, portal and roadmap
+link both pages. No builds, mining or deployment ran.

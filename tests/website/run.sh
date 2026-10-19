@@ -43,3 +43,6 @@ php -l website/explorer/api.php
 node --check website/explorer/app.js
 python3 tests/website/test_explorer_assets.py
 python3 tests/website/check_explorer_assets.py
+node --check website/payments/request/request.mjs
+node --test tests/website/payment-request.test.mjs
+python3 tests/website/check_payment_request.py
