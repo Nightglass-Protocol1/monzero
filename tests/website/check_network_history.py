@@ -64,6 +64,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
      assert page.locator('#rows tr').count()==expected
      assert page.locator('svg circle').count()==expected*2
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    assert page.evaluate('document.querySelector("header nav").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top')
     assert page.evaluate('document.querySelector("header").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top')
     # Real exporter fixtures test ranges independently of local runtime archives.
     page.select_option('#range','24h')

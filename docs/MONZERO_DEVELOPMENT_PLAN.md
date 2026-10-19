@@ -896,3 +896,34 @@ pass known histogram values, syncing/future-tip warnings and outage/recovery.
 The real mainnet histogram was visually inspected. The public roadmap records
 this recent-window scope, not historical block analytics completion. No native
 builds, mining or production deployment ran.
+
+### Community hub — local implementation, 2026-10-19
+
+Added `/community/` with the owner-supplied Telegram group, existing official
+repository, roadmap/source-update links, contribution routes, security disclosure
+instructions and mining/network resources. The homepage links to the hub without
+changing its navigation. Unknown Bitcointalk/social URLs are explicitly absent;
+no independent announcements feed or funded bounty claims were invented. Voting,
+bounties and badges remain planned, with submissions closed pending their controls.
+
+The static page needs no JavaScript. Desktop/mobile checks verify layout, header
+clearance and keyboard access; local resource links are checked against the preview.
+Claude's read-only review is pending. This page does not complete the community
+platform or publish anything to production. No builds or mining ran.
+
+### Community hub review follow-up — 2026-10-19
+
+Claude reviewed the hub and confirmed the listed Telegram/repository URLs match
+the established homepage links and contribution/security guidance. Changed the
+future-feature heading to Planned, stated moderation/authentication/abuse-control
+prerequisites, removed an unsupported translation-process implication, and added
+current-page navigation. The hub and network stylesheet links are absolute and
+versioned for cache refresh. Other review suggestions were stylistic; no new
+external official accounts or release claims were inferred.
+
+Visual inspection exposed inherited mobile navigation positioning over content
+on both the hub and network pages. Scoped static navigation fixes now pass at
+390/1440px; network browser acceptance explicitly checks navigation clearance.
+The hub passes no-JavaScript layout, keyboard skip-link and eleven local-route
+checks. The public roadmap records the hub's local-only implementation scope.
+Production publishing and the interactive community platform remain unfinished.

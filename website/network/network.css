@@ -8,3 +8,4 @@ caption{text-align:left;padding:12px 0;font-weight:600}
 #block-distribution{overflow-x:auto}
 
 #block-distribution svg{min-width:640px}
+.site-header nav{position:static;flex-direction:row;align-items:center;padding:0;background:none;border:0}
