@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css?v=20261011-hero">
   <link rel="stylesheet" href="theme.css?v=20261017-pool">
   <link rel="stylesheet" href="site-nav.css?v=20261018-brand">
+  <link rel="stylesheet" href="homepage-tools.css?v=20261019">
   <link rel="canonical" href="https://monzero.org/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Monzero">
@@ -194,6 +195,28 @@
         <li><span>3</span><div><strong>Start CPU mining</strong><p>Open Command Prompt in the extracted folder and run <code>start-mining.bat YOUR_MONZERO_ADDRESS 2</code>. Replace the address and choose the number of CPU threads you want to use.</p></div></li>
         <li><span>4</span><div><strong>Check rewards and stop</strong><p>Run <code>balance</code> in the wallet to see mined rewards; they unlock after 60 blocks. Run <code>stop-mining.bat</code> when you want to stop mining.</p></div></li>
       </ol>
+    </section>
+
+    <section class="section ecosystem" id="ecosystem" aria-labelledby="ecosystem-title">
+      <div class="section-heading compact"><p class="eyebrow">Explore Monzero</p><h2 id="ecosystem-title">Tools for the network.</h2><p>Explore the chain, understand mining and follow the project. Each tool states what its data can tell you.</p></div>
+      <div class="ecosystem-grid">
+        <article><h3>Explore the blockchain</h3><p>Look up blocks and transactions, or see observed network activity. Network figures describe the chain, not a count of people.</p><a href="explorer/">Open explorer</a><a href="stats/">View network charts</a></article>
+        <article><h3>Plan your mining</h3><p><strong>Preview tools.</strong> Estimate rewards and electricity costs, then compare sourced CPU measurements. Expected rewards are averages, not guaranteed payouts.</p><a href="mining/calculator/">Mining calculator</a><a href="mining/benchmarks/">CPU benchmarks</a></article>
+        <article><h3>Follow pool activity</h3><p><strong>Preview dashboard.</strong> Use a public mining address to look up supported pool statistics. Pool-reported payments are distinct from confirmed on-chain payouts.</p><a href="mining/dashboard/">Your mining dashboard</a><a href="https://pool.monzero.org/">Visit the mining pool</a></article>
+        <article><h3>Public wallet disclosures</h3><p>Wallets are private by default. Search only profiles their owners have explicitly signed and published.</p><a href="wallets/">Search published profiles</a></article>
+        <article><h3>Developer resources</h3><p>Inspect the source and protocol documentation. A dedicated developer portal and versioned website API documentation remain planned.</p><a href="https://github.com/Nightglass-Protocol1/monzero">Source repository</a><a href="WHITEPAPER.md?rev=1.5-20261017">Protocol whitepaper</a></article>
+        <article><h3>Join the community</h3><p>Discuss the project, follow its progress and find ways to contribute.</p><a href="https://t.me/MonzeroOfficial" rel="noopener noreferrer">Monzero on Telegram</a><a href="fund/">Fundraising transparency</a></article>
+      </div>
+      <p class="ecosystem-note">Payment-request and merchant tools are planned and are not yet available. No web wallet is planned.</p>
+    </section>
+
+    <section class="section ecosystem" id="development" aria-labelledby="development-title">
+      <div class="section-heading compact"><p class="eyebrow">Project development</p><h2 id="development-title">Follow the work.</h2><p>Release documentation, source changes and milestone evidence in one place.</p></div>
+      <div class="ecosystem-grid development-grid">
+        <article><h3>Release documentation</h3><p>Read the existing v1.0.0 release notes and the Windows GUI update notes dated 18 October 2026. Package checksums and validation limitations are listed with the downloads.</p><a href="releases/v1.0.0-notes.txt">v1.0.0 release notes</a><a href="releases/gui-profiles-20261018-notes.txt">18 October GUI update notes</a><a href="#download">Downloads and checksums</a></article>
+        <article><h3>Source activity</h3><p>A live GitHub activity feed is not available here yet. Follow the repository's commit history for source changes and open issues for ongoing discussion.</p><a href="https://github.com/Nightglass-Protocol1/monzero/commits">View commit history</a><a href="https://github.com/Nightglass-Protocol1/monzero/issues">Issues and contributions</a></article>
+        <article><h3>Website milestones</h3><p>In local preview: the mining calculator, pool dashboard, benchmark catalog and shared network observations. Local test evidence is recorded on the roadmap; production release acceptance remains open.</p><a href="roadmap/#website-progress">Website progress and remaining work</a><a href="roadmap/#milestones">DEX milestones</a></article>
+      </div>
     </section>
 
     <section class="support section" id="support">

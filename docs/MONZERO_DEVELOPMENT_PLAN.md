@@ -526,3 +526,20 @@ that reaches the total deadline; focused calculator browser checks also passed
 after these fixes. Requests arriving
 while an expired observation refreshes still receive explicit retryable 503; stale
 results are not presented as current. Edge abuse controls remain deployment work.
+
+### Homepage ecosystem and development discovery — 2026-10-19
+
+Added homepage ecosystem cards linking to existing explorer/network charts,
+mining tools, pool, public opt-in disclosures, source documentation and community.
+A development section links existing release notes/checksums, GitHub commit and
+issue pages, and the evidence-based website/DEX roadmap. The live GitHub feed is
+explicitly unavailable; payment/merchant tools and the developer portal remain
+planned. No web-wallet feature is offered. New sections retain the dark/teal
+palette and require no JavaScript or new dependencies.
+
+Verified discovery layout and local link destinations at 1440px, 768px and 390px,
+with no horizontal overflow; inspected desktop rendering. Homepage network tests
+passed at desktop/mobile sizes. The existing header/navigation and entire download
+section are byte-for-byte unchanged. Claude's source/content review completed. Mining cards now explicitly say preview,
+wallet privacy wording identifies signed publication, and headings use relative
+font sizing. The unchanged navigation/download comparison was also verified.

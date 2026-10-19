@@ -31,7 +31,7 @@ try:
    page.wait_for_function("document.querySelector('#metric-reward').textContent === '2 XMZ'")
    assert page.locator('#metric-target').inner_text()=='120 seconds'
    assert page.locator('#metric-connections').inner_text()=='Unavailable'
-   assert page.locator('a[href="mining/calculator/"]').count()==1
+   assert page.locator('#mine a[href="mining/calculator/"]').count()==1
    assert page.locator('.hero-actions a[href="https://t.me/MonzeroOfficial"]').count()==1
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow'
    for field in ('synchronized','tip_fresh'):
