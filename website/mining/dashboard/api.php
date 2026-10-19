@@ -23,12 +23,16 @@ $path=$directory.'/state.json';
 if(is_link($path))dashboardReply(['error'=>'Pool lookup temporarily unavailable'],503);
 $file=@fopen($path,'c+');
 if(!$file || !flock($file,LOCK_EX|LOCK_NB))dashboardReply(['error'=>'Pool lookup busy; retry shortly'],503);
-@chmod($path,0600);
+if(!@chmod($path,0600))dashboardReply(['error'=>'Pool lookup temporarily unavailable'],503);
 $bytes=stream_get_contents($file,2097153);
 if(strlen($bytes)>2097152)dashboardReply(['error'=>'Pool lookup temporarily unavailable'],503);
 $state=json_decode($bytes,true);$now=time();
+// Stable deployment secret comes from private configuration, never temp state.
+$configuredKey=getenv('MONZERO_POOL_WORKER_LABEL_KEY');
+$workerKey=is_string($configuredKey)&&preg_match('/\A[0-9a-f]{64}\z/',$configuredKey)?$configuredKey:null;
 if(!is_array($state) || !is_string($state['salt'] ?? null) || ($state['window'] ?? 0)<$now-60)
     $state=['salt'=>bin2hex(random_bytes(32)),'window'=>$now,'total'=>0,'clients'=>[],'cache'=>[]];
+unset($state['worker_key']); // remove temporary keys from earlier previews
 $client=hash_hmac('sha256',(string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'),$state['salt']);
 function dashboardSave($file,array $state): void {
     $bytes=json_encode($state,JSON_THROW_ON_ERROR);rewind($file);
@@ -47,7 +51,7 @@ try {
             'pool'=>['hashrate'=>poolNonnegative($rawStats['pool']['hashrate'] ?? null)]];
         $state['cache']=['stats'=>['observed_at'=>time(),'value'=>$stats]];
     }
-    $view=poolMinerView($miner,$stats,$address,time());
+    $view=poolMinerView($miner,$stats,$address,time(),$workerKey);
     unset($address,$miner,$stats);
     dashboardSave($file,$state);dashboardReply($view);
 } catch(Throwable $error) {

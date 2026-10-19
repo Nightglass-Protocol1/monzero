@@ -14,7 +14,7 @@ php -l website/mining/dashboard/api.php
 php tests/website/pool-contract.php
 python3 tests/website/test_pool_api.py
 node --check website/mining/dashboard/dashboard.mjs
-node --test tests/website/pool-history.test.mjs
+node --test tests/website/pool-history.test.mjs tests/website/worker-labels.test.mjs
 python3 tests/website/check_pool_dashboard.py
 
 node --check website/mining/benchmarks/benchmarks.mjs

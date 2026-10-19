@@ -1,5 +1,5 @@
 """PHP HTTP boundary checks using an explicitly replaced synthetic transport."""
-import json, shutil, socket, subprocess, tempfile, time, unittest, urllib.request, urllib.error
+import os, json, shutil, socket, subprocess, tempfile, time, unittest, urllib.request, urllib.error
 from pathlib import Path
 class PoolApi(unittest.TestCase):
  @classmethod
@@ -15,12 +15,12 @@ class PoolApi(unittest.TestCase):
     file_put_contents(__DIR__.'/calls',"call\\n",FILE_APPEND);
     if($path==='/api/stats')return ['config'=>['coin'=>'monzero','coinUnits'=>100000000000],'pool'=>['hashrate'=>2000]];
     parse_str(parse_url($path,PHP_URL_QUERY),$args);
-    return ['address'=>$args['address'],'hashrate'=>1000,'pending'=>'9007199254740993','paid'=>0,'workers'=>[],'payments'=>[]];
+    return ['address'=>$args['address'],'hashrate'=>1000,'pending'=>'9007199254740993','paid'=>0,'workers'=>[['name'=>'private-login-fixture','difficulty'=>1]],'payments'=>[]];
 }
 '''
   (cls.root/'api.php').write_text(code)
   with socket.socket() as s:s.bind(('127.0.0.1',0));cls.port=s.getsockname()[1]
-  cls.server=subprocess.Popen(['php','-S',f'127.0.0.1:{cls.port}','-t',cls.temp.name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+  cls.server=subprocess.Popen(['php','-S',f'127.0.0.1:{cls.port}','-t',cls.temp.name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env={**os.environ,'MONZERO_POOL_WORKER_LABEL_KEY':'a'*64})
   for _ in range(50):
    try:
     with socket.create_connection(('127.0.0.1',cls.port),timeout=.2):break
@@ -52,4 +52,10 @@ class PoolApi(unittest.TestCase):
   self.assertEqual(self.request(self.body())[0],429)
   state=(self.root/'private-state/state.json').read_text()
   self.assertNotIn('F'+'1'*94,state);self.assertNotIn('127.0.0.1',state);self.assertNotIn('9007199254740993',state)
+ def test_worker_identifiers_survive_rate_window_without_raw_names(self):
+  first=self.request(self.body())[1];identifier=first['workers'][0]['label_id']
+  path=self.root/'private-state/state.json';state=json.loads(path.read_text());state['window']=0;path.write_text(json.dumps(state))
+  second=self.request(self.body())[1];self.assertEqual(second['workers'][0]['label_id'],identifier)
+  other=self.request(self.body('2'))[1];self.assertNotEqual(other['workers'][0]['label_id'],identifier)
+  self.assertNotIn('worker_key',path.read_text());self.assertNotIn('a'*64,json.dumps(second));self.assertNotIn('private-login-fixture',json.dumps(second));self.assertNotIn('private-login-fixture',path.read_text())
 if __name__=='__main__':unittest.main()

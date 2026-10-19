@@ -198,3 +198,22 @@ regression fixture deliberately enables server-wide expiry to check that only
 one no-cache header survives. Production acceptance must verify `mod_headers`,
 `mod_mime`, appropriate `.htaccess` overrides and the resulting public headers;
 `IfModule` guards are compatibility measures, not proof that a host enforces them.
+
+### Optional local worker labels
+
+The dashboard returns opaque HMAC identifiers scoped to a mining address and
+pool login name, never the raw name. Connections sharing a login share a label.
+Configure `MONZERO_POOL_WORKER_LABEL_KEY` as 64 lowercase hexadecimal characters
+in the PHP service environment, using a persistent private secret outside the
+webroot (for example, a mode-0600 service environment file). Do not log or publish
+its contents. Missing or invalid configuration disables worker labels while other
+dashboard observations remain available. Rate-state cleanup does not rotate the
+key; deliberate key rotation invalidates saved associations and requires relabeling.
+No label text is sent to the server.
+
+The browser keeps labels in memory until the visitor explicitly enables local
+saving. It stores at most 100 opaque-ID/label pairs (60 characters each), without
+addresses, activity or raw worker names. Users can forget saved labels, switch
+saving off or clear the dashboard to remove them. Storage failures are reported
+without claiming deletion succeeded. Labels are notes, not proof of machine
+identity. Auto-refresh pauses while a worker-label control has focus.

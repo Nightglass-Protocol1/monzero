@@ -15,7 +15,7 @@ function poolLookupShape(mixed $value): bool {
     return is_string($value) && in_array(strlen($value),[95,106],true)
         && preg_match('/\A[1-9A-HJ-NP-Za-km-z]+\z/D',$value)===1;
 }
-function poolMinerView(array $miner, array $stats, string $address, int $observedAt): array {
+function poolMinerView(array $miner, array $stats, string $address, int $observedAt, ?string $workerKey=null): array {
     if (isset($miner['error']) || ($miner['address'] ?? null)!==$address) throw new UnexpectedValueException('Unmatched miner response');
     if (($stats['config']['coin'] ?? null)!=='monzero' || ($stats['config']['coinUnits'] ?? null)!==100000000000)
         throw new UnexpectedValueException('Wrong pool denomination');
@@ -28,7 +28,7 @@ function poolMinerView(array $miner, array $stats, string $address, int $observe
         foreach($miner['workers'] as $worker) {
             if (!is_array($worker) || !is_string($worker['name'] ?? null) || strlen($worker['name'])>256)
                 throw new UnexpectedValueException('Invalid worker');
-            $workers[]=['name'=>'Worker connection '.(count($workers)+1),'share_difficulty'=>poolNonnegative($worker['difficulty'] ?? null)];
+            $workers[]=['label_id'=>$workerKey===null?null:hash_hmac('sha256',$address."\0".$worker['name'],$workerKey),'name'=>'Worker connection '.(count($workers)+1),'share_difficulty'=>poolNonnegative($worker['difficulty'] ?? null)];
         }
     }
     $payments=null;
@@ -50,7 +50,7 @@ function poolMinerView(array $miner, array $stats, string $address, int $observe
         'pool_share_percent'=>$hashrate!==null && $poolHashrate!==null && $poolHashrate>0 && $hashrate<=$poolHashrate
             ?$hashrate/$poolHashrate*100:null,
         'pending_atomic'=>poolAtomic($miner['pending'] ?? null),'paid_atomic'=>poolAtomic($miner['paid'] ?? null),
-        'workers'=>$workers,'active_workers'=>$workers===null?null:count($workers),'payments'=>$payments,
+        'worker_labels_available'=>$workerKey!==null,'workers'=>$workers,'active_workers'=>$workers===null?null:count($workers),'payments'=>$payments,
         'accepted_shares'=>null,'rejected_shares'=>null,'worker_uptime'=>null,'hashrate_history'=>null,
         'limitations'=>['Hashrate is a ten-minute share-based estimate reported by the pool.',
             'Payments are reported sent by the pool; blockchain confirmations have not been verified.',

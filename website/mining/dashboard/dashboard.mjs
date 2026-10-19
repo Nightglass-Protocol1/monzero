@@ -1,3 +1,4 @@
+import {LABEL_STORAGE_KEY,parseLabels,setLabel} from './labels.mjs';
 import {appendObservation,plotSegments} from './history.mjs';
 const form=document.querySelector('#lookup'),address=document.querySelector('#address');
 const status=document.querySelector('#status'),results=document.querySelector('#results');
@@ -5,12 +6,15 @@ const workers=document.querySelector('#workers'),payments=document.querySelector
 const auto=document.querySelector('#auto');let generation=0,controller=null,selected='';
 const collect=document.querySelector('#collect-history'),historyView=document.querySelector('#session-history'),historyStatus=document.querySelector('#history-state');
 let samples=[],historyGap=false;
+const saveLabels=document.querySelector('#save-labels'),labelStatus=document.querySelector('#label-status');
+let labels={},currentWorkers=[],savedEnabled=false;
+saveLabels.checked=false;auto.checked=false;collect.checked=false;
 const format=n=>typeof n==='number' && Number.isFinite(n)?new Intl.NumberFormat(undefined,{maximumSignificantDigits:7}).format(n):'Unavailable';
 function atomic(value) {
   if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(value))return 'Unavailable';
   const padded=value.padStart(12,'0');return `${padded.slice(0,-11)}.${padded.slice(-11)} XMZ`;
 }
-function reset() {results.replaceChildren();workers.replaceChildren();payments.replaceChildren();document.querySelector('#worker-state').textContent='No current observation.';}
+function reset() {currentWorkers=[];results.replaceChildren();workers.replaceChildren();payments.replaceChildren();document.querySelector('#worker-state').textContent='No current observation.';}
 function cancel() {generation++;controller?.abort();controller=null;reset();}
 async function lookup(value) {
   cancel();const id=generation;controller=new AbortController();const requestController=controller;const timer=setTimeout(()=>requestController.abort(),16000);
@@ -27,7 +31,7 @@ async function lookup(value) {
       ['Pool contribution (%)',format(data.pool_share_percent)],['Pending pool rewards',atomic(data.pending_atomic)],['Total reported paid',atomic(data.paid_atomic)]];
     for(const [name,value] of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=name;dd.textContent=value;results.append(dt,dd);}
     if(Array.isArray(data.workers)) {
-      for(const worker of data.workers){const li=document.createElement('li');li.textContent=worker.name;workers.append(li);}
+      currentWorkers=data.workers;renderWorkers();if(data.worker_labels_available===false)labelStatus.textContent='Worker labels are unavailable until the website configures stable identifiers.';
       document.querySelector('#worker-state').textContent=data.workers.length?'Connection numbers apply only to this snapshot. Raw worker names are hidden because they may contain identifying login information. Individual hashrate and uptime are unavailable.':'No currently connected workers reported.';
     } else document.querySelector('#worker-state').textContent='Worker data unavailable.';
     if(Array.isArray(data.payments)) {
@@ -44,11 +48,11 @@ async function lookup(value) {
 }
 form.addEventListener('submit',event=>{event.preventDefault();const value=address.value.trim();
   if(![95,106].includes(value.length)||!/^[1-9A-HJ-NP-Za-km-z]+$/.test(value)){cancel();selected='';status.textContent='Enter a public XMZ mining address. Do not enter keys or seed words.';return;}
-  if(selected!==value)clearHistory();selected=value;lookup(value);
+  if(selected!==value){if(!savedEnabled)labels={};clearHistory();}selected=value;lookup(value);
 });
-address.addEventListener('input',()=>{clearHistory();cancel();selected='';status.textContent='Address changed. Submit a new lookup.';});
-document.querySelector('#clear').addEventListener('click',()=>{clearHistory();collect.checked=false;historyStatus.textContent='Session charts are off.';cancel();selected='';address.value='';auto.checked=false;status.textContent='Dashboard cleared.';});
-setInterval(()=>{if(auto.checked&&selected&&!document.hidden&&!controller)lookup(selected);},60000);
+address.addEventListener('input',()=>{if(!savedEnabled)labels={};clearHistory();cancel();selected='';status.textContent='Address changed. Submit a new lookup.';});
+document.querySelector('#clear').addEventListener('click',()=>{forgetLabels();clearHistory();collect.checked=false;historyStatus.textContent='Session charts are off.';cancel();selected='';address.value='';auto.checked=false;status.textContent='Dashboard cleared.';});
+setInterval(()=>{if(auto.checked&&selected&&!document.hidden&&!controller&&!workers.contains(document.activeElement))lookup(selected);},60000);
 document.querySelector('#calculator-inputs').disabled=false;
 
 function clearHistory(){samples=[];historyGap=false;renderHistory();}
@@ -76,3 +80,59 @@ function renderHistory(){
  const head=document.createElement('tr');for(const title of ['Time','H/s','Pending XMZ']){const th=document.createElement('th');th.scope='col';th.textContent=title;head.append(th);}const thead=document.createElement('thead');thead.append(head);table.append(thead);
  const body=document.createElement('tbody');for(const sample of samples){const row=document.createElement('tr');for(const value of [new Date(sample.at*1000).toLocaleString(),format(sample.hash),atomic(sample.pending)]){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}body.append(row);}table.append(body);details.append(summary,table);historyView.append(details);
 }
+
+function renderWorkers(){
+ workers.replaceChildren();
+ for(const worker of currentWorkers){
+  const li=document.createElement('li'),name=document.createElement('span');name.textContent=worker.name;li.append(name);
+  if(typeof worker.label_id==='string'&&/^[0-9a-f]{64}$/.test(worker.label_id)){
+   const form=document.createElement('form'),label=document.createElement('label'),input=document.createElement('input'),button=document.createElement('button');
+   label.append('Your label for '+worker.name);input.value=labels[worker.label_id]||'';input.maxLength=60;input.autocomplete='off';label.append(input);button.type='submit';button.textContent='Apply label';form.append(label,button);
+   form.addEventListener('submit',event=>{event.preventDefault();try{
+    saveWorkerLabel(worker.label_id,input.value);
+    // Update matching connections without replacing the focused form.
+    workers.querySelectorAll('input[data-worker]').forEach(other=>{if(other.dataset.worker===worker.label_id)other.value=labels[worker.label_id]||'';});
+   }catch(error){labelStatus.textContent='Label not saved: '+error.message;}});
+   input.dataset.worker=worker.label_id;li.append(form);
+  }
+  workers.append(li);
+ }
+}
+
+function saveWorkerLabel(id,value){
+ let base=labels;
+ if(savedEnabled){
+  const raw=localStorage.getItem(LABEL_STORAGE_KEY);
+  if(raw===null){savedEnabled=false;saveLabels.checked=false;base={};}
+  else base=parseLabels(raw);
+ }
+ const next=setLabel(base,id,value);
+ if(savedEnabled)localStorage.setItem(LABEL_STORAGE_KEY,JSON.stringify(next));
+ labels=next;renderSavedLabels();labelStatus.textContent=savedEnabled?'Label saved on this device.':'Label applied in memory only.';
+}
+function renderSavedLabels(){
+ const list=document.querySelector('#saved-label-list');list.replaceChildren();
+ if(!savedEnabled)return;
+ for(const [id,value] of Object.entries(labels)){
+  const item=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent='Remove '+value;
+  button.addEventListener('click',()=>{try{saveWorkerLabel(id,'');renderWorkers();}catch{labelStatus.textContent='Could not remove the saved label. Browser storage may be unavailable.';}});item.append(button);list.append(item);
+ }
+}
+saveLabels.addEventListener('change',()=>{
+ if(!saveLabels.checked){forgetLabels();return;}
+ try{
+  const next=parseLabels(JSON.stringify({...parseLabels(localStorage.getItem(LABEL_STORAGE_KEY)),...labels}));
+  localStorage.setItem(LABEL_STORAGE_KEY,JSON.stringify(next));labels=next;savedEnabled=true;
+  labelStatus.textContent='Saved labels enabled on this device.';renderWorkers();renderSavedLabels();
+ }catch{savedEnabled=false;saveLabels.checked=false;labelStatus.textContent='Saved labels could not be accessed or exceed the 100-label limit. Existing saved data may remain; use Forget or browser site-data controls.';}
+});
+function forgetLabels(){
+ labels={};savedEnabled=false;saveLabels.checked=false;renderWorkers();renderSavedLabels();
+ try{localStorage.removeItem(LABEL_STORAGE_KEY);labelStatus.textContent='Saved labels forgotten.';}catch{labelStatus.textContent='Browser storage could not be cleared. Use browser site-data controls to remove saved labels.';}
+}
+document.querySelector('#forget-labels').addEventListener('click',forgetLabels);
+window.addEventListener('storage',event=>{
+ if(event.storageArea!==localStorage || (event.key!==LABEL_STORAGE_KEY&&event.key!==null))return;
+ if(event.newValue===null){labels={};savedEnabled=false;saveLabels.checked=false;renderWorkers();renderSavedLabels();labelStatus.textContent='Saved labels were removed in another tab.';}
+ else if(savedEnabled){try{labels=parseLabels(event.newValue);if(!workers.contains(document.activeElement))renderWorkers();renderSavedLabels();}catch{labels={};savedEnabled=false;saveLabels.checked=false;renderWorkers();renderSavedLabels();labelStatus.textContent='Saved labels changed to an unreadable format; local saving is off.';}}
+});

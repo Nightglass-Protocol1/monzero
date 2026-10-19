@@ -1,6 +1,7 @@
 # Monzero ecosystem website development plan
 
-Updated: 2026-10-19. Status: repository analysis and Release 1 preparation.
+Updated: 2026-10-19. Status: Release 1 implementation and local acceptance;
+production deployment remains pending.
 Active priority: website expansion; DEX work is deferred. Local mining and builds
 remain stopped by owner request. No automatic payouts, new wallet custody, chain
 changes or browser wallet are authorized by this plan. The owner explicitly excludes all
@@ -636,3 +637,42 @@ remained empty, and Clear erased the address and observations. No private wallet
 seed, credentials, mining, transaction submission or production mutation was used.
 This closes the basic live-pool transport/response/browser integration check;
 outage, limits and malformed responses retain their separate synthetic evidence.
+
+### Optional worker labels — 2026-10-19
+
+Implemented address-scoped keyed worker identifiers without exposing raw login
+names. The private HMAC key is supplied through persistent service configuration,
+separate from temporary rate state; key loss/rotation invalidates old associations. Duplicate logins share
+labels and are documented as such, not falsely identified as separate machines.
+Browser labels stay in memory by default; explicit opt-in saves only bounded
+opaque-ID/label pairs locally. Clear, opt-out and Forget remove saved data, with
+honest errors if browser storage is unavailable. Raw addresses/activity are not
+stored with labels. Refresh pauses while editing a label.
+
+PHP contract/API tests passed for stable identifiers, address separation, key
+rotation and hidden raw names. Three JS tests passed for label validation,
+malformed storage, text safety and capacity. Claude reviewed the feature; fixes
+cover persistent key configuration, cross-tab deletion, restored checkbox state
+and removal of labels for disconnected workers. Chromium checks passed at 1440
+and 390 pixels for explicit saving, cross-tab forgetting, individual removal,
+blocked writes/deletions, chart regression, outage and clearing; no-JavaScript
+controls remain disabled. Four chart-model cases and syntax/whitespace checks
+also passed. No production deployment.
+
+### Windows mining report follow-up — 2026-10-19
+
+The new user report records repeated wallet-to-daemon connection failures after
+GUI mining start. It does not include daemon mining status or a daemon crash log,
+so the cause and actual CLI hashrate remain unverified. No reward transactions
+alone does not establish mining failure: solo rewards require finding a block.
+The published manifest identifies GUI `4b0cc9e16` and unchanged core `c4165784d`;
+source inspection confirms asynchronous loopback mining commands and an existing
+launcher RPC-ban safeguard. Earlier Wine mining evidence used a native Linux
+daemon and does not close native Windows daemon acceptance. Keep this issue open;
+no mining, builds, release replacement or claim of a reproduced fix was made.
+
+Claude's bounded source review completed. It confirmed that the supplied log
+cannot identify the mining failure, and identified two follow-up improvements:
+clear stale mining status text on disconnect and retain useful, sanitized mining
+command failure diagnostics. These are findings, not implemented or reproduced
+Windows fixes. Review: `core/build/claude-mining-report-review-20261019.txt`.

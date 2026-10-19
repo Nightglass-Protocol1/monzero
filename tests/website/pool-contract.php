@@ -28,3 +28,15 @@ foreach([array_merge($miner,['address'=>'different']),array_merge($miner,['payme
 }
 check(poolMinerView(array_merge($miner,['hashrate'=>3000]),$stats,$address,200)['pool_share_percent']===null,'Do not clamp inconsistent percentage');
 echo "Pool contract checks passed\n";
+$key=str_repeat('a',64);
+$labelled=poolMinerView($miner,$stats,$address,200,$key);
+$id=$labelled['workers'][0]['label_id'];
+check(preg_match('/^[0-9a-f]{64}$/',$id)===1,'Opaque label identifier');
+check(poolMinerView($miner,$stats,$address,201,$key)['workers'][0]['label_id']===$id,'Stable identifier');
+$otherAddress='F'.str_repeat('2',94);$other=$miner;$other['address']=$otherAddress;
+check(poolMinerView($other,$stats,$otherAddress,200,$key)['workers'][0]['label_id']!==$id,'Address scoped identifier');
+check(poolMinerView($miner,$stats,$address,200,str_repeat('b',64))['workers'][0]['label_id']!==$id,'Key rotation separates identifiers');
+check(!str_contains(json_encode($labelled),'<script>fixture</script>'),'Raw name remains hidden');
+$grouped=$miner;$grouped['workers'][]=$miner['workers'][0];
+$groupedView=poolMinerView($grouped,$stats,$address,200,$key);
+check($groupedView['workers'][0]['label_id']===$groupedView['workers'][1]['label_id'],'Shared login has shared label');
