@@ -1,0 +1,30 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/../../website/mining/dashboard/contract.php';
+function check(bool $condition,string $message): void {if(!$condition)throw new RuntimeException($message);}
+$address='F'.str_repeat('1',94);
+$stats=['config'=>['coin'=>'monzero','coinUnits'=>100000000000],'pool'=>['hashrate'=>2000]];
+$miner=['address'=>$address,'hashrate'=>1000,'pending'=>'18446744073709551615','paid'=>0,
+    'workers'=>[['name'=>'<script>fixture</script>','difficulty'=>5000]],
+    'payments'=>[['txid'=>str_repeat('a',64),'timestamp'=>100,'amount'=>'9007199254740993']]];
+$v=poolMinerView($miner,$stats,$address,200);
+check($v['pending_atomic']==='18446744073709551615','Atomic precision');
+check($v['payments'][0]['amount_atomic']==='9007199254740993','Payment precision');
+check($v['payments'][0]['confirmations']===null,'No invented confirmation');
+check($v['pool_share_percent']===50.0,'Contribution');
+check($v['active_workers']===1,'Workers');
+check($v['workers'][0]['name']==='Worker connection 1','Do not expose raw login identifiers');
+check(!isset($v['address']),'Do not echo address');
+check($v['accepted_shares']===null && $v['hashrate_history']===null,'Unavailable fields');
+$missing=poolMinerView(['address'=>$address],$stats,$address,200);
+check($missing['workers']===null && $missing['pending_atomic']===null && $missing['hashrate_hps']===null,'Missing is not zero');
+foreach([-1,1.2,'01','18446744073709551616',true,1e20] as $bad)check(poolAtomic($bad)===null,'Reject invalid atoms');
+check(poolAtomic(0)==='0','Real zero');
+check(poolLookupShape($address),'Address-shaped input');
+foreach(['seed words here',str_repeat('0',95),$address.'?url=evil',null] as $bad)check(!poolLookupShape($bad),'Input boundary');
+foreach([array_merge($miner,['address'=>'different']),array_merge($miner,['payments'=>[['txid'=>'bad']]])] as $bad){
+ $rejected=false;try{poolMinerView($bad,$stats,$address,200);}catch(UnexpectedValueException){$rejected=true;}
+ check($rejected,'Reject unmatched or malformed response');
+}
+check(poolMinerView(array_merge($miner,['hashrate'=>3000]),$stats,$address,200)['pool_share_percent']===null,'Do not clamp inconsistent percentage');
+echo "Pool contract checks passed\n";

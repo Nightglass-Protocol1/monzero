@@ -8,3 +8,9 @@ php -l website/api/node-info/index.php
 python3 tests/website/test_node_observation.py
 python3 tests/website/check_calculator_browser.py
 python3 tests/website/check_home_network.py
+
+php -l website/mining/dashboard/api.php
+php tests/website/pool-contract.php
+python3 tests/website/test_pool_api.py
+node --check website/mining/dashboard/dashboard.mjs
+python3 tests/website/check_pool_dashboard.py

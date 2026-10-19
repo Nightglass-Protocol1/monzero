@@ -3,7 +3,8 @@
 Updated: 2026-10-19. Status: repository analysis and Release 1 preparation.
 Active priority: website expansion; DEX work is deferred. Local mining and builds
 remain stopped by owner request. No automatic payouts, new wallet custody, chain
-changes or production browser wallet are authorized by this plan.
+changes or browser wallet are authorized by this plan. The owner explicitly excludes all
+web-wallet work, including research/specification, from the requested scope.
 
 ## Requirements and scope
 
@@ -138,7 +139,9 @@ Leaderboards use consented data with opt-out and self-report labels.
 - Payments: verify actual core address checksum/network rules and wallet URI
   specification before QR/address utilities. Merchant documentation remains
   self-hosted/non-custodial; authenticate callbacks and make confirmation state
-  explicit. Browser wallet is a researched architecture document only.
+  explicit. Browser/web wallet implementation and research/specification are excluded by
+  the owner. Public-address lookups and payment requests must never generate,
+  collect or store keys/seeds or sign transactions.
 - Exchanges/markets: sourced directory and dated listing tracker; live price,
   depth and volume only from verified venue APIs. No invented listings.
 - Transparency: extend existing fund/founder/roadmap pages with dated evidence,
@@ -292,3 +295,57 @@ Nginx example routing/security-header inheritance; unify navigation; verify pool
 terms and supported read-only endpoints; benchmark catalog with reviewed source
 records. Read-only pool research is already within the authorized scope and does
 not need additional owner permission. Keep unknown data unavailable.
+
+
+### Explicit owner scope correction
+
+The owner excludes the web wallet from the supplied feature list. Phase 5.3
+(browser-wallet research/architecture) is removed as well as any implementation.
+All other requested website features remain in scope. This is not a request to
+remove desktop wallet downloads or public-address/payment-request utilities.
+
+
+### Pool dashboard implementation — 2026-10-19
+
+Read-only HTTPS checks of the live pool homepage and `/api/stats` confirmed the
+published endpoints and config: XMZ, 11 decimals, PPLNS, 1% fee, 1 XMZ threshold,
+60 confirmations, payments-enabled flag. These are dated pool reports, not a
+promise that payouts cannot be paused. Inspected source:
+`/home/tripo/projects/Monzero-App/pool/xmzpool/xmzpool.py` (`stats`, `miner_stats`,
+`http`). Claude independently reviewed the contract; output:
+`core/build/claude-pool-contract-20261019.txt`.
+
+Additive `/mining/dashboard/` implementation now supports explicit public-address
+lookup, ten-minute share-based hashrate, connected worker count, pending/paid
+atomic-string amounts, contribution percentage where consistent and up to 50
+pool-reported sent payments with explorer links. Unknown-address and real-zero
+responses cannot be distinguished by the upstream API. Sent is not chain-confirmed;
+timestamps are pool payment record times. Missing share counts, uptime and
+historical hashrate remain unavailable. Charts, labels and independently checked
+confirmations are still open requirements, not completed by this page.
+
+Security: fixed HTTPS destination/no redirects, bounded bodies/timeouts, POST-only
+lookup, shape-only address boundary, response allowlist, no CORS, no-store client
+responses, ten requests/client/minute and sixty total/minute, serialized upstream
+access. Private operational state holds short-lived hashed client limits and
+only public pool aggregate caching; individual miner responses are not cached
+on disk. No plain address/IP logs in the adapter. Pool upstream GET query logging
+remains possible and is disclosed. Raw worker names are withheld because the
+pool may derive them from miner password/login fields; numbered connections are
+snapshot-only identifiers. No automatic initial lookup or address persistence.
+Refresh is explicitly opt-in and stops while the tab is hidden; Clear cancels
+requests and clears the address/results.
+
+Verification: contract checks for exact large amounts, unknown fields, invalid
+responses, generic worker labels and inconsistent percentages passed. Two PHP
+HTTP adapter tests passed using an explicitly replaced synthetic transport:
+method/body/cross-site guards, exact amounts, cache behavior, request limits and
+absence of plain address/IP/miner amount from disk state. This does not verify
+live TLS transport or production hosting. Chromium checks at 1440/390px passed
+explicit lookup, large-amount formatting, payment links, no overflow, error
+clearing, clear action and no localStorage persistence; JS-disabled controls
+remain disabled. Syntax and whitespace checks passed. Changes are unpublished.
+
+Outstanding: shared navigation, CPU benchmark catalog, historical chart support,
+worker-label strategy without sensitive upstream names, public observation cache
+hardening, production HTTP/TLS/header validation and full Release 1 regression.

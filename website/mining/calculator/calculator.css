@@ -17,3 +17,5 @@ select:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
 
 #calculator-inputs { border:0; padding:0; margin:0; min-width:0; }
 #results dt, #results dd { font-size:16px; line-height:1.6; }
+
+#payments a { overflow-wrap:anywhere; }
