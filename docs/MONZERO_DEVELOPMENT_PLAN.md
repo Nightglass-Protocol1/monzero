@@ -1096,3 +1096,48 @@ moderation, submissions and payout operations, which are not enabled. Eight
 contract groups, populated browser acceptance, fifteen-page navigation and
 Apache/Nginx hosting checks have passed. Claude's contract and UI reviews were
 reconciled as recorded above. No production deployment, native builds or mining.
+
+### Developer portal — initial local documentation, 2026-10-19
+
+Added `/developers/` with source/protocol links and implementation-derived recent
+block/history contracts, local curl example, caching/freshness/error handling and
+source limitations. The homepage links to the portal. Proposed versioned API,
+explorer/pool API support and wallet/payment examples are explicitly unfinished;
+no browser wallet or unverified network endpoints were introduced.
+
+Desktop/mobile no-JavaScript layout and navigation clearance checks passed.
+Claude's factual review against the adapter/collector sources is pending. This
+is an initial portal, not completion of the developer platform or a deployed API.
+No native builds, mining or production deployment ran.
+
+### Pool adapter developer documentation — 2026-10-19
+
+Expanded the portal from the actual pool adapter/normalizer source: POST shape,
+2 KiB limit, same-origin browser boundary, lexical-only address checks, exact
+11-decimal XMZ atomic strings, nullable observations, connection-label semantics,
+pool-sent versus confirmed payments, privacy implications and current throttling/
+error responses. The example requires a caller-supplied public mining address
+and is not executed by the page. The documentation distinguishes the existing
+site adapter from a versioned supported API.
+
+Desktop/mobile no-JavaScript checks pass after the addition. Claude's initial
+network-contract review remains in progress. Explorer/RPC and wallet/payment
+integration examples, versioned APIs and production deployment remain unfinished.
+No builds, mining or external messages ran.
+
+### Developer portal review and explorer reference — 2026-10-19
+
+Claude's network-contract review completed; corrected synchronization semantics,
+the history sources array and sampled-tip wording, and made preview-to-public-node
+requests explicit. Verified the transaction-count field uses blk.tx_hashes.size()
+in the core RPC source, excluding the miner transaction.
+
+Added the existing explorer action reference directly from its switch/validation
+logic, including newest-first headers, bounded asset search and ambiguous
+unsupported/outage fallback. The portal explicitly distinguishes this legacy
+presentation adapter from a hardened versioned API. Pool contract details were
+checked against its adapter and normalizer; neither example runs automatically.
+All sixteen shared-navigation routes pass desktop/mobile/no-JavaScript checks.
+The public roadmap records the initial portal scope. Full RPC documentation,
+wallet/payment examples, versioned APIs and production deployment remain open.
+No builds, mining or production changes ran.
