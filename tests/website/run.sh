@@ -25,3 +25,8 @@ python3 tests/website/check_benchmarks.py
 
 node --check website/site-nav.js
 python3 tests/website/check_navigation.py
+
+php -l website/stats/api.php
+php tests/website/stats-contract.php
+python3 tests/website/test_stats_api.py
+MONZERO_TEST_STREAM_HTTP=1 python3 tests/website/test_stats_api.py

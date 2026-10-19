@@ -743,3 +743,28 @@ content/tag, request counts and clearing; delivery uses a mock Notification API.
 Existing dashboard labels/charts also passed after initial integration. Syntax
 and whitespace checks passed. No production deployment or native builds/mining.
 Network-difficulty alerts remain unfinished.
+
+### Statistics endpoint validation and cache — 2026-10-19
+
+Replaced permissive chart-data casts with strict source consistency checks for
+complete, linked windows matching the reported mainnet tip. Numeric data must be
+nonnegative safe integers (positive difficulty); unsupported wide difficulty and
+bootstrap-marked responses are rejected. Retained the existing route and chart
+response fields, adding schema `monzero-chain-charts-v2`.
+
+Private deployment-scoped cache permissions, shared-reader locks, nonblocking
+refresh, bounded transport, failure cooldown and remaining browser cache lifetime
+are implemented. Failed refreshes do not return stale success. Claude reviewed
+the changes; shared-reader concurrency and cache-write/age findings were addressed.
+Contract tests cover malformed/partial/reordered headers, link/tip mismatches,
+720-header boundaries, bootstrap flags and numeric limits. Eight integration
+tests passed with cURL and eight with the forced PHP stream fallback, covering
+cache reuse/expiry, permissions, busy/shared locks, corruption/future dates,
+negative caching, upstream failure, redirects, oversized responses and methods.
+
+Read-only mainnet sampling validated 720 headers at height 12,524. The local PHP
+endpoint returned HTTP 200 with the v2 schema and 720 blocks; the existing mobile
+stats page rendered this live-source response without JavaScript errors. This
+is not independent consensus validation or a production deployment. Upstream
+HTTP trust, archival storage and broader rate controls remain open. No local
+mining or builds ran.

@@ -254,3 +254,22 @@ Incomplete initial history can make an old payment appear newly observed later;
 this is disclosed rather than inferred away using unverified payment timestamps.
 Queued counts wait for a valid list and pause if the ID limit is reached. Stop,
 Clear and address changes also uncheck the payment option.
+
+### Statistics source validation
+
+`stats/contract.php` validates an exact window of up to 720 ordered headers,
+consecutive heights, hash links and agreement with the `get_info` tip. Wrong
+network/target, bootstrap-marked responses, orphan headers, incomplete lists,
+wide difficulty and unsafe numeric values fail closed. Backward timestamps remain
+valid data; the UI already omits their negative interval. This is not independent
+consensus verification. Fixed upstream HTTP transport remains an explicit trust
+limitation pending authenticated HTTPS support.
+
+The stats cache is deployment-scoped with private permissions. Fresh readers
+share locks; only refresh holds the exclusive lock, with a second cache check
+after upgrading. Busy refresh returns no-store 503, never stale success. Responses
+are bounded to 2 MiB on both PHP transports with redirects disabled. Failures have
+a five-second cooldown; success caches for 60 seconds and downstream max-age uses
+remaining lifetime. Corrupt, future-dated or malformed cached observations are
+rejected. Source errors are not echoed or logged verbatim. Historical archival
+storage and broader edge rate controls are still separate remaining work.
