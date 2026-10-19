@@ -18,5 +18,5 @@ export function summarizeBlocks(data){
  }
  const intervals=blocks.length-1,valid=intervals-backwards,span=blocks[blocks.length-1].timestamp-blocks[0].timestamp;
  // Endpoint-based estimate; internal timestamp reversals remain explicitly counted.
- return {generatedAt:data.generated_at,height:data.height,synchronized:data.synchronized,firstHeight:start,lastHeight:data.height-1,blockCount:blocks.length,firstTimestamp:blocks[0].timestamp,lastTimestamp:blocks[blocks.length-1].timestamp,bins,backwards,validIntervals:valid,blocksPerHour:intervals>0&&span>0?intervals*3600/span:null};
+ return {tipDifficulty:blocks[blocks.length-1].difficulty,generatedAt:data.generated_at,height:data.height,synchronized:data.synchronized,firstHeight:start,lastHeight:data.height-1,blockCount:blocks.length,firstTimestamp:blocks[0].timestamp,lastTimestamp:blocks[blocks.length-1].timestamp,bins,backwards,validIntervals:valid,blocksPerHour:intervals>0&&span>0?intervals*3600/span:null};
 }

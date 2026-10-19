@@ -944,3 +944,38 @@ mobile, and mobile with JavaScript disabled. This protects against the inherited
 mobile-positioning regression found during visual inspection. These results do
 not establish production hosting/deployment or completeness of later releases.
 No native builds or mining ran.
+
+### Network difficulty session alerts — implementation under test, 2026-10-19
+
+Added an opt-in difficulty monitor to the network page. It compares fresh,
+synchronized tip difficulty with the first qualifying observation after enabling.
+Two spaced observations confirm a threshold crossing; duplicates, backwards
+clocks, stale/future observations and syncing nodes cannot confirm a change.
+The fixed baseline and event list are memory-only. Alerts latch while a condition
+persists, rearm after recovery and have a ten-minute cooldown. Stop clears state.
+While enabled, the visible page refreshes recent blocks once per minute; there
+are no background or operating-system notifications.
+
+Six focused model tests pass and existing recent-block model tests still pass.
+Browser opt-in/confirmation/clear acceptance passed at 390/1440px, including a known 20% increase and the minute refresh timer. The fixture clock is installed before page load so existing timers are controlled. Claude's review remains in progress.
+This work is not yet claimed as a completed public roadmap milestone. No builds,
+mining or production deployment ran.
+
+### Difficulty alert review follow-up — 2026-10-19
+
+Claude reviewed the model and browser integration. Added spacing checks against
+both source observation time and browser monotonic time; rapid opposite-direction
+samples now break pending confirmation. Rejected observations explain clock skew,
+stale tips, syncing and lookup failures. Strict clock checking is retained with
+an explicit reason. The wording distinguishes repeated observations of one tip
+from new-block confirmations and explains delays during normal long block gaps.
+
+The threshold is locked while enabled and displayed in the active status. Enable
+during an older request schedules a fresh request after that request completes;
+old epochs still cannot seed a monitor. Automatic refresh avoids clearing the
+previous display or announcing Loading on every poll. Unchanged alert status is
+not rewritten. Nine focused model tests and the desktop/mobile browser suite
+pass, including opt-in, threshold locking, confirmation and clearing. Dedicated
+pending-request/visibility alert scenarios remain additional acceptance work.
+The public roadmap records local session-alert scope, not background delivery or
+production deployment. No builds or mining ran.

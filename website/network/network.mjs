@@ -1,3 +1,4 @@
+import {createDifficultyMonitor} from './difficulty-alerts.mjs';
 import {summarizeBlocks} from './blocks.mjs';
 import {validateHistory,historyFreshness,ranges} from './history.mjs';
 const $=id=>document.getElementById(id);
@@ -46,16 +47,16 @@ async function load(){
 }
 $('range').disabled=false;$('refresh').disabled=false;$('range').addEventListener('change',load);$('refresh').addEventListener('click',load);setInterval(status,30000);load();
 
-let recent=null,blocksBusy=false;
+let recent=null,blocksBusy=false,difficultyMonitor=null,alertEpoch=0;
 function blockStatus(){
  if(!recent)return;
  const age=Date.now()/1000-recent.generatedAt;
  const text=`${age<0?'Clock mismatch; freshness cannot be verified':age>300?'Historical snapshot — over five minutes old':'Recent snapshot'} · observed ${date(recent.generatedAt)}${recent.synchronized?'':' · public node syncing'}`;
  if($('block-status').textContent!==text)$('block-status').textContent=text;
 }
-async function loadBlocks(){
- if(blocksBusy)return;blocksBusy=true;recent=null;$('refresh-blocks').disabled=true;
- $('block-status').textContent='Loading recent blocks…';$('block-summary').textContent='';$('block-distribution').replaceChildren();
+async function loadBlocks(background=false){
+ if(blocksBusy)return;const requestEpoch=alertEpoch;blocksBusy=true;recent=null;$('refresh-blocks').disabled=true;
+ if(background!==true){$('block-status').textContent='Loading recent blocks…';$('block-summary').textContent='';$('block-distribution').replaceChildren();}
  const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),10000);
  try{
   const response=await fetch('/stats/api.php',{signal:abort.signal,cache:'no-cache'});if(!response.ok)throw Error('Unavailable');
@@ -72,8 +73,25 @@ async function loadBlocks(){
    histogram.append(svgElement('text',{x:550,y:y+17},value.validIntervals?number(share)+'%':'N/A'));
   }
   histogram.append(svgElement('text',{x:165,y:250},'0%'),svgElement('text',{x:535,y:250,'text-anchor':'end'},'100% of counted intervals'));
-  $('block-distribution').append(histogram,table);recent=value;blockStatus();
- }catch{recent=null;$('block-summary').textContent='';$('block-distribution').replaceChildren();$('block-status').textContent='Recent block data is unavailable. No missing intervals have been estimated.';}
- finally{clearTimeout(timer);blocksBusy=false;$('refresh-blocks').disabled=false;}
+  $('block-distribution').append(histogram,table);recent=value;blockStatus();if(requestEpoch===alertEpoch)observeDifficulty(value);
+ }catch{if(requestEpoch===alertEpoch)observeDifficulty(null);recent=null;$('block-summary').textContent='';$('block-distribution').replaceChildren();$('block-status').textContent='Recent block data is unavailable. No missing intervals have been estimated.';}
+ finally{clearTimeout(timer);blocksBusy=false;$('refresh-blocks').disabled=false;if(difficultyMonitor&&requestEpoch!==alertEpoch)loadBlocks(true);}
 }
 $('refresh-blocks').disabled=false;$('refresh-blocks').addEventListener('click',loadBlocks);setInterval(blockStatus,30000);loadBlocks();
+
+function observeDifficulty(value){
+ if(!difficultyMonitor)return;
+ const event=difficultyMonitor.sample(value,Date.now()/1000,performance.now());
+ const baseline=difficultyMonitor.baseline();
+ const message=`Enabled — ${baseline===null?'waiting for a baseline':`baseline difficulty ${baseline}; ${$('difficulty-threshold').value}% threshold`}. ${difficultyMonitor.status()}`;
+ if($('difficulty-status').textContent!==message)$('difficulty-status').textContent=message;
+ if(event){const li=document.createElement('li');li.textContent=`${date(event.observedAt)}: difficulty ${event.direction==='up'?'increased':'decreased'} ${number(Math.abs(event.changePercent))}% from the session baseline to ${event.difficulty}.`;$('difficulty-events').prepend(li);while($('difficulty-events').children.length>20)$('difficulty-events').lastElementChild.remove();}
+}
+$('difficulty-threshold').disabled=false;$('enable-difficulty').disabled=false;
+$('difficulty-alert-form').addEventListener('submit',event=>{
+ event.preventDefault();if(!$('difficulty-alert-form').reportValidity())return;
+ difficultyMonitor=createDifficultyMonitor(Number($('difficulty-threshold').value));alertEpoch++;
+ $('difficulty-events').replaceChildren();$('difficulty-threshold').disabled=true;$('enable-difficulty').disabled=true;$('stop-difficulty').disabled=false;$('difficulty-status').textContent='Enabled — waiting for a fresh synchronized observation.';loadBlocks();
+});
+$('stop-difficulty').addEventListener('click',()=>{difficultyMonitor=null;alertEpoch++;$('difficulty-threshold').disabled=false;$('enable-difficulty').disabled=false;$('difficulty-events').replaceChildren();$('difficulty-status').textContent='Difficulty alerts are off.';$('stop-difficulty').disabled=true;});
+setInterval(()=>{if(difficultyMonitor&&!document.hidden)loadBlocks(true);},60000);

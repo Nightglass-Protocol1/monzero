@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
    for width in (390,1440):
-    page=browser.new_page(viewport={'width':width,'height':900});errors=[]
+    page=browser.new_page(viewport={'width':width,'height':900});page.clock.install();errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
     mode=['normal'];held=[]
     def respond(route):
@@ -76,6 +76,23 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
      assert page.locator('#results').is_hidden()
     mode[0]='normal';page.click('#refresh')
     page.wait_for_function("document.getElementById('status').textContent.includes('Historical data')")
+    assert page.locator('#difficulty-status').inner_text()=='Difficulty alerts are off.'
+    page.click('#enable-difficulty')
+    page.wait_for_function("document.getElementById('difficulty-status').textContent.includes('baseline difficulty 1200')")
+    for step in (1,2):
+     block_fixture['generated_at']=now+step*60
+     block_fixture['blocks'][-1]['timestamp']=now+step*60
+     block_fixture['blocks'][-1]['difficulty']=1440
+     page.clock.fast_forward(60000)
+     page.wait_for_function('(stamp)=>document.getElementById("block-summary").textContent.includes(stamp)',arg=time.strftime('%H:%M:%S',time.gmtime(now+step*60)))
+    page.wait_for_function("document.querySelectorAll('#difficulty-events li').length===1")
+    assert 'increased 20%' in page.locator('#difficulty-events').inner_text()
+    assert page.locator('#difficulty-threshold').is_disabled()
+    assert page.locator('#enable-difficulty').is_disabled()
+    page.click('#stop-difficulty')
+    assert page.locator('#difficulty-events li').count()==0
+    assert page.locator('#difficulty-threshold').is_enabled()
+    assert page.locator('#difficulty-status').inner_text()=='Difficulty alerts are off.'
     # A pending request must not replace a subsequently selected range.
     mode[0]='hold';page.select_option('#range','7d')
     page.wait_for_timeout(100)
@@ -87,7 +104,6 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
     except Exception:pass  # Browser may have already cancelled the old route.
     assert f"Bucket width: {exports['all']['bucket_seconds']} seconds" in page.locator('#coverage').inner_text()
     # Advance browser timers rather than waiting ten seconds for the timeout.
-    page.clock.install()
     mode[0]='hold';page.click('#refresh');page.wait_for_timeout(100)
     page.clock.fast_forward(10001)
     page.wait_for_function("document.getElementById('status').textContent.includes('unavailable')")
@@ -102,6 +118,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
    page=browser.new_page(java_script_enabled=False)
    page.goto(f'http://127.0.0.1:{port}/network/')
    assert page.locator('#range').is_disabled()
+   assert page.locator('#enable-difficulty').is_disabled()
    assert 'JavaScript must be enabled' in page.locator('#status').inner_text()
    browser.close()
  finally:

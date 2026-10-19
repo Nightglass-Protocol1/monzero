@@ -9,3 +9,4 @@ caption{text-align:left;padding:12px 0;font-weight:600}
 
 #block-distribution svg{min-width:640px}
 .site-header nav{position:static;flex-direction:row;align-items:center;padding:0;background:none;border:0}
+#difficulty-alert-form{display:flex;flex-wrap:wrap;gap:12px;align-items:center}#difficulty-threshold{font:inherit;padding:12px;max-width:110px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px}
