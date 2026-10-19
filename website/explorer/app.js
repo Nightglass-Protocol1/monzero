@@ -25,8 +25,9 @@ async function api(action, data = {}) {
 }
 
 function loading(label = 'Loading chain data…') { view.innerHTML = `<div class="loading"><span></span>${escapeHtml(label)}</div>`; }
-function showError(message = '') {
+function showError(message = '', title = 'Nothing found') {
   const fragment = $('#error-template').content.cloneNode(true);
+  fragment.querySelector('strong').textContent = title;
   if (message) fragment.querySelector('p').textContent = message;
   view.replaceChildren(fragment);
 }
@@ -155,16 +156,18 @@ function assetAmount(value, decimals = 0) {
 }
 
 async function showAssets() {
+  headerTitle('Node-reported registry', 'Assets & NFTs');
   loading('Loading asset registry…');
   try {
     const result = await api('assets', {offset:0, count:100});
-    headerTitle('Authenticated registry', 'Assets & NFTs');
-    const assets = result.assets || [];
-    view.innerHTML = `${result.supported === false ? '<div class="notice"><strong>Asset RPC upgrade pending</strong><p>The public explorer node does not expose the authenticated asset registry yet.</p></div>' : result.active ? '' : '<div class="notice"><strong>Assets are inactive</strong><p>The connected network has not activated the asset hard fork. Entries shown here are authenticated development-state records, not transferable production assets.</p></div>'}
+    headerTitle('Node-reported registry', 'Assets & NFTs');
+    if (result.supported !== true || typeof result.active !== 'boolean' || !Array.isArray(result.assets) || !Number.isSafeInteger(result.total) || result.total < result.assets.length) throw new Error('Asset registry is unavailable. No asset count or activation state has been established.');
+    const assets = result.assets;
+    view.innerHTML = `${result.active ? '' : '<div class="notice"><strong>Assets are inactive</strong><p>This node reports that the asset hard fork is not active. Entries shown here are authenticated development-state records, not transferable production assets.</p></div>'}
       ${assets.length ? `<div class="table-wrap"><table><thead><tr><th>Asset</th><th>Class</th><th>Supply</th><th>Issued at</th><th>Metadata trust</th></tr></thead><tbody>${assets.map((asset) => `
-        <tr><td><a class="link hash" href="#/asset/${escapeHtml(asset.asset_id)}">${escapeHtml(shortHash(asset.asset_id, 16))}</a></td><td>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</td><td>${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</td><td><a class="link" href="#/block/${escapeHtml(asset.height)}">#${number.format(asset.height || 0)}</a></td><td>${asset.collection_id ? '<span class="trust verified">Controller-authorized member</span>' : '<span class="trust">Issuer-signed descriptor</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No registered assets</strong><p>No authenticated issuance records are present on this network.</p></div>'}
+        <tr><td><a class="link hash" href="#/asset/${escapeHtml(asset.asset_id)}">${escapeHtml(shortHash(asset.asset_id, 16))}</a></td><td>${escapeHtml(assetClasses[asset.asset_class] || `Unknown (${asset.asset_class})`)}</td><td>${escapeHtml(assetAmount(asset.atomic_supply, asset.display_decimals))}</td><td><a class="link" href="#/block/${escapeHtml(asset.height)}">#${number.format(asset.height || 0)}</a></td><td>${asset.collection_id ? '<span class="trust verified">Controller-authorized member</span>' : '<span class="trust">Issuer-signed descriptor</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><strong>No registered assets</strong><p>This node reports no registered assets in this response. This is not independent verification of the network state.</p></div>'}
       <p class="registry-note">Showing ${number.format(assets.length)} of ${number.format(result.total || 0)} records. External metadata is never trusted solely because its reference appears on-chain.</p>`;
-  } catch (error) { showError(error.message); }
+  } catch (error) { showError('The asset registry could not be read. Asset count and activation state are unknown.', 'Asset registry unavailable'); }
 }
 
 async function showAsset(assetId) {

@@ -39,3 +39,7 @@ node --test tests/website/difficulty-alerts.test.mjs
 node --test tests/website/bounties.test.mjs
 node --check website/community/bounties/board.mjs
 python3 tests/website/check_bounties.py
+php -l website/explorer/api.php
+node --check website/explorer/app.js
+python3 tests/website/test_explorer_assets.py
+python3 tests/website/check_explorer_assets.py

@@ -531,6 +531,7 @@
     }));
   }).catch(() => {
     $('#asset-count').textContent = '—';
+    $('#asset-state').textContent = 'Unknown';
     const p = document.createElement('p');
     p.className = 'st-empty';
     p.textContent = 'The asset list is unavailable right now.';

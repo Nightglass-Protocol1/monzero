@@ -1141,3 +1141,34 @@ All sixteen shared-navigation routes pass desktop/mobile/no-JavaScript checks.
 The public roadmap records the initial portal scope. Full RPC documentation,
 wallet/payment examples, versioned APIs and production deployment remain open.
 No builds, mining or production changes ran.
+
+### Explorer asset outage semantics — implementation under review, 2026-10-19
+
+Removed the catch-all successful empty/unsupported fallback from the asset-list
+adapter. RPC errors and malformed registry envelopes now return unavailable;
+valid empty registries still succeed. The frontend refuses legacy ambiguous
+responses instead of inferring activation state or zero assets. Updated the
+portal to describe the local behavior.
+
+Isolated actual-PHP checks pass method-not-found, upstream failure, missing fields,
+invalid activation type and a valid empty registry. PHP/JS syntax passes; the
+checks are included in the website runner. Claude's review and browser-level
+outage wording acceptance remain pending. This does not complete general
+explorer transport/input hardening or the versioned API. No native builds,
+mining or production deployment ran.
+
+### Explorer asset-list review follow-up — 2026-10-19
+
+Claude confirmed the outage fallback was removed and identified remaining
+consumer certainty issues. The explorer now titles registry failures unavailable,
+not Nothing found, and makes successful empty/inactive messages node-reported.
+Studio resets activation to Unknown after lookup failure. Script cache versions
+were bumped. The isolated upstream test asserts URL replacement before execution
+so it cannot silently reach the public node after a source URL change.
+
+Desktop/mobile browser checks distinguish HTTP failures, legacy ambiguous 200
+responses and valid empty registries; no page errors or horizontal overflow.
+Actual-PHP fixture checks pass and assert failure responses contain none of the
+supported/active/count/list fields. General input/transport hardening, individual
+record validation, single-asset/hash-search failure semantics and dedicated Studio
+browser acceptance remain follow-up work. No builds, mining or deployment ran.

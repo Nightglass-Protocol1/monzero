@@ -61,12 +61,14 @@ try {
         case 'assets':
             $offset = max(0, (int)($input['offset'] ?? 0));
             $count = min(100, max(1, (int)($input['count'] ?? 25)));
-            try {
-                $assets = jsonRpc('get_assets', ['offset' => $offset, 'count' => $count]);
-                respond(['supported' => true] + $assets);
-            } catch (Throwable) {
-                respond(['supported' => false, 'active' => false, 'total' => 0, 'assets' => []]);
+            $assets = jsonRpc('get_assets', ['offset' => $offset, 'count' => $count]);
+            if (($assets['status'] ?? null) !== 'OK' || !is_bool($assets['active'] ?? null)
+                || !is_int($assets['total'] ?? null) || $assets['total'] < 0
+                || !isset($assets['assets']) || !is_array($assets['assets']) || !array_is_list($assets['assets'])
+                || count($assets['assets']) > $count || count($assets['assets']) > $assets['total']) {
+                throw new RuntimeException('Invalid asset registry observation');
             }
+            respond(['supported' => true] + $assets);
 
         case 'asset':
             $assetId = strtolower((string)($input['asset_id'] ?? ''));
