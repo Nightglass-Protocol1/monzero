@@ -6,6 +6,7 @@ node --check website/mining/calculator/calculator.mjs
 node --test tests/website/mining-calculator.test.mjs
 php -l website/api/node-info/index.php
 python3 tests/website/test_node_observation.py
+MONZERO_TEST_STREAM_HTTP=1 python3 tests/website/test_node_observation.py
 python3 tests/website/check_calculator_browser.py
 python3 tests/website/check_home_network.py
 

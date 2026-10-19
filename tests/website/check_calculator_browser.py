@@ -38,6 +38,10 @@ try:
     assert page.locator('#results dd').count()==0,patch
    state['data']=info;page.locator('#refresh').click()
    page.wait_for_function("document.querySelector('#results').children.length === 12")
+   page.evaluate("window.originalNow=Date.now; Date.now=()=>window.originalNow()+310000")
+   page.locator('button[type=submit]').click();assert page.locator('#results dd').count()==0
+   page.evaluate("Date.now=window.originalNow")
+   page.locator('#refresh').click();page.wait_for_function("document.querySelector('#results').children.length === 12")
    page.clock.install();page.clock.fast_forward(310000)
    page.wait_for_function("document.querySelector('#result-status').textContent === 'Estimate expired.'")
    assert page.locator('#results dd').count()==0

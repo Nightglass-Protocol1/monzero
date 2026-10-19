@@ -39,12 +39,14 @@ async function updateNodeStatus() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: '{}',
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(12000),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const info = await response.json();
     if (info.status !== 'OK' || info.nettype !== 'mainnet' || !Number.isSafeInteger(info.height) || info.height < 1) throw new Error('Invalid mainnet observation');
-    fields.observed.textContent = `Node status retrieved ${new Date().toLocaleString()}. Rewards include transaction fees.`;
+    fields.observed.textContent = Number.isSafeInteger(info.observed_at)
+      ? `Node observed ${new Date(info.observed_at * 1000).toLocaleString()} (shared cache up to 15 seconds). Rewards include transaction fees.`
+      : `Node status retrieved ${new Date().toLocaleString()}. Rewards include transaction fees.`;
     // get_info height counts blocks; the newest block is one below it.
     fields.height.textContent = `#${number.format(Math.max(0, (info.height ?? 1) - 1))}`;
     const tipAge = info.tip_age_seconds;
@@ -103,7 +105,7 @@ async function updateChainStrip(readiness) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'blocks', limit: 8 }),
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(12000),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();

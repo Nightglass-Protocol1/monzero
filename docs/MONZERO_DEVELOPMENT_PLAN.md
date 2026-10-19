@@ -494,3 +494,35 @@ the three mining tools, distinguishing local verification from production releas
 acceptance. It preserves historical DEX entries and explicitly excludes the web
 wallet. All 36 navigation checks passed; the new roadmap section was visually
 inspected at mobile width with no horizontal overflow.
+
+### Shared node observation cache — 2026-10-19
+
+The homepage/calculator endpoint now shares public observations for 15 seconds,
+with one nonblocking refresh lock and a five-second failure cooldown. Expired
+observations are never returned as fallback after a failed refresh. Public
+observation timestamps and response age are exposed; tip freshness is recalculated
+on every response, and readiness explicitly requires mainnet. Calculator expiry
+accounts for the server observation age; homepage/calculator display source time.
+
+Cache files live outside the webroot in a deployment-specific mode-0700 temporary
+directory, mode 0600, without client IDs or request bodies. Both cURL and stream
+HTTP paths cap responses at 256 KiB and disable redirects. Storage errors return
+503. The existing node HTTP transport remains a deployment limitation.
+
+Eleven PHP adapter tests pass for each transport path, covering shared reads,
+expiry, outage cooldown/no stale fallback, cached freshness, lock contention,
+malformed storage, private permissions, response caps, redirect refusal and
+non-mainnet readiness. The full website regression suite passed after the cache
+change. Broader endpoint caching/edge rate limits and production hosting remain
+open; this does not complete Release 1. Claude source review is pending.
+
+Claude review completed. Fresh readers now share a read lock; only refreshes
+hold an exclusive lock. Header-fetch failures and mismatched tip observations
+use the short cooldown. Stream fallback reads have a total deadline, cache JSON
+encoding is bounded, and private-directory ownership is checked where supported.
+Calculator expiry checks both elapsed and wall-clock time to cover suspend/resume.
+Fifteen adapter cases passed per transport, including a slow-trickle upstream
+that reaches the total deadline; focused calculator browser checks also passed
+after these fixes. Requests arriving
+while an expired observation refreshes still receive explicit retryable 503; stale
+results are not presented as current. Edge abuse controls remain deployment work.

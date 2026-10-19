@@ -145,3 +145,21 @@ the pool dashboard's per-client limits and public-profile proxy depend on it.
 The example deliberately does not guess the deployment's trusted proxy addresses.
 Directory redirects are relative to preserve the external HTTPS origin; the
 node-status slash redirect uses 308 so POST requests retain their method.
+
+### Public node observation cache
+
+The node-status PHP adapter shares public observations for at most 15 seconds.
+Its private temporary directory is named from the deployed script directory;
+files are mode 0600 in a mode-0700 directory. Only public node information and
+its observation time are stored, without request bodies or visitor identifiers.
+A nonblocking lock permits one upstream refresh at a time; competing refreshes
+return 503 with Retry-After. Failed node lookups have a five-second cooldown.
+Expired observations are not served as an outage fallback. Tip age and readiness
+are recalculated on each response, and the UI labels the original observation
+time. Browser/proxy caching remains disabled with Cache-Control: no-store.
+
+PHP must be able to create and lock files in its temporary directory. Cache
+storage errors fail closed with 503. Upstream responses are capped at 256 KiB,
+redirects are disabled, and each request retains its existing timeout. The node
+URL remains the existing HTTP endpoint; this cache does not authenticate that
+transport or replace production TLS and edge abuse-control requirements.
