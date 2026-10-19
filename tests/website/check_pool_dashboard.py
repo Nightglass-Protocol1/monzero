@@ -29,11 +29,30 @@ try:
    assert '90071.99254740993 XMZ' in page.locator('#results').inner_text()
    assert page.locator('#payments a').get_attribute('href')=='../../explorer/#/tx/'+'a'*64
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+   assert not page.locator('#collect-history').is_checked()
+   assert page.locator('#session-history svg').count()==0
+   page.locator('#collect-history').check();assert len(calls)==1
+   page.locator('button[type=submit]').click()
+   page.wait_for_function("document.querySelector('#session-history tbody')?.children.length===1")
+   fixture['observed_at']+=60;fixture['hashrate_hps']=1500
+   page.locator('button[type=submit]').click()
+   page.wait_for_function("document.querySelector('#session-history tbody')?.children.length===2")
+   assert page.locator('#session-history svg').count()==2
+   assert '90071.99254740993 XMZ' in page.locator('#session-history table').text_content()
+   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+   page.locator('#session-history').screenshot(path=f'/tmp/monzero-session-charts-{width}.png')
+   page.locator('#collect-history').uncheck();assert page.locator('#session-history svg').count()==0
+   page.locator('#collect-history').check();assert page.locator('#session-history svg').count()==0
+   page.locator('button[type=submit]').click();page.wait_for_function("document.querySelector('#session-history tbody')?.children.length===1")
+   page.locator('#address').fill('F'+'2'*94);assert page.locator('#session-history svg').count()==0
    state['status']=502;page.locator('button[type=submit]').click()
    page.wait_for_function("document.querySelector('#status').textContent.includes('unavailable')")
    assert page.locator('#results dd').count()==0
-   page.locator('#clear').click();assert page.locator('#address').input_value()==''
+   assert 'Last lookup failed' in page.locator('#history-state').inner_text()
+   page.locator('#clear').click();assert page.locator('#session-history svg').count()==0;assert not page.locator('#collect-history').is_checked();assert page.locator('#address').input_value()==''
    assert page.evaluate('localStorage.length')==0
+   assert page.evaluate('sessionStorage.length')==0
+   assert not page.context.cookies()
    assert not errors,errors
    print(f'{width}px: explicit lookup, atomic precision, links, outage, clearing and no persistence passed')
    page.close()

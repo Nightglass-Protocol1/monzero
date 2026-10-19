@@ -567,3 +567,30 @@ status-description header, including for plain-text consumers. Preserving its
 existing numeric contract is intentional; `max_supply` was already null and is
 unchanged. Homepage wording does not imply independent verification is underway.
 No local node, miner or build was started to resolve the missing anchor evidence.
+
+### Pool session observation charts — 2026-10-19
+
+Added opt-in, memory-only hashrate and pending-reward charts. The public pool
+provides no historical samples, so the charts collect only successful lookups
+after the visitor opts in, capped at 120 observations. They cause no additional
+requests and never use browser persistence. Opt-out, address edits and clear
+remove samples. Duplicate/backward timestamps are rejected; failed lookups,
+missing metrics and intervals above 90 seconds break lines. Pending rewards are
+not described as earned income; approximate chart values have an exact-amount
+accessible table. Earlier pool history and persistent worker labels remain open.
+
+Three model tests passed, covering bounds, timestamps, exact amount retention,
+gaps, zero and unavailable samples. Desktop/mobile browser checks passed for
+opt-in/no extra lookup, rendering, exact amounts, opt-out, address-change erasure,
+clear, outage and no localStorage. Mobile rendering was inspected. Claude review
+is pending; this remains local preview work.
+
+Claude's chart review found no privacy/address-mixing defects. Addressed its
+presentation findings: failed lookups immediately annotate retained samples,
+sub-XMZ amounts use an appropriate vertical scale, duplicate/earlier timestamps
+are explained, retrieval labels include dates and identify the website clock,
+and overlapping ten-minute averages are disclosed. Four model tests now pass,
+including pending-unit conversion and time-coordinate checks. Opt-out and address
+edit browser checks were added during review (they were absent from Claude's
+initial snapshot). Historical pool data is still unavailable; session observations
+do not replace it.
