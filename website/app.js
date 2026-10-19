@@ -29,6 +29,8 @@ const fields = {
   tipAge: document.querySelector('#metric-tip-age'),
   state: document.querySelector('#node-state'),
   dot: document.querySelector('#node-dot'),
+  target: document.querySelector('#metric-target'),
+  observed: document.querySelector('#metric-observed'),
 };
 
 async function updateNodeStatus() {
@@ -41,17 +43,21 @@ async function updateNodeStatus() {
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const info = await response.json();
+    if (info.status !== 'OK' || info.nettype !== 'mainnet' || !Number.isSafeInteger(info.height) || info.height < 1) throw new Error('Invalid mainnet observation');
+    fields.observed.textContent = `Node status retrieved ${new Date().toLocaleString()}. Rewards include transaction fees.`;
     // get_info height counts blocks; the newest block is one below it.
     fields.height.textContent = `#${number.format(Math.max(0, (info.height ?? 1) - 1))}`;
-    const tipAge = Number(info.tip_age_seconds);
+    const tipAge = info.tip_age_seconds;
     fields.tipAge.textContent = Number.isFinite(tipAge) ? `Last block found ${formatAge(tipAge)} ago` : 'Last block time unavailable';
-    fields.difficulty.textContent = number.format(info.difficulty ?? 0);
-    const target = Number(info.target);
-    const networkHashrate = target > 0 ? Number(info.difficulty ?? 0) / target : 0;
-    fields.networkHashrate.textContent = formatHashrate(networkHashrate);
+    fields.difficulty.textContent = Number.isFinite(info.difficulty) && info.difficulty > 0 ? number.format(info.difficulty) : 'Unavailable';
+    const target = info.target;
+    fields.target.textContent = Number.isFinite(target) && target > 0 ? `${target} seconds` : 'Unavailable';
+    const networkHashrate = Number.isFinite(target) && target > 0 && Number.isFinite(info.difficulty) && info.difficulty > 0 ? info.difficulty / target : null;
+    fields.networkHashrate.textContent = networkHashrate === null ? 'Unavailable' : formatHashrate(networkHashrate);
     const peerCount = info.peer_connections
-      ?? ((info.incoming_connections_count ?? 0) + (info.outgoing_connections_count ?? 0));
-    fields.connections.textContent = info.connections_hidden ? 'HIDDEN' : number.format(peerCount);
+      ?? (Number.isSafeInteger(info.incoming_connections_count) && Number.isSafeInteger(info.outgoing_connections_count)
+        ? info.incoming_connections_count + info.outgoing_connections_count : null);
+    fields.connections.textContent = info.connections_hidden ? 'Unavailable' : Number.isSafeInteger(peerCount) && peerCount >= 0 ? number.format(peerCount) : 'Unavailable';
     fields.connections.title = info.connections_hidden
       ? 'Connection counts are intentionally hidden by the public restricted RPC.'
       : 'Current incoming and outgoing P2P peer nodes, not unique people.';
@@ -73,6 +79,8 @@ async function updateNodeStatus() {
       fields.dot.className = 'status-dot online';
     }
   } catch {
+    for (const key of ['height', 'difficulty', 'networkHashrate', 'connections', 'target']) fields[key].textContent = '—';
+    fields.observed.textContent = 'Current node status unavailable. Rewards include transaction fees.';
     fields.state.textContent = 'Status unavailable';
     fields.rpc.textContent = '—';
     fields.tipAge.textContent = 'Network data unavailable';
@@ -99,8 +107,15 @@ async function updateChainStrip() {
       signal: AbortSignal.timeout(6000),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const headers = (await response.json()).headers;
+    const data = await response.json();
+    if (data.info?.nettype !== 'mainnet' || data.info?.status !== 'OK') throw new Error('Wrong network');
+    const headers = data.headers;
     if (!Array.isArray(headers) || !headers.length) throw new Error('No blocks');
+    const latest = headers[0];
+    document.querySelector('#metric-reward').textContent = Number.isSafeInteger(latest.reward) && latest.reward >= 0
+      ? `${new Intl.NumberFormat(undefined, {maximumFractionDigits: 11}).format(latest.reward / 1e11)} XMZ` : 'Unavailable';
+    document.querySelector('#metric-block-time').textContent = Number.isSafeInteger(latest.timestamp) && latest.timestamp > 0
+      ? new Date(latest.timestamp * 1000).toLocaleString() : 'Unavailable';
     const now = Date.now() / 1000;
     chainStrip.replaceChildren(...headers.slice(0, 8).reverse().map((block) => {
       const item = document.createElement('li');
@@ -117,6 +132,9 @@ async function updateChainStrip() {
     }));
     chainStrip.classList.add('loaded');
   } catch {
+    chainStrip.replaceChildren();
+    document.querySelector('#metric-reward').textContent = '—';
+    document.querySelector('#metric-block-time').textContent = '—';
     chainStrip.classList.remove('loaded');
   }
 }

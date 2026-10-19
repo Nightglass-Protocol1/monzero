@@ -292,3 +292,7 @@ nav a[aria-current] { color: var(--accent); }
 /* Mining pool callout (home, #pool) */
 .mine-copy h3 { margin: 28px 0 8px; font-size: 18px; }
 .mine-copy code { color: var(--text, #e8eef3); font: 13px/1.6 var(--mono); overflow-wrap: anywhere; }
+
+/* Dated public-node observations; no implied independently verified census. */
+.live-observed { padding: 12px 20px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.live-stats dd { overflow-wrap: anywhere; }

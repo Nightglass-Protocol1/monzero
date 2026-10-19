@@ -43,10 +43,12 @@
       <div class="hero-copy">
         <p class="eyebrow"><span class="pulse"></span> Mainnet · v1.0.0 stable release</p>
         <h1>Privacy should be <em>ordinary.</em></h1>
-        <p class="hero-lead">Monzero is an independent, community-run digital currency for private payments. Anyone with an ordinary computer can run a node and mine it.</p>
+        <p class="hero-lead">Monzero (XMZ) is an independent, community-run digital currency for private payments. Anyone with an ordinary computer can run a node and mine it.</p>
         <div class="hero-actions">
           <a class="button primary" href="#download">Download Monzero <span aria-hidden="true">↓</span></a>
           <a class="button secondary" href="explorer/">Explore the chain <span aria-hidden="true">↗</span></a>
+          <a class="button secondary" href="#mine">Start mining</a>
+          <a class="button secondary" href="https://t.me/MonzeroOfficial" rel="noopener noreferrer">Join the community</a>
         </div>
         <ul class="hero-facts" aria-label="Core network properties">
           <li><strong>RandomX</strong><span>CPU-friendly mining</span></li>
@@ -75,11 +77,15 @@
           <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
         </ol>
         <dl class="live-stats">
-          <div><dt>Network hash rate</dt><dd id="metric-network-hashrate">—</dd></div>
+          <div><dt>Estimated network hash rate</dt><dd id="metric-network-hashrate">—</dd></div>
           <div><dt>Difficulty</dt><dd id="metric-difficulty">—</dd></div>
-          <div><dt>Peer nodes</dt><dd id="metric-connections">—</dd></div>
+          <div><dt>Node peer connections</dt><dd id="metric-connections">—</dd></div>
+          <div><dt>Target block interval</dt><dd id="metric-target">—</dd></div>
+          <div><dt>Latest observed reward</dt><dd id="metric-reward">—</dd></div>
+          <div><dt>Latest block time</dt><dd id="metric-block-time">—</dd></div>
           <div><dt>Public RPC</dt><dd id="metric-rpc">—</dd></div>
         </dl>
+        <p id="metric-observed" class="live-observed">Waiting for a public-node observation. Rewards include transaction fees.</p>
         <a class="live-footer" href="explorer/">Open the block explorer <span aria-hidden="true">↗</span></a>
       </aside>
     </section>
@@ -164,6 +170,7 @@
         <h2>Turn spare CPU time into network security.</h2>
         <p>Run your own daemon, create a fresh Monzero wallet, and mine directly to an address you control. Solo mining rewards the machine that finds a block; rewards unlock after 60 blocks.</p>
         <div class="warning"><strong>Keep it separate.</strong> Never reuse a Monero seed, keys, or wallet file with Monzero.</div>
+        <p><a class="button secondary" href="mining/calculator/">Estimate mining rewards and electricity costs</a></p>
         <h3 id="pool">Mining pool</h3>
         <p>Prefer steady payouts? Mine with others at <a href="https://pool.monzero.org/">pool.monzero.org</a>: PPLNS, 1% fee, payouts from 1 XMZ after 60 confirmations. Point XMRig at port <code>3333</code> (CPUs and laptops) or <code>5555</code> (servers and rigs), with your Monzero address as the login:</p>
         <p><code>xmrig -o pool.monzero.org:3333 -u YOUR_MONZERO_ADDRESS -p rig1 -a rx/0</code></p>

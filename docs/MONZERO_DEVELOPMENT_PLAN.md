@@ -233,3 +233,24 @@ No deployment, mining or build was performed.
   node, matching height/header, 120-second target, numeric difficulty and an exact
   safe-integer atomic reward. This verifies the current input contract, not future
   availability or all browser integration. Calculator remains unpublished.
+
+
+### Reconfirmed request and homepage progress
+
+The owner resent the website requirements in attachment
+`47becf12-eb32-4dea-863a-ddf643c12c68/pasted-text.txt`; detailed requirements
+remain the same, with the Release 2 sequence still truncated. Continue this plan.
+
+Homepage additions: explicit XMZ naming, Start mining and owner-supplied Telegram
+links, calculator entry point, estimated-hashrate label, target interval, observed
+block reward including fees and block time. Missing statistics now show unavailable
+instead of fabricated zeroes; failed refreshes clear previous node/header values.
+No existing download/release reference was changed. This implements part of the
+homepage scope; supply integration, ecosystem directory and development feed remain
+open. No deployment or native build/mining performed.
+
+Verification: `tests/website/check_home_network.py` passed at 1440px and 390px,
+covering observed fields, absent inputs, failed refresh clearing, required links,
+no horizontal overflow and no JavaScript runtime errors. `node --check` and
+`git diff --check` passed. This is fixture-backed browser verification, not a
+claim that every production service or the entire website is accepted.
