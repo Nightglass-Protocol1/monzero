@@ -399,3 +399,26 @@ fixes (`core/build/website-checks-20261019.log`); final focused verification the
 passed six module tests and Chromium checks at 1440/390px including verified
 source/reproduction display, comparison cap and restored focus. Diff/syntax checks
 passed. No deployment or native build/mining occurred. Web wallet remains excluded.
+
+### Shared navigation verification — 2026-10-19
+
+The twelve existing website pages now share a static, keyboard-accessible menu,
+maintained by `utils/website/sync_navigation.py`. Downloads, Assets & NFTs and
+all three mining tools are directly reachable. No web-wallet feature, research
+or specification is included; public opt-in wallet disclosures remain a separate
+existing feature.
+
+Claude reviewed the navigation sources and identified missing Download and
+Assets & NFTs routes; both are now included in the shared menu. The earlier
+focus handling issue was corrected with `FocusEvent.relatedTarget`. The full
+website checks passed before these two link additions; focused navigation checks
+cover all twelve pages at desktop/mobile widths and mobile without JavaScript.
+The source consistency check is part of the website test runner. Changes remain
+local and are not a production deployment. Production hosting validation and
+the remaining Release 1 items listed above are still outstanding. Mining and
+native builds remain paused as requested.
+
+The calculator, pool dashboard and benchmark headers now use the existing
+transparent teal coin asset. Mobile rendering and successful image loading were
+checked in Chromium; all 36 shared navigation checks passed after the change.
+A local PHP preview is available at http://127.0.0.1:8765/ without a build step.
