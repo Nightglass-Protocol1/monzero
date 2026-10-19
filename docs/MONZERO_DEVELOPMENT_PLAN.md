@@ -1310,3 +1310,30 @@ their own view-only wallet; "paid" is reported by the merchant through a signed
 callback; disputes affect only reputation and listing; no escrow or custody.
 Legal, moderation and fraud risks plus dependencies are listed. Tests: faucet
 status contract and page checks; 24-route navigation. No deployment.
+
+### Invite-only administration — 2026-10-21 (Claude)
+
+Owner request: `security@monzero.org` is the owner; the owner approves other
+admins and the rights they may pass on; everyone else joins by invite only.
+Added `/admin/` (PHP + SQLite outside the document root at
+`~/monzero-private/admin.sqlite`; the production host has PHP 8.3, pdo_sqlite and
+sodium). Owner created only by the CLI `admin/bootstrap.php`, which refuses a
+second owner and emails a one-time 48-hour setup link. No password is ever
+emailed; the owner sets it. Owner invites are emailed immediately. Invites
+from admins holding "Invite admins" wait for owner approval and may grant
+only a subset of the inviter's permissions. The owner can change permissions,
+disable or enable, revoke and resend; the owner row cannot be changed from the
+web. Security: Argon2id; 12-character minimum; per-account (5) and per-client
+(20) failure throttling per 15 minutes; a dummy-hash verify for unknown
+accounts; `__Host-` Secure HttpOnly SameSite=Strict cookies over HTTPS; hashed
+session tokens with 30 min idle / 8 h maximum; per-session CSRF plus an Origin
+check; single-use hashed link tokens; optional TOTP (RFC 6238, QR rendered
+locally); no-store, no-referrer and noindex headers; an append-only audit table
+enforced by triggers; lib/bootstrap return 404 over HTTP; email links use a
+fixed base URL, never the Host header.
+
+Tests (`tests/website/test_admin.py`, run on PHP 8.3 in the local php:8.3-cli
+image because host PHP lacks pdo_sqlite; `run.sh` reports SKIPPED when it is
+missing) cover the whole flow including throttling, TOTP, disable/logout,
+audit immutability and that no password appears in mail. Pages showed zero CSP
+violations. Content-editing modules are not built yet; the overview says so.
