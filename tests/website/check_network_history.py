@@ -35,9 +35,11 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
      if mode[0]=='malformed':data={**data,'archive_last_observed_at':now}
      if mode[0]=='empty':data={**data,'archive_samples':0,'archive_first_observed_at':None,'archive_last_observed_at':None,'sources':[],'points':[]}
      route.fulfill(content_type='application/json',body=json.dumps(data))
-    block_mode=['normal']
+    block_mode=['normal'];block_held=[];block_requests=[0]
     block_fixture={'schema':'monzero-chain-charts-v2','network':'mainnet','target_seconds':120,'generated_at':now,'height':4,'synchronized':True,'blocks':[{'height':i+1,'timestamp':now-240+i*120,'difficulty':1200,'transactions':0} for i in range(3)]}
     def block_response(route):
+     block_requests[0]+=1
+     if block_mode[0]=='hold':block_held.append(route);return
      if block_mode[0]=='outage':route.fulfill(status=503,body='Unavailable');return
      route.fulfill(content_type='application/json',body=json.dumps(block_fixture))
     page.route('**/stats/api.php',block_response)
@@ -93,6 +95,39 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
     assert page.locator('#difficulty-events li').count()==0
     assert page.locator('#difficulty-threshold').is_enabled()
     assert page.locator('#difficulty-status').inner_text()=='Difficulty alerts are off.'
+    # Enable during a pending pre-opt-in request: only the follow-up sets baseline.
+    block_mode[0]='hold';page.click('#refresh-blocks');page.wait_for_timeout(100)
+    assert len(block_held)==1
+    old_response=json.dumps(block_fixture)
+    page.click('#enable-difficulty')
+    assert 'waiting' in page.locator('#difficulty-status').inner_text()
+    block_fixture['blocks'][-1]['difficulty']=1800;block_mode[0]='normal'
+    block_held.pop().fulfill(content_type='application/json',body=old_response)
+    page.wait_for_function("document.getElementById('difficulty-status').textContent.includes('baseline difficulty 1800')")
+    # Stop/re-enable while pending must also discard the prior session's sample.
+    block_mode[0]='hold';page.click('#refresh-blocks');page.wait_for_timeout(100)
+    assert len(block_held)==1
+    old_response=json.dumps(block_fixture)
+    page.click('#stop-difficulty');page.click('#enable-difficulty')
+    block_fixture['blocks'][-1]['difficulty']=2000;block_mode[0]='normal'
+    block_held.pop().fulfill(content_type='application/json',body=old_response)
+    page.wait_for_function("document.getElementById('difficulty-status').textContent.includes('baseline difficulty 2000')")
+    # Simulate the visibility signal; hidden automatic timers must make no requests.
+    page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true})")
+    before=block_requests[0];page.clock.fast_forward(60000);page.wait_for_timeout(100)
+    assert block_requests[0]==before
+    page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false})")
+    block_fixture['generated_at']=now+240;block_fixture['blocks'][-1]['timestamp']=now+240
+    page.clock.fast_forward(60000)
+    page.wait_for_function("document.getElementById('block-status').textContent.includes('Recent snapshot')")
+    assert block_requests[0]>before
+    # Stop while a request is pending leaves alerts off after it completes.
+    block_mode[0]='hold';page.click('#refresh-blocks');page.wait_for_timeout(100)
+    page.click('#stop-difficulty');block_mode[0]='normal'
+    block_held.pop().fulfill(content_type='application/json',body=json.dumps(block_fixture))
+    page.wait_for_function("!document.getElementById('refresh-blocks').disabled")
+    assert page.locator('#difficulty-status').inner_text()=='Difficulty alerts are off.'
+    assert page.locator('#difficulty-events li').count()==0
     # A pending request must not replace a subsequently selected range.
     mode[0]='hold';page.select_option('#range','7d')
     page.wait_for_timeout(100)

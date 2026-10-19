@@ -979,3 +979,17 @@ pass, including opt-in, threshold locking, confirmation and clearing. Dedicated
 pending-request/visibility alert scenarios remain additional acceptance work.
 The public roadmap records local session-alert scope, not background delivery or
 production deployment. No builds or mining ran.
+
+### Difficulty alert request/visibility acceptance — 2026-10-19
+
+Extended the network browser suite with held-response scenarios at 390/1440px.
+Enable during an existing request waits for a new request before establishing
+a baseline. Stop/re-enable excludes the prior session's response; Stop during a
+request leaves monitoring off when it completes. Tests use distinct difficulty
+values to prove that the correct response establishes each baseline.
+
+A simulated document visibility signal verifies that automatic timers issue no
+requests while hidden and resume while visible. This is deterministic browser
+logic coverage, not operating-system background lifecycle testing. All scenarios
+passed alongside the existing range, outage, timeout and alert checks. No product
+changes were needed. No builds, mining or production deployment ran.
