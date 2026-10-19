@@ -676,3 +676,30 @@ cannot identify the mining failure, and identified two follow-up improvements:
 clear stale mining status text on disconnect and retain useful, sanitized mining
 command failure diagnostics. These are findings, not implemented or reproduced
 Windows fixes. Review: `core/build/claude-mining-report-review-20261019.txt`.
+
+### Benchmark submission intake — 2026-10-19
+
+Added a structured GitHub issue form for CPU/system details, measured hashrate,
+power basis, methodology, date and sanitized evidence. Public visibility and
+review requirements are explicit. The template remains local until merged to the
+repository default branch; the site explains the blank-issue fallback. Submission
+does not add a record to the catalog or qualify it as reproduced. No real records
+were invented, no issue was sent, and no automatic publishing path was added.
+Claude reviewed the form and page; wording now distinguishes public issues from
+catalog acceptance, and evidence accepts attachments in a textarea. The page uses
+semantic headings/lists, site typography and the transparent coin. No-JavaScript
+390/1440px layout, logo and keyboard skip-link checks passed. YAML parsing, field
+uniqueness and required-field checks passed locally; GitHub hosting acceptance is
+still pending. Full website regression suite passed (log:
+`core/build/website-release1-intake-regression-20261019.log`). No deployment.
+
+### GUI mining source follow-up — 2026-10-19
+
+Source changes in `gui-wt-usability` clear disconnected readings, promptly refresh
+after reconnect, ignore replies for a changed wallet/node, default to one mining
+thread and report fixed mining-command failure categories. Claude reviewed them.
+Twenty mining and thirteen startup QML results passed using the existing Linux
+test executable and current source QML with mocked replies. These do not validate
+the changed C++ binary or reproduce the Windows daemon disconnect. Builds and
+mining remain stopped; no release replacement. Details in the GUI worktree's
+`docs/WINDOWS_MINING_FOLLOWUP_20261019.md`. Original root cause remains open.
