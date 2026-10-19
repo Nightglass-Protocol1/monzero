@@ -1249,3 +1249,29 @@ mining guide, Telegram and the third-party Chainquiry listing. Submissions go
 through GitHub issues with maintainer review until authenticated moderation
 exists. Unit and browser tests (filters, labels, noopener, outage clearing,
 390/1440px) pass. Linked from the homepage. No deployment.
+
+### Read-only API v1 — 2026-10-19 (Claude)
+
+Added `/api/v1/` as directory `index.php` endpoints (same hosting pattern as
+`/api/node-info/`, so no rewrite rules are needed): network stats/hashrate/
+difficulty, blocks/latest (count 1–30), blocks?height=N, mining/pools,
+mining/benchmarks, exchanges, ecosystem. `lib.php` refuses direct requests and
+provides: a fixed method allowlist (get_info, get_last_block_header,
+get_block_header_by_height, get_block_headers_range) against the configured
+public node with 1 MiB bounds, 2s/5s timeouts and no redirects; strict
+GET/HEAD/OPTIONS handling; rejection of unknown or array query parameters; one
+JSON envelope and error shape; CORS `*` without credentials; nosniff; 15-second
+private file caches under fixed names. Rate limit: 60 per client and 1200 total
+per minute, keyed by HMAC with a per-window salt so no IP is stored. Headers are
+normalised (amounts and difficulty as strings; nonce/pow hash dropped). The
+observation is refused unless the network is mainnet and the tip matches; latest
+windows must be contiguous, prev-hash linked and end at the tip; deep blocks
+cache longer. Roadmap and transaction endpoints are not included; the docs say so.
+
+Tests use the actual PHP against a fixture node (the URL replacement is asserted
+first, so the public node is never reached): envelope, cache reuse, ranges,
+400/404/405, testnet/outage/broken-link refusal (502, no partial data, no-store),
+429 with Retry-After, no stored IPs. Docs at `/developers/api/`; portal, homepage
+and roadmap updated. All new pages were checked under the production `.htaccess`
+CSP with zero violations. 22-route navigation and the full runner pass. No
+deployment.

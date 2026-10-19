@@ -3,7 +3,7 @@ import importlib.util, socket, subprocess, time, shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[2]
-routes=['/ecosystem/','/exchanges/','/markets/','/payments/request/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/','/','/explorer/','/stats/','/wallets/','/app/','/founder/','/fund/','/roadmap/','/security/','/mining/calculator/','/mining/dashboard/','/mining/benchmarks/']
+routes=['/developers/api/','/ecosystem/','/exchanges/','/markets/','/payments/request/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/','/','/explorer/','/stats/','/wallets/','/app/','/founder/','/fund/','/roadmap/','/security/','/mining/calculator/','/mining/dashboard/','/mining/benchmarks/']
 with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
 server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(root/'website')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 try:
@@ -31,7 +31,7 @@ try:
     if path.startswith('/mining/'):
      assert page.locator('.site-header nav').is_visible(),path
      assert page.locator('.brand-coin').evaluate('(img)=>img.complete && img.naturalWidth > 0'),path
-    if path in ['/ecosystem/','/exchanges/','/markets/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/']:
+    if path in ['/developers/api/','/ecosystem/','/exchanges/','/markets/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/']:
      assert page.locator('.site-header nav').is_visible(),path
      assert page.locator('.brand img').evaluate('(img)=>img.complete && img.naturalWidth > 0'),path
      assert page.evaluate('document.querySelector("header nav").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top'),(path,width,js)
