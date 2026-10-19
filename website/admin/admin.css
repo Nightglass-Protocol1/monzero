@@ -1,6 +1,5 @@
-main { max-width:900px; margin:auto; padding:32px 20px; }
-.site-header { position:relative; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; padding:20px; }
-.site-header nav { position:static; display:flex; flex-wrap:wrap; gap:16px; align-items:center; padding:0; border:0; background:none; }
+main { max-width:1140px; margin:auto; padding:40px 20px; }
+.site-header nav form.inline button { min-height:0; padding:6px 14px; font-size:13px; }
 .stack { display:flex; flex-direction:column; gap:16px; max-width:480px; }
 label { display:flex; flex-direction:column; gap:8px; }
 label.check { flex-direction:row; align-items:center; gap:10px; }
@@ -20,3 +19,7 @@ dl { display:grid; grid-template-columns:minmax(100px,1fr) 3fr; gap:6px 12px; } 
 .qr svg { display:block; width:100%; height:auto; }
 @media(max-width:500px) { dl { grid-template-columns:1fr; } }
 main > section { margin-top:40px; } h1 + section, h1 + .notice + section { margin-top:16px; }
+
+/* Body copy matches the original pages: muted text, links inherit and stay underlined. */
+main p, main li, main dd, main td, main figcaption { color: var(--muted); }
+main p a, main li a, main dd a { color: inherit; }

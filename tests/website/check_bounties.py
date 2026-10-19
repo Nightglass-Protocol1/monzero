@@ -64,7 +64,7 @@ try:
     except Exception:pass
    mode[0]='normal';page.click('#refresh');page.wait_for_function("document.querySelectorAll('#list article').length===20")
    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-   assert page.evaluate('document.querySelector("header nav").getBoundingClientRect().bottom<=document.querySelector("main").getBoundingClientRect().top')
+   assert page.evaluate('document.querySelector("header").getBoundingClientRect().bottom<=document.querySelector("main").getBoundingClientRect().top')
    assert not errors,errors
    page.close()
   page=browser.new_page(java_script_enabled=False);page.goto(f'http://127.0.0.1:{port}/community/bounties/');assert page.locator('#search').is_disabled();browser.close()

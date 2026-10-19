@@ -9,7 +9,7 @@ function chart(id,rows,key,label){
  const add=(tag,attrs,text)=>{const el=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;svg.append(el);return el;};
  const max=Math.max(1,...values.map(r=>r[key])), first=rows[0].height,last=rows.at(-1).height;
  const x=r=>60+(r.height-first)/Math.max(1,last-first)*480,y=r=>200-r[key]/max*175;
- for(let i=0;i<4;i++){let yy=200-i*175/3;add('line',{x1:60,y1:yy,x2:540,y2:yy,stroke:'#24434a'});add('text',{x:54,y:yy+4,'text-anchor':'end',class:'axis'},new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(max*i/3));}
+ for(let i=0;i<4;i++){let yy=200-i*175/3;add('line',{x1:60,y1:yy,x2:540,y2:yy,stroke:'#293b49'});add('text',{x:54,y:yy+4,'text-anchor':'end',class:'axis'},new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(max*i/3));}
  add('path',{class:'plot',d:rows.map((r,i)=>Number.isFinite(r[key])?((i===0||!Number.isFinite(rows[i-1][key]))?'M':'L')+x(r)+','+y(r):'').join(' ')});
  for(const r of values){const dot=add('circle',{cx:x(r),cy:y(r),r:5,class:'point',tabindex:'0','aria-label':'Block '+r.height+': '+fmt(r[key])+' '+label});const t=document.createElementNS(ns,'title');t.textContent='Block '+r.height+': '+fmt(r[key])+' '+label;dot.append(t);}
  add('text',{x:60,y:228,class:'axis'},'#'+first);add('text',{x:540,y:228,class:'axis','text-anchor':'end'},'#'+last);box.append(svg);

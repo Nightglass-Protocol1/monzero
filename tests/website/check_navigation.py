@@ -28,13 +28,13 @@ try:
      page.keyboard.press('Escape');assert not page.locator('#site-nav').is_visible(),path
     if width==1440:
      assert page.locator('.site-header nav').is_visible(),path
-    if path.startswith('/mining/'):
-     assert page.locator('.site-header nav').is_visible(),path
-     assert page.locator('.brand-coin').evaluate('(img)=>img.complete && img.naturalWidth > 0'),path
-    if path in ['/faucet/','/developers/api/','/ecosystem/','/exchanges/','/markets/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/']:
-     assert page.locator('.site-header nav').is_visible(),path
-     assert page.locator('.brand img').evaluate('(img)=>img.complete && img.naturalWidth > 0'),path
-     assert page.evaluate('document.querySelector("header nav").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top'),(path,width,js)
+    # Every page uses the homepage header: logo, the same twelve links and the Download button.
+    assert page.locator('.site-header .brand img').evaluate('(img)=>img.complete && img.naturalWidth > 0'),path
+    if path!='/':
+     assert [a.strip() for a in page.locator('#site-nav a').all_inner_texts()]==['Home','Explorer','Stats','Public wallets','Studio','Roadmap','Whitepaper','Mining','Pool','Founder','Donate','Security'],path
+    if width<1100:assert menu.count()==1,path
+    if path not in ['/','/explorer/']:
+     assert page.evaluate('document.querySelector(".site-header").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top+1'),(path,width,js)
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(path,width,js)
     page.close()
    print(f'{width}px JS={js}: all {len(routes)} pages passed navigation visibility/menu/logo/no overflow')
