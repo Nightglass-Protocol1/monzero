@@ -1,0 +1,3 @@
+{"schema":"monzero-exchanges-v1","updated_at":"2026-10-19","records":[
+{"id":"biconomy","exchange":"Biconomy","status":"planned","note":"First listing goal announced on the fundraising page. No application has been submitted and no listing is confirmed.","updated_at":"2026-10-19","application_date":null,"listing_fee":null,"funding":{"target":"15000","currency":"USD","progress_url":"/fund/"},"announcements":[{"label":"Fundraising goal: listing XMZ on Biconomy","url":"/fund/"}],"pair":null,"trading_url":null,"deposits":null,"withdrawals":null,"trading":null,"last_verified":null,"verification_url":null}
+]}

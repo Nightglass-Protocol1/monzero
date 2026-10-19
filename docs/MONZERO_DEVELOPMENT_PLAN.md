@@ -1215,3 +1215,24 @@ expiry/late payments and HMAC callback verification. Flags/methods checked in
 source; create_address/make_uri/digest-401 exercised offline. `get_transfers`
 needs a daemon and was verified from source only. Homepage, portal and roadmap
 link both pages. No builds, mining or deployment ran.
+
+### Exchange directory, listing tracker and markets — 2026-10-19 (Claude)
+
+Added `/exchanges/` backed by a reviewed `catalog.json` (`monzero-exchanges-v1`)
+and a fail-closed validator. Statuses follow the brief (planned, application
+submitted, under review, approved, live, suspended). Venue fields (pair, official
+HTTPS URL, deposit/withdrawal/trading state, last-verified date, verification
+link) are required for live/suspended and forbidden before; applications need
+dates; a listing fee needs a source link; no price or volume fields exist.
+Production data: one record, Biconomy, Planned, no application date, fee not
+published, $15,000 target linked to live `/fund/` progress. Sources: the
+published fund page goal and `outreach/listing/README.md` (application not
+submitted). No live venue is claimed. Updates are maintainer-reviewed catalog
+edits until the authenticated admin system exists.
+
+`/markets/` shows an explicit unavailable state: no verified venue, so no
+price, change, volume, depth or spread; no synthetic data. Unit tests cover the
+production catalog and the status, venue, fee, link and duplicate rules. A
+browser test covers the real tracker, a fixture live venue (literal text,
+noopener), and invalid/outage clearing at 390/1440px. Navigation passes on 20
+routes. No deployment.
