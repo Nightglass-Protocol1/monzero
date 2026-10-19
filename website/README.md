@@ -163,3 +163,15 @@ storage errors fail closed with 503. Upstream responses are capped at 256 KiB,
 redirects are disabled, and each request retains its existing timeout. The node
 URL remains the existing HTTP endpoint; this cache does not authenticate that
 transport or replace production TLS and edge abuse-control requirements.
+
+### Legacy supply endpoint
+
+`/api/supply/` retains its numeric plain-text output and existing JSON fields for
+listing-site compatibility. This is an explicit legacy exception: those numbers
+are an estimate from a saved anchor plus unpenalized emission, not a reverified
+circulating-supply measurement. JSON metadata and the `X-Monzero-Supply-Status`
+header disclose that limitation; existing plain-text consumers may not read them.
+The homepage therefore shows supply unavailable rather than reusing that value.
+Do not treat `circulating_supply` or `total_supply` as verified totals without
+checking the anchor against a trusted unrestricted node and accounting for reward
+penalties and the intended supply definition. GMP is required by the calculation.

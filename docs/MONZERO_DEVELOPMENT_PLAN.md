@@ -543,3 +543,27 @@ passed at desktop/mobile sizes. The existing header/navigation and entire downlo
 section are byte-for-byte unchanged. Claude's source/content review completed. Mining cards now explicitly say preview,
 wallet privacy wording identifies signed publication, and headings use relative
 font sizing. The unchanged navigation/download comparison was also verified.
+
+### Supply metric provenance audit — 2026-10-19
+
+The existing supply endpoint extrapolates a saved 10,000-block emission anchor
+with unpenalized rewards; it does not measure circulating availability or later
+reward penalties. Native constants confirm the emission parameters, but the
+public node rejected `get_coinbase_tx_sum` with method-not-found, so this audit
+could not reverify the anchor. The homepage now explicitly marks estimated
+circulating supply unavailable instead of presenting that estimate as verified.
+
+Preserved legacy endpoint numbers/field names and arithmetic for existing
+consumers; added JSON estimate/method/anchor-verification metadata and corrected
+the explanatory note. PHP syntax and homepage desktop/mobile tests passed.
+A synthetic amount fixture verified unchanged legacy JSON fields and new metadata;
+source comparison verified unchanged arithmetic. Local PHP lacks GMP, so no
+claim is made that the emission calculation was executed in this check. Anchor
+verification and production extension validation remain open.
+
+Claude confirmed the PHP estimate wording and native emission constants. The
+legacy endpoint exception is now explicitly documented and marked by an HTTP
+status-description header, including for plain-text consumers. Preserving its
+existing numeric contract is intentional; `max_supply` was already null and is
+unchanged. Homepage wording does not imply independent verification is underway.
+No local node, miner or build was started to resolve the missing anchor evidence.

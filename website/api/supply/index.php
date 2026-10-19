@@ -1,17 +1,15 @@
 <?php
 declare(strict_types=1);
 
-// Circulating XMZ supply, as plain text (the format listing sites expect) or,
-// with ?format=json, with its height. XMZ has no premine, locked or burned
-// supply, so circulating supply = total supply = every coin mined so far.
-//
-// Exact node total (get_coinbase_tx_sum) for blocks 0..ANCHOR_BLOCKS-1, then
-// the deterministic Monero-style emission for each block after it. A block
-// whose reward was cut for its size makes this read high by that cut, which
-// was 0.0001 XMZ over the first 10,000 blocks.
+// Legacy listing-site supply estimate, not a verified circulating-supply total.
+// The saved anchor is extrapolated using unpenalized emission. Later reward
+// penalties can make it read high; lost, burned or locked coins are not measured.
+// Keep legacy numeric fields for existing consumers, with explicit JSON metadata.
+// Anchor provenance must be reverified before using this as a homepage metric.
 
 header('Cache-Control: public, max-age=300');
 header('X-Content-Type-Options: nosniff');
+header('X-Monzero-Supply-Status: estimate-unverified-anchor');
 
 const NODE_RPC = 'http://node.monzero.org:6175/json_rpc';
 const ANCHOR_BLOCKS = 10000;
@@ -66,7 +64,10 @@ try {
 if (($_GET['format'] ?? '') === 'json') {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['ticker' => 'XMZ', 'circulating_supply' => $amount, 'total_supply' => $amount,
-        'max_supply' => null, 'height' => $blocks, 'note' => 'No premine or locked supply; tail emission 3.26 XMZ per block continues forever.']);
+        'max_supply' => null, 'height' => $blocks, 'is_estimate' => true, 'method' => 'saved-anchor-plus-unpenalized-emission',
+        'anchor_blocks' => ANCHOR_BLOCKS, 'anchor_emission_atomic' => ANCHOR_EMISSION,
+        'anchor_verification' => 'not-reverified',
+        'note' => 'Legacy supply fields contain an emission estimate, not independently verified circulating supply. Reward penalties after the saved anchor are not accounted for; lost, burned and locked coins are not measured. Tail emission is 3.26 XMZ per block.']);
 } else {
     header('Content-Type: text/plain; charset=utf-8');
     echo $amount;
