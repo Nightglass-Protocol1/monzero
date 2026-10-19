@@ -927,3 +927,20 @@ on both the hub and network pages. Scoped static navigation fixes now pass at
 The hub passes no-JavaScript layout, keyboard skip-link and eleven local-route
 checks. The public roadmap records the hub's local-only implementation scope.
 Production publishing and the interactive community platform remain unfinished.
+
+### Integrated website regression — 2026-10-19
+
+The complete `tests/website/run.sh` finished with exit 0 after the network and
+community integration. Evidence is in
+`core/build/website-network-community-regression-20261019.log`. Coverage includes
+calculator/browser cases; node observation contracts with both PHP transports;
+pool adapter, worker labels, session charts and alerts; benchmark contracts and
+browser behavior; statistics contracts/cache and historical collector tests;
+network history and recent-block calculations/browser error recovery.
+
+Shared navigation acceptance now includes `/community/` and `/network/`, checks
+their logo and navigation clearance, and passes all fourteen routes at desktop,
+mobile, and mobile with JavaScript disabled. This protects against the inherited
+mobile-positioning regression found during visual inspection. These results do
+not establish production hosting/deployment or completeness of later releases.
+No native builds or mining ran.
