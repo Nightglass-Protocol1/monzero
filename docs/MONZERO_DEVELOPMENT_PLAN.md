@@ -349,3 +349,53 @@ remain disabled. Syntax and whitespace checks passed. Changes are unpublished.
 Outstanding: shared navigation, CPU benchmark catalog, historical chart support,
 worker-label strategy without sensitive upstream names, public observation cache
 hardening, production HTTP/TLS/header validation and full Release 1 regression.
+
+
+### CPU benchmark catalog — implementation in testing
+
+`/mining/benchmarks/` now has a versioned static catalog, strict runtime validation,
+search across CPU/system/miner fields, manufacturer and verification filters,
+hashrate/date/efficiency sorting, 50-row incremental presentation, and up to three
+selected comparisons retained across filtering. Comparison controls restore keyboard
+focus after rerender. Production `records` is empty: no measured records have been
+provided or independently reproduced. Synthetic values exist only in test fixtures.
+
+Efficiency ranking accepts wall measurements only; package and unknown power do
+not produce a comparable H/s-per-watt score. All records require source evidence,
+method/date and environment. A verified record additionally requires a reviewer
+identifier and separate reproduction link. Publication review is via repository
+pull requests/issues, documented in `submission.md`; accepting a community record
+must not imply reproduction. General website admin remains a later requirement.
+
+Five module tests passed: production schema/test-data exclusion, verification
+requirements, malformed/duplicate input rejection, power-basis comparisons and
+filter/sort behavior. Chromium checks at 1440px and 390px passed empty state,
+filtering, comparison persistence/removal, three-item cap, keyboard focus and no
+horizontal overflow/runtime errors. Full website check runner is underway;
+Claude's read-only implementation review is running under
+`monzero-claude-benchmarks-review-20261019.service`, output
+`core/build/claude-benchmarks-review-20261019.txt`. Neither result is assumed
+complete until observed terminal. Nothing deployed; no mining or builds started.
+
+The homepage pool terms now identify their 19 Oct verification date and advise
+checking current pool terms/status; existing downloads remain unchanged.
+
+
+Benchmark review follow-up: Claude completed source review (unit exited 0).
+Its initial missing-runner, focus and homepage-link findings described an earlier
+snapshot; those had already been corrected and tested. Subsequently fixed strict
+record/root field allowlists (avoid publishing incidental private fields), power
+basis/null consistency, threads/core consistency, control/bidi text rejection,
+distinct verification URL requirement, original source plus reproduction links,
+CPU-specific link labels and row headers. Added a served HTML submission guide,
+explicit selection-limit explanation and clearer unavailable-power wording.
+Independent reproduction remains a human evidence-review requirement; URL/schema
+checks alone cannot prove it. A separate full JSON Schema, CI wiring, duplicate
+measurement review automation, shared navigation and full accessibility audit
+remain open. No sourced measurements were invented to populate the catalog.
+
+The full website runner completed successfully before the final benchmark review
+fixes (`core/build/website-checks-20261019.log`); final focused verification then
+passed six module tests and Chromium checks at 1440/390px including verified
+source/reproduction display, comparison cap and restored focus. Diff/syntax checks
+passed. No deployment or native build/mining occurred. Web wallet remains excluded.

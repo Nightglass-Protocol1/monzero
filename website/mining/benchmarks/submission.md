@@ -1,0 +1,32 @@
+# RandomX measurement submissions
+
+Submit a pull request to https://github.com/Nightglass-Protocol1/monzero or open
+an issue there with evidence. Maintainers review submissions before publication.
+Do not send keys, seeds, wallet addresses, worker identifiers or personal logs.
+
+Each `catalog.json` record needs:
+- `id`: unique lowercase slug; manufacturer/model; integer cores/threads.
+- `hashrate_hps`: positive finite average, not a momentary peak.
+- `power_watts`: positive measured watts, or null when unknown.
+- `power_basis`: wall, cpu-package, or unknown. Only wall readings are ranked.
+- `os`, `miner`, `miner_version`, ISO `date` and `methodology` (up to 200 chars).
+- `source_url`: public HTTPS evidence including measurement interval, memory,
+  thread settings, tuning, power measurement method and relevant sanitized logs.
+- `status`: community initially; `verified_by` and `verification_url`: null.
+
+A reviewer checks field validity, evidence, duplicates, personal-data removal and
+measurement basis. Approval of a community submission does not mean reproduction.
+Only a separate documented reproduction permits status `verified`, with a public
+reviewer identifier and HTTPS verification report. Keep original source evidence.
+Record corrections through reviewed commits; do not silently relabel estimates.
+No invented seed records. Rejected submissions remain unpublished. Runtime schema
+validation is in `catalog.mjs`; synthetic tests never populate production data.
+
+Update `website/mining/benchmarks/catalog.json` and its `updated_at` date, which
+must be on or after each measurement date. IDs match `[a-z0-9][a-z0-9-]{0,79}`.
+All descriptive string fields are limited to 200 characters and must contain no
+control or bidirectional override characters. Hashrate is in H/s, not kH/s.
+Unknown power requires null watts; known power requires wall or cpu-package.
+No extra fields are permitted. Reproduction evidence must use a different URL
+from the original source. Reviewer judgement is still required to establish that
+the report is an independent measurement; schema validity does not prove that.
