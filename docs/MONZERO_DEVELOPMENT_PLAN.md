@@ -795,3 +795,53 @@ were collected through the local preview and exported to
 deployment was enabled. The `/network/` consumer, staleness presentation and
 additional analytics metrics remain next work. Operational notes are in
 `utils/website/NETWORK_HISTORY.md`. No builds or mining ran.
+
+### Network history browser contract — 2026-10-19
+
+Added the browser-side history contract for all six requested ranges. It checks
+source/schema, timestamps, aggregation bucket boundaries, numeric bounds,
+exact difficulty extrema, estimated hashrate consistency and synchronization
+counts before chart rendering. Missing buckets remain missing and decreasing
+heights are permitted. Freshness distinguishes old observations, empty archives
+and a browser clock behind the export clock.
+
+Seven focused test groups passed; all six existing real mainnet archive exports
+also passed the contract. The test is included in the website runner. Claude's
+read-only review is in progress. The visible network page, ongoing collection
+and production deployment remain unfinished. No native builds or mining ran.
+
+### Network history page — local preview, 2026-10-19
+
+Implemented `/network/` with six time ranges, individual difficulty/hashrate
+points, UTC archive coverage and accessible bucket tables. Missing observations
+are not connected. Unsynchronized, stale-tip and future-timestamp observations
+are qualified visually and exposed numerically in the table. Unsupported metrics
+remain explicitly unavailable. The homepage links to the page without changing
+its preferred navigation. Runtime JSON exports remain untracked and the private
+archive remains outside the document root.
+
+Claude's browser-contract review identified archive/point freshness mismatches
+and floating-point mean edge cases; both were addressed. Eight contract tests
+pass. Local Chromium checks passed all six ranges at 390/1440px, overflow checks,
+failed-refresh clearing and JavaScript-disabled controls. These browser checks
+use existing local exports, not a production deployment. Added hosting cache
+revalidation configuration; hosting acceptance and broader malformed/empty/race
+browser coverage remain pending. Continuous collection is still not enabled.
+No native builds or mining ran.
+
+### Network page acceptance follow-up — 2026-10-19
+
+Apache and Nginx isolated hosting checks now include history JSON revalidation
+and pass. Browser acceptance uses temporary databases and exports from the real
+collector, with no dependency on a running preview or its archive. Six ranges,
+390/1440px layouts, malformed/empty/oversized/outage responses and recovery,
+no-JavaScript controls and header clearance pass. The suite is in the runner.
+
+Claude's page review prompted render-error state clearing, calendar bounds,
+streamed response-size enforcement, readable horizontally scrollable charts,
+explicit highest-bucket-mean values/units, quality text in the table, distinct
+outlined quality markers, accessible table/scroll regions and unchanged-status
+announcement suppression. Visual inspection caught and fixed inherited header
+overlap. Conservative clock mismatch reporting is retained: a clock behind the
+export cannot verify freshness. Nine contract tests pass. Fast-switch/timeout
+browser scenarios and continuous collection remain open; no production deployment.

@@ -31,3 +31,6 @@ php tests/website/stats-contract.php
 python3 tests/website/test_stats_api.py
 MONZERO_TEST_STREAM_HTTP=1 python3 tests/website/test_stats_api.py
 python3 tests/website/test_network_history.py
+node --test tests/website/network-history.test.mjs
+node --check website/network/network.mjs
+python3 tests/website/check_network_history.py

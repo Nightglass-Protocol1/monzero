@@ -17,6 +17,9 @@ with tempfile.TemporaryDirectory(prefix='monzero-apache-') as directory:
  tmp=Path(directory);site=tmp/'site';site.mkdir()
  (site/'.htaccess').write_bytes((root/'website/.htaccess').read_bytes())
  for name in ['index.html','main.mjs','catalog.json','styles.css','main.js','release.zip.sha256']:(site/name).write_text('fixture')
+ data=site/'network/data';data.mkdir(parents=True)
+ (data/'.htaccess').write_bytes((root/'website/network/data/.htaccess').read_bytes())
+ (data/'24h.json').write_text('{}')
  for rewrite in [False,True]:
   with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
   names=['mpm_event','authz_core','unixd','dir','mime','headers','expires']+(['rewrite'] if rewrite else [])
@@ -33,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-apache-') as directory:
      with socket.create_connection(('127.0.0.1',port),timeout=.2):break
     except OSError:time.sleep(.1)
    else:raise RuntimeError((tmp/'error.log').read_text())
-   for path in ['/','/main.mjs','/catalog.json','/main.js','/styles.css','/release.zip.sha256','/missing']:
+   for path in ['/','/main.mjs','/catalog.json','/main.js','/styles.css','/release.zip.sha256','/network/data/24h.json','/missing']:
     try:response=opener.open(f'http://127.0.0.1:{port}'+path,timeout=5)
     except urllib.error.HTTPError as error:response=error
     with response:
@@ -43,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-apache-') as directory:
       continue
      assert response.status==(404 if path=='/missing' else 200),(path,response.status,(tmp/'error.log').read_text())
      for header in ['Content-Security-Policy','X-Frame-Options','X-Content-Type-Options','Referrer-Policy','Permissions-Policy','Strict-Transport-Security']:assert response.headers.get(header),(path,header)
-     if path in ['/main.mjs','/catalog.json']:
+     if path in ['/main.mjs','/catalog.json','/network/data/24h.json']:
       assert response.headers.get_all('Cache-Control')==['no-cache']
       assert response.headers.get('Expires') is None
      if path=='/main.mjs':
