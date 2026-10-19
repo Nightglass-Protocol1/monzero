@@ -2,8 +2,6 @@
    the same links everywhere; below 1100px they fold into the Menu button. */
 .site-header { position: relative !important; width: min(1280px, 100% - 96px) !important; max-width: none !important; margin-inline: auto !important; padding-inline: 0 !important; }
 .site-header .menu-toggle { display: none; padding: 8px 14px !important; border: 1px solid var(--line, #293b49) !important; border-radius: 8px !important; background: transparent !important; color: var(--ink, #e8eef3) !important; font: 500 14px/1.2 var(--sans, system-ui, sans-serif) !important; box-shadow: none !important; }
-/* Explorer: its node status sits in the header too, so drop the duplicate links there. */
-[data-page="explorer"] .site-header .header-cta, [data-page="explorer"] .site-header .site-link { display: none; }
 .site-header nav a[aria-current="page"] { color: var(--ink, #e8eef3); }
 @media (max-width: 1100px) {
   .site-header { position: relative; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 16px; }
@@ -16,11 +14,6 @@
   .site-header nav a { display: block !important; padding: 10px 4px !important; margin: 0 !important; min-height: 0 !important; font-size: 15px !important; line-height: 1.4 !important; border: 0 !important; color: var(--muted, #a8bac8) !important; }
   .site-header nav a[aria-current="page"] { color: var(--ink, #edf3f7) !important; }
   .site-header .header-cta { display: none; }
-  [data-page="explorer"] .site-header .header-actions { position: static !important; margin-left: auto; order: 2; }
-  [data-page="explorer"] .site-header .menu-toggle { margin-left: 0; order: 3; }
-}
-@media (max-width: 600px) {
-  [data-page="explorer"] #node-label { display: none; }
 }
 @media print { .site-header { position: relative !important; } }
 
@@ -42,3 +35,12 @@
   .site-header nav a { padding: 0 !important; border: 0 !important; font-size: 13px !important; line-height: 1.6 !important; color: var(--muted, #a8bac8) !important; white-space: nowrap; }
   .site-header nav a:hover, .site-header nav a[aria-current="page"] { color: var(--ink, #edf3f7) !important; }
 }
+
+/* Header typography is fixed here so page stylesheets cannot change the logo,
+   menu or Download button (the values are the shared theme's). */
+.site-header .brand { display: flex !important; align-items: center !important; gap: 12px !important; margin: 0 !important; padding: 0 !important; font: 750 13px/1.7 "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; letter-spacing: 2px !important; text-transform: none !important; color: #edf3f7 !important; text-decoration: none !important; }
+.site-header .brand span { display: block !important; font: inherit !important; letter-spacing: inherit !important; color: inherit !important; }
+.site-header nav a { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; font-weight: 400 !important; letter-spacing: normal !important; text-transform: none !important; }
+.site-header .header-cta { font: 400 12px/1.7 "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; letter-spacing: normal !important; padding: 9px 17px !important; border: 1px solid var(--line, #293b49) !important; border-radius: 30px !important; color: #edf3f7 !important; background: transparent !important; text-decoration: none !important; white-space: nowrap; }
+.site-header .header-cta:hover { color: var(--accent, #69d5c2) !important; }
+.site-header .menu-toggle { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }

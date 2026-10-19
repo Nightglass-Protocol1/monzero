@@ -79,3 +79,7 @@ footer { width:min(1480px,100%); margin:0 auto; border-top:1px solid var(--line)
 @media(max-width:850px){ .overview{grid-template-columns:1fr 1fr}.overview article:nth-child(odd){border-left:1px solid var(--line)}.detail-grid{grid-template-columns:1fr 1fr}.datum:nth-child(3n){border-right:1px solid var(--line)}.datum:nth-child(2n){border-right:0}footer{flex-direction:column}.hero::after{display:none} }
 @media(max-width:520px){ header{padding-inline:1rem}.brand small,.site-link{display:none}.node-pill{border:0;padding:0}.overview{grid-template-columns:1fr 1fr;padding:0}.overview article{padding:1rem;min-height:110px}.search{grid-template-columns:1fr}.search button{height:48px}.detail-grid{grid-template-columns:1fr}.datum,.datum:nth-child(3n){border-right:0}.detail-head{align-items:flex-start;flex-direction:column-reverse} }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Node status sits at the top of the page; the header is the same as every other page. */
+.explorer-status { display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px; margin:0 0 20px; }
+.explorer-status .site-link { display:inline; }
