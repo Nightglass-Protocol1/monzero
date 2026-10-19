@@ -845,3 +845,20 @@ announcement suppression. Visual inspection caught and fixed inherited header
 overlap. Conservative clock mismatch reporting is retained: a clock behind the
 export cannot verify freshness. Nine contract tests pass. Fast-switch/timeout
 browser scenarios and continuous collection remain open; no production deployment.
+
+### Local network collection timer — 2026-10-19
+
+Added preview-specific systemd user service/timer examples and installed them
+locally. Collection runs 60 seconds after completion, with a 60-second service
+deadline, private umask and lower CPU scheduling priority. The timer does not
+start mining, build code, enable lingering or automatically start the preview.
+The archive remains outside the document root with mode 0600. Operations and
+stop commands are documented in `utils/website/NETWORK_HISTORY.md`.
+
+The first explicit service invocation and the following scheduled invocation
+both exited successfully; the real archive increased from two to four mainnet
+observations. The browser displayed recent observations. The public roadmap now
+links to network history with local-only status. Browser fixture checks now also
+pass pending-range cancellation and timeout/recovery, without waiting on upstream
+services. Claude's timer review found no blockers. Added isolated Python startup, more timeout headroom and ignored interrupted-publish temporary files. Worktree removal requires stopping/reconfiguring the timer; this is documented. The preview unit's presence was confirmed with systemctl, contrary to the review's missing-unit concern. Production collection/deployment
+and additional network metrics remain unfinished. No builds or mining ran.

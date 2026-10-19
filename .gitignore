@@ -142,3 +142,5 @@ __pycache__/
 
 # Runtime public network observations
 /website/network/data/*.json
+
+/website/network/data/.history-*

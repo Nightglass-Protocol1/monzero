@@ -25,9 +25,10 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
    for width in (390,1440):
     page=browser.new_page(viewport={'width':width,'height':900});errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
-    mode=['normal']
+    mode=['normal'];held=[]
     def respond(route):
      name=route.request.url.rsplit('/',1)[-1].split('.')[0]
+     if mode[0]=='hold':held.append(route);return
      data=exports[name]
      if mode[0]=='oversized':route.fulfill(content_type='application/json',body=' '*1048577);return
      if mode[0]=='outage':route.fulfill(status=503,body='Unavailable');return
@@ -52,6 +53,27 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
      expected='No observations' if state=='empty' else 'unavailable'
      page.wait_for_function('(expected)=>document.getElementById("status").textContent.includes(expected)',arg=expected)
      assert page.locator('#results').is_hidden()
+    mode[0]='normal';page.click('#refresh')
+    page.wait_for_function("document.getElementById('status').textContent.includes('Historical data')")
+    # A pending request must not replace a subsequently selected range.
+    mode[0]='hold';page.select_option('#range','7d')
+    page.wait_for_timeout(100)
+    assert held
+    mode[0]='normal';page.select_option('#range','all')
+    page.wait_for_function("document.getElementById('status').textContent.includes('Historical data')")
+    assert page.locator('#range').input_value()=='all'
+    try:held.pop().fulfill(content_type='application/json',body=json.dumps(exports['7d']))
+    except Exception:pass  # Browser may have already cancelled the old route.
+    assert f"Bucket width: {exports['all']['bucket_seconds']} seconds" in page.locator('#coverage').inner_text()
+    # Advance browser timers rather than waiting ten seconds for the timeout.
+    page.clock.install()
+    mode[0]='hold';page.click('#refresh');page.wait_for_timeout(100)
+    page.clock.fast_forward(10001)
+    page.wait_for_function("document.getElementById('status').textContent.includes('unavailable')")
+    assert page.locator('#results').is_hidden()
+    for route in held:
+     try:route.abort()
+     except Exception:pass
     mode[0]='normal';page.click('#refresh')
     page.wait_for_function("document.getElementById('status').textContent.includes('Historical data')")
     assert not errors,errors
