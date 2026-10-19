@@ -1275,3 +1275,18 @@ first, so the public node is never reached): envelope, cache reuse, ranges,
 and roadmap updated. All new pages were checked under the production `.htaccess`
 CSP with zero violations. 22-route navigation and the full runner pass. No
 deployment.
+
+### Opt-in mining leaderboard — 2026-10-19 (Claude)
+
+Added `/mining/leaderboard/` over the existing `/api/miner-stats/` GET (no
+backend change). It ranks opted-in miners active in the last 3 minutes by
+reported hashrate and by reported blocks, top 50 each, under the service's
+existing HMAC pseudonyms; responses with any non-pseudonym name are refused.
+Blocks come from each reporter's local log count (`utils/monzero-miner-reporter.py`)
+and are labelled as possibly including orphans and resetting with the log.
+Uptime and weekly/monthly boards are shown as unavailable: the service keeps
+only each miner's latest record (deleted after 7 days), so building them needs
+an opt-in history design that changes the ingest service, which is an owner
+decision. Opt-out is explained. Unit and browser tests cover rankings, the cap,
+zero-block exclusion, and empty/invalid/outage states. Navigation passes. No
+deployment.
