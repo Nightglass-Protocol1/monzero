@@ -62,18 +62,14 @@ try {
             $offset = max(0, (int)($input['offset'] ?? 0));
             $count = min(100, max(1, (int)($input['count'] ?? 25)));
             $assets = jsonRpc('get_assets', ['offset' => $offset, 'count' => $count]);
-            if (($assets['status'] ?? null) !== 'OK' || !is_bool($assets['active'] ?? null)
-                || !is_int($assets['total'] ?? null) || $assets['total'] < 0
-                || !isset($assets['assets']) || !is_array($assets['assets']) || !array_is_list($assets['assets'])
-                || count($assets['assets']) > $count || count($assets['assets']) > $assets['total']) {
-                throw new RuntimeException('Invalid asset registry observation');
-            }
+            validateAssetPage($assets, 'assets', $offset, $count);
             respond(['supported' => true] + $assets);
 
         case 'asset':
             $assetId = strtolower((string)($input['asset_id'] ?? ''));
             if (!validHash($assetId)) respond(['error' => 'Valid asset ID required'], 400);
             $assets = jsonRpc('get_assets', ['offset' => 0, 'count' => 1000]);
+            validateAssetPage($assets, 'assets', 0, 1000);
             $match = null;
             foreach (($assets['assets'] ?? []) as $asset) {
                 if (hash_equals($assetId, strtolower((string)($asset['asset_id'] ?? '')))) {
@@ -81,18 +77,23 @@ try {
                     break;
                 }
             }
-            if ($match === null) respond(['error' => 'Asset not found'], 404);
+            if ($match === null) {
+                if ($assets['total'] > count($assets['assets'])) respond(['error' => 'Asset lookup window exhausted; existence is unknown'], 503);
+                respond(['error' => 'Asset not found in this node registry'], 404);
+            }
             $outputs = jsonRpc('get_asset_outputs', [
                 'asset_id' => $assetId,
                 'offset' => 0,
                 'count' => 100,
             ]);
+            validateAssetPage($outputs, 'outputs', 0, 100);
+            if ($outputs['active'] !== $assets['active']) throw new RuntimeException('Inconsistent asset activation observations');
             respond([
                 'supported' => true,
-                'active' => (bool)($assets['active'] ?? false),
+                'active' => $assets['active'],
                 'asset' => $match,
-                'outputs' => $outputs['outputs'] ?? [],
-                'output_total' => $outputs['total'] ?? count($outputs['outputs'] ?? []),
+                'outputs' => $outputs['outputs'],
+                'output_total' => $outputs['total'],
             ]);
 
         case 'pool':
@@ -104,6 +105,18 @@ try {
 } catch (Throwable $error) {
     error_log('Monzero explorer API: ' . $error->getMessage());
     respond(['error' => 'Node request failed'], 502);
+}
+
+function validateAssetPage(array $page, string $field, int $offset, int $count): void {
+    if (($page['status'] ?? null) !== 'OK' || !is_bool($page['active'] ?? null)
+        || !is_int($page['total'] ?? null) || $page['total'] < 0 || $page['total'] > 9007199254740991
+        || !isset($page[$field]) || !is_array($page[$field]) || !array_is_list($page[$field])
+        || count($page[$field]) !== min($count, max(0, $page['total'] - $offset))) {
+        throw new RuntimeException('Invalid asset page observation');
+    }
+    foreach ($page[$field] as $record) {
+        if (!is_array($record) || !validHash($record['asset_id'] ?? null)) throw new RuntimeException('Invalid asset record identity');
+    }
 }
 
 function validHash(mixed $value): bool {

@@ -1172,3 +1172,15 @@ Actual-PHP fixture checks pass and assert failure responses contain none of the
 supported/active/count/list fields. General input/transport hardening, individual
 record validation, single-asset/hash-search failure semantics and dedicated Studio
 browser acceptance remain follow-up work. No builds, mining or deployment ran.
+
+### Single-asset lookup failure semantics — 2026-10-19
+
+The single-asset action now validates both registry and output pages with the
+same envelope rules as the list (status, activation type, bounded total, exact
+page length, 64-hex record identities) and requires consistent activation
+observations. A miss inside a truncated 1000-record window returns 503 (existence
+unknown) instead of a false 404. Field names and the page-length rule were checked
+against `COMMAND_RPC_GET_ASSETS`/`COMMAND_RPC_GET_ASSET_OUTPUTS` and
+`on_get_assets` in the core source. Actual-PHP fixture checks cover malformed,
+busy, inconsistent-activation and valid empty output pages; full website runner
+passes. No builds, mining or deployment ran.

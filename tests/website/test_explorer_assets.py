@@ -5,8 +5,9 @@ root=Path(__file__).resolve().parents[2]
 reply={}
 class Upstream(http.server.BaseHTTPRequestHandler):
  def do_POST(self):
-  self.rfile.read(int(self.headers.get('Content-Length',0)))
-  body=json.dumps(reply).encode();self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(body)
+  request=json.loads(self.rfile.read(int(self.headers.get('Content-Length',0))))
+  result=reply.get('_methods',{}).get(request.get('method'),reply)
+  body=json.dumps(result).encode();self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(body)
  def log_message(self,*args):pass
 upstream=http.server.ThreadingHTTPServer(('127.0.0.1',0),Upstream);threading.Thread(target=upstream.serve_forever,daemon=True).start()
 try:
@@ -30,6 +31,17 @@ try:
      data=json.load(response);assert response.status==expected,(response.status,data)
      if expected==502:assert 'supported' not in data and 'assets' not in data and 'active' not in data and 'total' not in data
      else:assert data['supported'] is True and data['assets']==[] and data['active'] is False
+   asset_id='a'*64
+   registry={'result':{'status':'OK','active':False,'total':1,'assets':[{'asset_id':asset_id}]}}
+   for output,expected in [({'result':{}},502),({'result':{'status':'BUSY','active':False,'total':0,'outputs':[]}},502),({'result':{'status':'OK','active':True,'total':0,'outputs':[]}},502),({'result':{'status':'OK','active':False,'total':0,'outputs':[]}},200)]:
+    reply={'_methods':{'get_assets':registry,'get_asset_outputs':output}}
+    req=urllib.request.Request(f'http://127.0.0.1:{port}/api.php',data=json.dumps({'action':'asset','asset_id':asset_id}).encode(),headers={'Content-Type':'application/json'})
+    try:response=urllib.request.urlopen(req,timeout=5)
+    except urllib.error.HTTPError as e:response=e
+    with response:
+     data=json.load(response);assert response.status==expected,(response.status,data)
+     if expected==502:assert 'outputs' not in data and 'active' not in data
+     else:assert data['outputs']==[] and data['output_total']==0
   finally:server.terminate();server.wait(timeout=5)
 finally:upstream.shutdown();upstream.server_close()
 print('Explorer assets: RPC failures and malformed observations are unavailable, valid empty registry preserved')
