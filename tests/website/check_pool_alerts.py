@@ -77,6 +77,33 @@ try:
    page.locator('#clear').click()
    assert page.locator('#alert-events li').count()==0
    assert page.locator('#alert-state').inner_text()=='Alerts are off.'
+   mode['status']=200
+   data.update(observed_at=100,hashrate_hps=100,active_workers=2,payments=[{'txid':'a'*64,'timestamp':1,'amount_atomic':'100'}])
+   page.locator('#address').fill('F'+'3'*94);lookup()
+   assert not page.locator('#alert-payments').is_checked()
+   page.locator('#alert-payments').check();page.locator('#alert-settings button[type=submit]').click()
+   page.evaluate("() => {Notification.requestPermission=async()=> {Notification.permission='granted';return 'granted';};}")
+   page.locator('#desktop-alerts').click()
+   page.wait_for_function("document.querySelector('#notification-state').textContent.includes('enabled for this visit')")
+   page.evaluate('window.testTime=360000');data['observed_at']+=1;lookup()
+   assert page.locator('#alert-events li').count()==0
+   assert 'Existing history was excluded' in page.locator('#payment-alert-state').inner_text()
+   data['payments'].insert(0,{'txid':'b'*64,'timestamp':2,'amount_atomic':'200'})
+   page.evaluate('window.testTime=420000');data['observed_at']+=1;lookup()
+   assert page.locator('#alert-events li').count()==1
+   assert 'confirmations are not verified' in page.locator('#alert-events').inner_text()
+   assert page.evaluate("notifications.at(-1).options.tag")=='monzero-session-payments'
+   assert ('b'*64) not in str(page.evaluate('notifications'))
+   data['payments'].extend([{'txid':c*64,'timestamp':3,'amount_atomic':'300'} for c in ['c','d']])
+   page.evaluate('window.testTime=480000');data['observed_at']+=1;lookup()
+   assert page.locator('#alert-events li').count()==1
+   page.evaluate('window.testTime=1080000');data['observed_at']+=1;lookup()
+   assert page.locator('#alert-events li').count()==2
+   assert '2 payment transaction' in page.locator('#alert-events li').first.inner_text()
+   assert len(calls)==14
+   assert page.evaluate('localStorage.length+sessionStorage.length')==0
+   page.locator('#clear').click();assert page.locator('#payment-alert-state').inner_text()=='Payment alerts are off.'
+   assert not page.locator('#alert-payments').is_checked()
    assert not errors,errors
    print(f'{width}px session-alert opt-in, thresholds, deduplication, privacy and clearing passed')
    page.close()

@@ -722,3 +722,24 @@ regressions also passed; mobile controls were visually inspected. Browser delive
 was mocked for privacy and deterministic tests, not verified across real OS
 notification centers. No deployment, mining or builds. Payout/difficulty alerts
 and wider network/community work remain open.
+
+### Pool-reported payment alerts — 2026-10-19
+
+Added a separate payout-monitoring opt-in to the session dashboard. The first
+valid list is a baseline with no alert; subsequent newly observed pool-sent
+transaction IDs are deduplicated and grouped under a ten-minute rate limit.
+Notifications remain generic and omit transaction IDs, addresses and amounts.
+No confirmations or actual send times are inferred. Incomplete initial history
+can produce an alert for an older payment appearing later; this is disclosed.
+Invalid lists are skipped. At 1,000 distinct IDs, payment monitoring and queued
+alerts pause visibly rather than evicting IDs and potentially re-alerting.
+Stop, Clear and address changes reset the payout opt-in and monitor.
+
+Claude reviewed the implementation. Thirteen alert-model tests passed, including
+malformed/oversized lists, first-history exclusion, cooldown grouping, memory
+bounds and backfilled history semantics. Chromium at 390/1440px passed payment
+opt-in, baseline exclusion, deduplication, grouped alerts, generic notification
+content/tag, request counts and clearing; delivery uses a mock Notification API.
+Existing dashboard labels/charts also passed after initial integration. Syntax
+and whitespace checks passed. No production deployment or native builds/mining.
+Network-difficulty alerts remain unfinished.

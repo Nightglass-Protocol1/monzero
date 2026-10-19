@@ -59,3 +59,45 @@ test('a full drop threshold triggers only at zero, with two observations',()=>{
  assert.deepEqual(m.sample(observation(3,0,0),120000),[]);
  assert.deepEqual(m.sample(observation(4,0,0),180000).map(e=>e.kind),['hashrate']);
 });
+
+test('payments are opt-in and the first valid history is only a baseline',()=>{
+ const pay=(...ids)=>ids.map(n=>({txid:n.toString(16).padStart(64,'0')}));
+ const data=(at,...ids)=>({...observation(at),payments:pay(...ids)});
+ const off=createAlertMonitor(settings);off.sample(data(1),0);assert.deepEqual(off.sample(data(2,1),60000),[]);
+ const m=createAlertMonitor({...settings,payments:true});m.sample({...observation(1),payments:null},0);
+ assert.equal(m.paymentState(),'waiting');assert.deepEqual(m.sample(data(2,1,2),60000),[]);
+ assert.equal(m.paymentState(),'active');assert.deepEqual(m.sample(data(3,2,1),120000),[]);
+ const events=m.sample(data(4,3,2,1),180000);assert.equal(events.length,1);assert.equal(events[0].kind,'payments');
+ assert.match(events[0].message,/confirmations are not verified/);
+ assert.deepEqual(m.sample(data(5,1),240000),[]);assert.deepEqual(m.sample(data(6,3,1),300000),[]);
+});
+test('new payments are deduplicated and grouped during cooldown',()=>{
+ const m=createAlertMonitor({...settings,payments:true});
+ const data=(at,...ids)=>({...observation(at),payments:ids.map(n=>({txid:n.toString(16).padStart(64,'0')}))});
+ m.sample(data(1),0);assert.equal(m.sample(data(2,1,1),60000).length,1);
+ assert.deepEqual(m.sample(data(3,2,1),120000),[]);
+ assert.deepEqual(m.sample(data(4,3,2),180000),[]);
+ const events=m.sample(data(5,3,2),660000);assert.equal(events.length,1);assert.match(events[0].message,/2 payment/);
+});
+test('malformed payment observations do not establish a baseline or emit alerts',()=>{
+ const m=createAlertMonitor({...settings,payments:true});
+ let at=0;
+ for(const payments of [[{txid:'bad'}],[null],Array(51).fill({txid:'a'.repeat(64)})]){
+  at++;assert.deepEqual(m.sample({...observation(at),payments},at*60000),[]);
+ }
+ assert.equal(m.paymentState(),'waiting');
+ assert.throws(()=>validateAlertSettings({...settings,payments:'true'}));
+});
+test('payment identity memory is bounded without forgetting old IDs and re-alerting',()=>{
+ const m=createAlertMonitor({...settings,payments:true});
+ for(let batch=0;batch<21;batch++)m.sample({...observation(batch+1),payments:Array.from({length:50},(_,i)=>({txid:(batch*50+i).toString(16).padStart(64,'0')}))},batch*60000);
+ assert.equal(m.paymentState(),'limit');
+ assert.deepEqual(m.sample({...observation(22),payments:[{txid:'f'.repeat(64)}]},1260000),[]);
+ assert.equal(createAlertMonitor({...settings,payments:true}).paymentState(),'waiting');
+});
+
+test('backfilled history after an empty baseline is newly observed, not confirmed',()=>{
+ const m=createAlertMonitor({...settings,payments:true});m.sample({...observation(100),payments:[]},0);
+ const event=m.sample({...observation(101),payments:[{txid:'a'.repeat(64),timestamp:1}]},60000)[0];
+ assert.match(event.message,/newly reported/);assert.match(event.message,/confirmations are not verified/);
+});

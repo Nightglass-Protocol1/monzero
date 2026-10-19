@@ -142,18 +142,21 @@ window.addEventListener('storage',event=>{
 let alertMonitor=null,desktopAlerts=false,alertEpoch=0;
 const alertState=document.querySelector('#alert-state'),notificationState=document.querySelector('#notification-state'),alertEvents=document.querySelector('#alert-events'),desktopButton=document.querySelector('#desktop-alerts');
 const notifications=new Set();
+const paymentAlertState=document.querySelector('#payment-alert-state');
+document.querySelector('#alert-payments').checked=false;
 document.querySelector('#alert-controls').disabled=false;
-function stopAlerts(){
+function stopAlerts(resetChoices=true){
+ if(resetChoices)document.querySelector('#alert-payments').checked=false;
  alertEpoch++;alertMonitor=null;desktopAlerts=false;desktopButton.disabled=true;alertEvents.replaceChildren();
  for(const notification of notifications)notification.close();notifications.clear();
- alertState.textContent='Alerts are off.';notificationState.textContent='Browser notifications are off.';
+ alertState.textContent='Alerts are off.';paymentAlertState.textContent='Payment alerts are off.';notificationState.textContent='Browser notifications are off.';
 }
 document.querySelector('#stop-alerts').addEventListener('click',stopAlerts);
 document.querySelector('#alert-settings').addEventListener('submit',event=>{
- event.preventDefault();stopAlerts();
+ event.preventDefault();stopAlerts(false);
  if(!selected){alertState.textContent='Look up a mining address before enabling alerts.';return;}
- try{alertMonitor=createAlertMonitor({hashDropPercent:Number(document.querySelector('#alert-drop').value),minimumWorkers:Number(document.querySelector('#alert-workers').value)});
- desktopButton.disabled=false;alertState.textContent='Session alerts enabled. Waiting for new observations; no extra requests are made.';
+ try{alertMonitor=createAlertMonitor({hashDropPercent:Number(document.querySelector('#alert-drop').value),minimumWorkers:Number(document.querySelector('#alert-workers').value),payments:document.querySelector('#alert-payments').checked});
+ desktopButton.disabled=false;paymentAlertState.textContent=alertMonitor.settings().payments?'Payment alerts enabled; waiting for a baseline.':'Payment alerts are off.';alertState.textContent='Session alerts enabled. Waiting for new observations; no extra requests are made.';
  }catch(error){alertState.textContent=error.message;}
 });
 desktopButton.addEventListener('click',async()=>{
@@ -169,6 +172,8 @@ desktopButton.addEventListener('click',async()=>{
 function checkAlerts(data,epoch){
  if(!alertMonitor||epoch!==alertEpoch)return;
  const events=alertMonitor.sample(data,performance.now());
+ const paymentMessages={off:'Payment alerts are off.',waiting:'Payment alerts enabled; waiting for a valid payment baseline.',active:'Payment alerts enabled. Existing history was excluded; new pool-reported IDs are monitored.',limit:'Payment monitoring paused at the 1,000-ID limit. Re-enable alerts to establish a fresh baseline.'};
+ paymentAlertState.textContent=paymentMessages[alertMonitor.paymentState()];
  const baseline=alertMonitor.baseline(),settings=alertMonitor.settings();alertState.textContent=baseline===null?'Session alerts enabled; waiting for a positive hashrate baseline.':`Session alerts enabled. Baseline: ${format(baseline)} H/s; drop threshold ${settings.hashDropPercent}%; minimum workers ${settings.minimumWorkers}. Checks use subsequent lookups.`;
  for(const event of events){
  const item=document.createElement('li');item.textContent=`${new Date().toLocaleString()}: ${event.message}`;alertEvents.prepend(item);

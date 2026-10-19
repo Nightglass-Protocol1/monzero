@@ -239,4 +239,18 @@ omit addresses, labels and amounts. Unsupported delivery leaves on-page alerts
 working. Permission and already displayed OS notifications may outlive the tab.
 This is not a background monitoring service: hidden tabs and focused worker-label
 controls pause automatic refresh. No email/Telegram integration or service worker
-was introduced. Payout and network-difficulty notifications remain outstanding.
+was introduced. Network-difficulty notifications remain outstanding.
+
+Payment alerts are a separate opt-in within session monitoring. The first valid
+list of up to 50 pool-sent payments establishes a baseline; later newly observed
+transaction IDs are deduplicated and grouped at a ten-minute notification limit.
+This is not confirmation verification or proof of the actual send time. Missing
+or malformed lists do not establish a baseline. The pool history window can miss
+payments during long gaps. After 1,000 distinct IDs, payment monitoring pauses
+with a visible message; it never evicts old IDs and re-alerts on them. Re-enabling
+starts a fresh baseline. IDs and pending counts remain in memory, and browser
+notifications still contain no transaction ID, address or amount.
+Incomplete initial history can make an old payment appear newly observed later;
+this is disclosed rather than inferred away using unverified payment timestamps.
+Queued counts wait for a valid list and pause if the ID limit is reached. Stop,
+Clear and address changes also uncheck the payment option.
