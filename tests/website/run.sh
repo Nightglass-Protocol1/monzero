@@ -19,6 +19,5 @@ node --check website/mining/benchmarks/benchmarks.mjs
 node --test tests/website/benchmarks.test.mjs
 python3 tests/website/check_benchmarks.py
 
-python3 utils/website/sync_navigation.py --check
 node --check website/site-nav.js
 python3 tests/website/check_navigation.py

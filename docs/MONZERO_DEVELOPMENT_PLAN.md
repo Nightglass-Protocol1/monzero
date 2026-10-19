@@ -422,3 +422,18 @@ The calculator, pool dashboard and benchmark headers now use the existing
 transparent teal coin asset. Mobile rendering and successful image loading were
 checked in Chromium; all 36 shared navigation checks passed after the change.
 A local PHP preview is available at http://127.0.0.1:8765/ without a build step.
+
+### Navigation preference — 2026-10-19
+
+At the owner's request, restored the previous page-specific navigation and
+its desktop links/mobile Menu layout. This supersedes the unified disclosure
+menu described above. Retained the new mining pages, their transparent teal
+logos and homepage links. Removed the navigation generator so it cannot
+reapply the rejected design. Updated navigation checks to cover the restored
+layout rather than require the rejected menu.
+
+Follow-up mobile verification found that shared responsive styles hid the short
+mining-page navigation without a toggle. Scoped mining-header styles now keep
+those links visible at every width, preserving the owner's preferred existing
+navigation elsewhere. All 36 navigation checks passed, including mining-link
+visibility at 390px with and without JavaScript. No production deployment.

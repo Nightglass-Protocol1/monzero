@@ -36,16 +36,7 @@
 /* Supplied Monzero coin artwork. */
 .brand .brand-coin { display: block; width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; border: 0; border-radius: 50%; }
 
-/* Shared disclosure at every width: all routes remain in static HTML. */
-.site-header .menu-toggle { display:none !important; }
-.site-header.navigation-ready .menu-toggle { display:block !important; cursor:pointer; }
-.site-header.navigation-ready nav { position:absolute !important; top:100%; left:0; right:0; width:auto !important; z-index:40; display:grid !important; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:4px 16px !important; padding:16px 20px !important; background:var(--surface,#111c27) !important; border:1px solid var(--line,#293b49) !important; border-radius:0 0 12px 12px; max-height:70vh; overflow:auto; }
-.site-header.navigation-ready nav[hidden] { display:none !important; }
-.site-header.navigation-ready nav a { padding:10px 4px !important; margin:0 !important; line-height:1.4; }
-.site-header:not(.navigation-ready) { flex-wrap:wrap !important; }
-.site-header:not(.navigation-ready) nav { display:flex !important; position:static !important; width:100% !important; flex-direction:row !important; flex-wrap:wrap !important; padding:12px 0; }
-@media(max-width:600px) { .site-header.navigation-ready nav { grid-template-columns:1fr; } }
-@media print { .site-header.navigation-ready .menu-toggle { display:none !important; } }
-.site-header:not(.navigation-ready) { height:auto !important; min-height:84px; }
-.site-header.navigation-ready .menu-toggle, .site-header.navigation-ready nav a { min-height:44px; box-sizing:border-box; }
-.site-header.navigation-ready nav a { display:block; }
+/* Mining utility pages retain their short, always-visible navigation. */
+.site-header.mining-header { flex-wrap:wrap !important; height:auto; }
+.site-header.mining-header nav { display:flex !important; position:static !important; width:auto; flex-direction:row; flex-wrap:wrap; padding:0; background:none; border:0; gap:12px 20px; }
+.site-header.mining-header nav a { min-height:44px; display:inline-flex; align-items:center; }
