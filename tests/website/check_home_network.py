@@ -14,7 +14,7 @@ try:
    page=browser.new_page(viewport={'width':width,'height':1000});errors=[]
    page.on('pageerror',lambda e:errors.append(str(e)))
    state={'offline':False,'missing':False}
-   info={'status':'OK','nettype':'mainnet','height':100,'target':120,'difficulty':3600000,'tip_age_seconds':12,'synchronized':True,'tip_fresh':True,'peer_ready':True,'connections_hidden':True,'restricted':True}
+   info={'status':'OK','nettype':'mainnet','height':100,'target':120,'difficulty':3600000,'difficulty_top64':0,'tip_age_seconds':12,'synchronized':True,'tip_fresh':True,'peer_ready':True,'connections_hidden':True,'restricted':True}
    def route(r):
     url=r.request.url
     if '/api/node-info/' in url:
@@ -34,6 +34,11 @@ try:
    assert page.locator('a[href="mining/calculator/"]').count()==1
    assert page.locator('a[href="https://t.me/MonzeroOfficial"]').count()==1
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow'
+   for field in ('synchronized','tip_fresh'):
+    info[field]=False;page.evaluate('updateNetwork()')
+    assert page.locator('#metric-reward').inner_text()=='—'
+    assert page.locator('#chain-strip li').count()==0
+    info[field]=True
    state['missing']=True;page.evaluate('updateNodeStatus()')
    page.wait_for_function("document.querySelector('#metric-target').textContent === 'Unavailable'")
    assert page.locator('#metric-network-hashrate').inner_text()=='Unavailable'

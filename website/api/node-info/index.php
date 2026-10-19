@@ -77,11 +77,16 @@ $tipTimestamp = is_array($header) ? ($header['timestamp'] ?? null) : null;
 $tipAge = is_int($tipTimestamp) ? time() - $tipTimestamp : null;
 $genesisOnly = (int)($decoded['height'] ?? 0) === 1
     && hash_equals(GENESIS_HASH, (string)($decoded['top_block_hash'] ?? ''));
-$tipFresh = $genesisOnly || (is_int($tipAge)
+$tipMatches = is_array($header) && isset($header['height'], $header['hash'])
+    && (int)$header['height'] === (int)($decoded['height'] ?? 0) - 1
+    && hash_equals((string)($decoded['top_block_hash'] ?? ''), (string)$header['hash']);
+$tipFresh = $tipMatches && ($genesisOnly || (is_int($tipAge)
     && $tipAge <= MAX_TIP_AGE_SECONDS
-    && $tipAge >= -MAX_FUTURE_SKEW_SECONDS);
+    && $tipAge >= -MAX_FUTURE_SKEW_SECONDS));
 
 $decoded['tip_timestamp'] = $tipTimestamp;
+$decoded['tip_height'] = $tipMatches ? $header['height'] : null;
+$decoded['tip_reward_atomic'] = $tipMatches ? ($header['reward'] ?? null) : null;
 $decoded['tip_age_seconds'] = $tipAge;
 $decoded['tip_fresh'] = $tipFresh;
 $decoded['network_ready'] = ($decoded['status'] ?? '') === 'OK'

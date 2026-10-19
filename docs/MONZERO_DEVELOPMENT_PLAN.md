@@ -254,3 +254,41 @@ covering observed fields, absent inputs, failed refresh clearing, required links
 no horizontal overflow and no JavaScript runtime errors. `node --check` and
 `git diff --check` passed. This is fixture-backed browser verification, not a
 claim that every production service or the entire website is accepted.
+
+### Claude review fixes — 2026-10-19
+
+Actual Claude source review completed successfully; evidence is
+`core/build/claude-website-review-20261019.txt`. Addressed the pre-publication
+privacy, difficulty-source and freshness findings:
+
+- Calculator controls remain disabled until its module and submit handler load;
+  a no-script notice explains why. No default form submission of user inputs.
+- Calculator now uses the existing node-readiness PHP endpoint instead of a
+  second explorer request. The adapter includes matched tip height/reward;
+  mismatched info/header heights or hashes invalidate freshness.
+- Next-block difficulty drives expected work, with nonzero high-64-bit difficulty
+  rejected. Server readiness supplies the existing 900s age / 300s future-skew
+  operational policy; visitor wall-clock accuracy is not a readiness condition.
+  Five-minute result expiry uses a monotonic browser clock.
+- Module MIME mappings added to both hosting examples; actual production headers
+  still require deployment validation. No security-header claim is made for the
+  existing Nginx inheritance issue, which remains open.
+- Small nonzero results use significant digits; result text is larger. Automatic
+  refresh uses silent validity checks. Repeated input notices are deduplicated.
+- Homepage reward/block display now requires a synchronized, fresh observation;
+  unavailable high-bit difficulty is never presented as low-bit hashrate.
+
+Verification: ten calculation cases, four PHP adapter tests using a synthetic
+loopback RPC server, expanded Chromium tests at 1440px and 390px (wrong network,
+unsynchronized/stale data, mismatched height, unsafe reward, high-bit difficulty,
+result expiry, small nonzero reward, outage, no-JavaScript disabled inputs), plus
+homepage stale/unsynchronized rejection checks. All passed. PHP/JS syntax and
+whitespace checks passed. Reusable check runner: `tests/website/run.sh`; requires
+installed Node, PHP, Chromium, Python Playwright. It performs no native builds or
+mining. Hosted CSP/MIME acceptance and a full accessibility audit remain open.
+
+Remaining review items: cache/rate-limit shared public observations; resolve
+Nginx example routing/security-header inheritance; unify navigation; verify pool
+terms and supported read-only endpoints; benchmark catalog with reviewed source
+records. Read-only pool research is already within the authorized scope and does
+not need additional owner permission. Keep unknown data unavailable.

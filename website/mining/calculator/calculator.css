@@ -14,3 +14,6 @@ select:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
 .site-header nav { position:static; width:auto; display:flex; flex-direction:row; flex-wrap:wrap; padding:0; border:0; background:none; }
 .skip-link:not(:focus) { transform:translateY(-200vh); }
 .skip-link:focus { top:16px; transform:none; }
+
+#calculator-inputs { border:0; padding:0; margin:0; min-width:0; }
+#results dt, #results dd { font-size:16px; line-height:1.6; }

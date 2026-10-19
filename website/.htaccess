@@ -1,3 +1,4 @@
+AddType text/javascript .mjs
 Options -Indexes
 
 <IfModule mod_rewrite.c>

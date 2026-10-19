@@ -49,10 +49,10 @@ async function updateNodeStatus() {
     fields.height.textContent = `#${number.format(Math.max(0, (info.height ?? 1) - 1))}`;
     const tipAge = info.tip_age_seconds;
     fields.tipAge.textContent = Number.isFinite(tipAge) ? `Last block found ${formatAge(tipAge)} ago` : 'Last block time unavailable';
-    fields.difficulty.textContent = Number.isFinite(info.difficulty) && info.difficulty > 0 ? number.format(info.difficulty) : 'Unavailable';
+    fields.difficulty.textContent = Number.isFinite(info.difficulty) && info.difficulty > 0 && info.difficulty_top64 === 0 ? number.format(info.difficulty) : 'Unavailable';
     const target = info.target;
     fields.target.textContent = Number.isFinite(target) && target > 0 ? `${target} seconds` : 'Unavailable';
-    const networkHashrate = Number.isFinite(target) && target > 0 && Number.isFinite(info.difficulty) && info.difficulty > 0 ? info.difficulty / target : null;
+    const networkHashrate = Number.isFinite(target) && target > 0 && Number.isFinite(info.difficulty) && info.difficulty > 0 && info.difficulty_top64 === 0 ? info.difficulty / target : null;
     fields.networkHashrate.textContent = networkHashrate === null ? 'Unavailable' : formatHashrate(networkHashrate);
     const peerCount = info.peer_connections
       ?? (Number.isSafeInteger(info.incoming_connections_count) && Number.isSafeInteger(info.outgoing_connections_count)
@@ -62,10 +62,7 @@ async function updateNodeStatus() {
       ? 'Connection counts are intentionally hidden by the public restricted RPC.'
       : 'Current incoming and outgoing P2P peer nodes, not unique people.';
     fields.rpc.textContent = info.restricted ? 'RESTRICTED' : 'ONLINE';
-    if (info.status !== 'OK') {
-      fields.state.textContent = info.status || 'Node unavailable';
-      fields.dot.className = 'status-dot offline';
-    } else if (info.synchronized !== true) {
+    if (info.synchronized !== true) {
       fields.state.textContent = 'Node unsynchronized';
       fields.dot.className = 'status-dot offline';
     } else if (info.tip_fresh !== true) {
@@ -78,6 +75,7 @@ async function updateNodeStatus() {
       fields.state.textContent = 'Node synchronized';
       fields.dot.className = 'status-dot online';
     }
+    return info;
   } catch {
     for (const key of ['height', 'difficulty', 'networkHashrate', 'connections', 'target']) fields[key].textContent = '—';
     fields.observed.textContent = 'Current node status unavailable. Rewards include transaction fees.';
@@ -98,8 +96,9 @@ function formatAge(seconds) {
 
 const chainStrip = document.querySelector('#chain-strip');
 
-async function updateChainStrip() {
+async function updateChainStrip(readiness) {
   try {
+    if (!readiness || readiness.synchronized !== true || readiness.tip_fresh !== true) throw new Error('Node not ready');
     const response = await fetch('explorer/api.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -110,7 +109,7 @@ async function updateChainStrip() {
     const data = await response.json();
     if (data.info?.nettype !== 'mainnet' || data.info?.status !== 'OK') throw new Error('Wrong network');
     const headers = data.headers;
-    if (!Array.isArray(headers) || !headers.length) throw new Error('No blocks');
+    if (!Array.isArray(headers) || !headers.length || headers[0].height !== readiness.height - 1 || data.info.synchronized !== true) throw new Error('No matching ready tip');
     const latest = headers[0];
     document.querySelector('#metric-reward').textContent = Number.isSafeInteger(latest.reward) && latest.reward >= 0
       ? `${new Intl.NumberFormat(undefined, {maximumFractionDigits: 11}).format(latest.reward / 1e11)} XMZ` : 'Unavailable';
@@ -139,9 +138,9 @@ async function updateChainStrip() {
   }
 }
 
-function updateNetwork() {
-  updateNodeStatus();
-  updateChainStrip();
+async function updateNetwork() {
+  const readiness = await updateNodeStatus();
+  await updateChainStrip(readiness);
 }
 
 updateNetwork();
