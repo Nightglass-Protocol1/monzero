@@ -464,3 +464,33 @@ validator fixes; subsequent benchmark browser checks cover the changed module.
 Branch-protection/reviewer configuration is not established by a local workflow;
 no invented maintainer allowlist or automatic verification claims were added.
 Numeric plausibility and independence of evidence remain human review duties.
+
+### Nginx hosting parity — 2026-10-19
+
+The example config now routes PHP directory indexes through the website adapter,
+so `/api/node-info/` retains the same freshness/readiness contract as the local
+preview. Removed the raw daemon bypass. Static cache rules use `expires` without
+location-level `add_header`, preserving inherited security headers. Hidden-file
+denial now precedes PHP regex matching, including hidden `.php` names.
+
+Verified against Nginx 1.30.5 and PHP CGI on isolated loopback ports: syntax;
+real adapter GET rejection; POST preservation through index resolution; static
+and error security headers; checksum/module MIME; static cache policy; hidden
+PHP denial. The four actual node-observation PHP tests also pass. No service
+configuration, live server, mining or build process was changed. Production TLS,
+PHP-FPM permissions, Apache hosting and public header validation remain pending.
+A dedicated reproducible check is in `tests/website/check_nginx.py`; its required
+executables and limitations are documented in `website/README.md`.
+
+Claude's hosting review is complete. Added relative directory redirects and a
+308 node-status slash redirect, and verified both through Nginx. Hardened the
+test's process cleanup, disabled PHP opcode caching for its rewritten fixture,
+and tested the image fixture. Trusted proxy/client-IP configuration remains a
+required deployment-specific step documented in the README; no arbitrary proxy
+addresses are trusted by this patch. The expanded Nginx regression check passes.
+
+The preview roadmap now includes a dated website-progress section with links to
+the three mining tools, distinguishing local verification from production release
+acceptance. It preserves historical DEX entries and explicitly excludes the web
+wallet. All 36 navigation checks passed; the new roadmap section was visually
+inspected at mobile width with no horizontal overflow.

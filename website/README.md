@@ -28,9 +28,12 @@ but deliberately has no wallet connection, signing, or submission path.
 Copy this directory's contents to `/var/www/monzero`, install
 `nginx-monzero.conf` as `/etc/nginx/sites-available/monzero`, enable the site,
 set the `fastcgi_pass` socket to the PHP-FPM listener installed on the host,
-test Nginx, and reload it. The included Nginx route proxies only the homepage's
-`/api/node-info/` request to the restricted local RPC service. PHP-FPM serves
-the allowlisted explorer proxy and opt-in miner statistics endpoint.
+test Nginx, and reload it. The included Nginx configuration executes `/api/node-info/index.php` through
+PHP-FPM for `/api/node-info/`, preserving tip freshness and mainnet readiness
+checks. PHP-FPM also serves the allowlisted explorer proxy and opt-in miner
+statistics endpoint. Static cache rules retain the server security headers.
+This port-80 example assumes a separately configured HTTPS terminator; verify
+TLS and public headers before deployment.
 
 On IONOS web hosting, upload the complete contents of this directory to the
 domain's assigned document root. PHP must be enabled so `/explorer/api.php` can
@@ -110,3 +113,35 @@ Validation: PHP syntax, JavaScript syntax and real mainnet API retrieval; Chromi
 checks at 1440px and 390px, 720/120-block selection, retained-snapshot and first-load
 outage states. Wine mainnet GUI screenshots use a separate empty demonstration
 wallet connected to the public remote node, without mining or transfers.
+
+### Nginx configuration regression check
+
+With Nginx and `php-cgi` available, run:
+
+```sh
+python3 tests/website/check_nginx.py
+```
+
+If needed, set `NGINX_BINARY` to the Nginx executable and
+`NGINX_FASTCGI_PARAMS` to its distribution's `fastcgi_params` file. The check
+uses temporary files and loopback ports, validates configuration syntax, and
+checks PHP directory routing, POST preservation, static/error security headers,
+module/checksum MIME types, cache behavior and hidden-file denial. It neither
+changes the installed server configuration nor contacts the blockchain node.
+The standard website suite tests the actual PHP observation logic separately.
+This local HTTP check does not validate a production TLS terminator, PHP-FPM
+socket permissions, Apache `.htaccess`, or public-hosting response headers.
+
+Keep security `add_header` directives at server scope: a location with its own
+`add_header` can suppress inherited headers. The static locations use `expires`
+for caching without adding a location-level `add_header`.
+See the [Nginx headers documentation](https://nginx.org/en/docs/http/ngx_http_headers_module.html).
+
+Behind a reverse proxy, configure Nginx's `set_real_ip_from` for only the actual
+trusted proxy IPs/CIDRs and `real_ip_header` for the header that proxy overwrites.
+Do not copy a broad trust range or accept visitor-supplied forwarding headers.
+Verify that PHP receives distinct client `REMOTE_ADDR` values before publishing:
+the pool dashboard's per-client limits and public-profile proxy depend on it.
+The example deliberately does not guess the deployment's trusted proxy addresses.
+Directory redirects are relative to preserve the external HTTPS origin; the
+node-status slash redirect uses 308 so POST requests retain their method.
