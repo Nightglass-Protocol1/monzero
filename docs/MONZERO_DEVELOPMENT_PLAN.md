@@ -620,3 +620,19 @@ responses. The full interpreted website regression suite completed successfully.
 No new production deployment or native build was performed. Release acceptance
 still requires a concrete staged deployment/rollback, real pool integration and
 remaining feature/support decisions; local test success does not close those gates.
+
+### Real pool integration acceptance — 2026-10-19
+
+A bounded read-only lookup through the local production PHP adapter used the
+already published founder address from `website/founder/index.html`. HTTPS pool
+integration returned HTTP 200/no-store, ten pool-reported sent payments, exact
+string amounts, zero connected workers, no echoed address and no historical data.
+Worker-name masking and null confirmation fields matched the presentation contract.
+This is source integration evidence, not independent on-chain payout verification.
+
+A Chromium pass then used the same public address through the real dashboard:
+payments rendered, both opt-in session charts appeared, local/session storage
+remained empty, and Clear erased the address and observations. No private wallet,
+seed, credentials, mining, transaction submission or production mutation was used.
+This closes the basic live-pool transport/response/browser integration check;
+outage, limits and malformed responses retain their separate synthetic evidence.
