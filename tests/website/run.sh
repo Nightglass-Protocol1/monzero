@@ -57,3 +57,5 @@ python3 tests/website/test_api_v1.py
 node --check website/mining/leaderboard/leaderboard.mjs
 node --test tests/website/leaderboard.test.mjs
 python3 tests/website/check_leaderboard.py
+php -l website/api/faucet/index.php
+python3 tests/website/test_faucet_status.py

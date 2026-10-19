@@ -1290,3 +1290,23 @@ an opt-in history design that changes the ingest service, which is an owner
 decision. Opt-out is explained. Unit and browser tests cover rankings, the cap,
 zero-block exclusion, and empty/invalid/outage states. Navigation passes. No
 deployment.
+
+### Faucet architecture and marketplace specification — 2026-10-19 (Claude)
+
+Added `docs/FAUCET_ARCHITECTURE.md`: claim endpoint, private claims store,
+payout worker under a separate OS user, and a loopback hot wallet. It covers
+anti-bot checks, per-address/client/day limits, treasury float and reserve,
+an append-only log, a pause flag read by both parts, configuration outside the
+document root (default disabled) and an activation checklist (owner approval,
+tests, a week on testnet, security review, a small float). Implemented only a
+`/faucet/` page (Status: paused, no form) and `GET /api/faucet/`, which can
+only return paused. It reads no config, has no wallet access and refuses POST.
+Not implemented on purpose: the claim endpoint, payout worker, wallet and
+anti-bot provider; these need owner approval and funding.
+
+Added `docs/MARKETPLACE_SPEC.md`: a non-custodial catalog and order
+bookkeeping. Merchants receive payment directly via per-order subaddresses from
+their own view-only wallet; "paid" is reported by the merchant through a signed
+callback; disputes affect only reputation and listing; no escrow or custody.
+Legal, moderation and fraud risks plus dependencies are listed. Tests: faucet
+status contract and page checks; 24-route navigation. No deployment.
