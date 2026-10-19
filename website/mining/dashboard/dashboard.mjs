@@ -1,3 +1,4 @@
+import {createAlertMonitor} from './alerts.mjs';
 import {LABEL_STORAGE_KEY,parseLabels,setLabel} from './labels.mjs';
 import {appendObservation,plotSegments} from './history.mjs';
 const form=document.querySelector('#lookup'),address=document.querySelector('#address');
@@ -17,7 +18,7 @@ function atomic(value) {
 function reset() {currentWorkers=[];results.replaceChildren();workers.replaceChildren();payments.replaceChildren();document.querySelector('#worker-state').textContent='No current observation.';}
 function cancel() {generation++;controller?.abort();controller=null;reset();}
 async function lookup(value) {
-  cancel();const id=generation;controller=new AbortController();const requestController=controller;const timer=setTimeout(()=>requestController.abort(),16000);
+  cancel();const id=generation,monitorEpoch=alertEpoch;controller=new AbortController();const requestController=controller;const timer=setTimeout(()=>requestController.abort(),16000);
   status.textContent='Loading pool observation…';
   try {
     const response=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:value}),signal:controller.signal,cache:'no-store',referrerPolicy:'no-referrer'});
@@ -26,6 +27,7 @@ async function lookup(value) {
     if(!response.ok || data.schema!=='monzero-pool-miner-view-v1')throw new Error(response.status===429?'Lookup limit reached. Try again in one minute.':'Pool observation unavailable. Try again later.');
     if(!Number.isSafeInteger(data.observed_at)||data.observed_at<=0)throw new Error('Pool timestamp unavailable.');
     if(collect.checked){const next=appendObservation(samples,data,historyGap);const skipped=next===samples;if(!skipped)historyGap=false;samples=next;renderHistory();if(skipped)historyStatus.textContent=`${samples.length} observations retained. Duplicate or earlier response time skipped.`;}
+    checkAlerts(data,monitorEpoch);
     status.textContent=`Pool response retrieved ${new Date(data.observed_at*1000).toLocaleString()}. This is a dated snapshot, not a live guarantee.`;
     const rows=[['Estimated ten-minute hashrate (H/s)',format(data.hashrate_hps)],['Connected workers',format(data.active_workers)],
       ['Pool contribution (%)',format(data.pool_share_percent)],['Pending pool rewards',atomic(data.pending_atomic)],['Total reported paid',atomic(data.paid_atomic)]];
@@ -43,15 +45,15 @@ async function lookup(value) {
       }
       if(!data.payments.length){const li=document.createElement('li');li.textContent='No sent payments returned by the pool.';payments.append(li);}
     } else {const li=document.createElement('li');li.textContent='Payment history unavailable.';payments.append(li);}
-  } catch(error) {if(id===generation){historyGap=true;reset();if(collect.checked)historyStatus.textContent=`Last lookup failed; ${samples.length} observations retained. The next sample starts a new segment.`;status.textContent=error.name==='AbortError'?'Lookup timed out. Try again later.':error instanceof SyntaxError?'Pool returned an unreadable response. Try again later.':error.message;}}
+  } catch(error) {if(id===generation){checkAlerts(null,monitorEpoch);historyGap=true;reset();if(collect.checked)historyStatus.textContent=`Last lookup failed; ${samples.length} observations retained. The next sample starts a new segment.`;status.textContent=error.name==='AbortError'?'Lookup timed out. Try again later.':error instanceof SyntaxError?'Pool returned an unreadable response. Try again later.':error.message;}}
   finally {clearTimeout(timer);if(id===generation)controller=null;}
 }
 form.addEventListener('submit',event=>{event.preventDefault();const value=address.value.trim();
   if(![95,106].includes(value.length)||!/^[1-9A-HJ-NP-Za-km-z]+$/.test(value)){cancel();selected='';status.textContent='Enter a public XMZ mining address. Do not enter keys or seed words.';return;}
-  if(selected!==value){if(!savedEnabled)labels={};clearHistory();}selected=value;lookup(value);
+  if(selected!==value){stopAlerts();if(!savedEnabled)labels={};clearHistory();}selected=value;lookup(value);
 });
-address.addEventListener('input',()=>{if(!savedEnabled)labels={};clearHistory();cancel();selected='';status.textContent='Address changed. Submit a new lookup.';});
-document.querySelector('#clear').addEventListener('click',()=>{forgetLabels();clearHistory();collect.checked=false;historyStatus.textContent='Session charts are off.';cancel();selected='';address.value='';auto.checked=false;status.textContent='Dashboard cleared.';});
+address.addEventListener('input',()=>{stopAlerts();if(!savedEnabled)labels={};clearHistory();cancel();selected='';status.textContent='Address changed. Submit a new lookup.';});
+document.querySelector('#clear').addEventListener('click',()=>{stopAlerts();forgetLabels();clearHistory();collect.checked=false;historyStatus.textContent='Session charts are off.';cancel();selected='';address.value='';auto.checked=false;status.textContent='Dashboard cleared.';});
 setInterval(()=>{if(auto.checked&&selected&&!document.hidden&&!controller&&!workers.contains(document.activeElement))lookup(selected);},60000);
 document.querySelector('#calculator-inputs').disabled=false;
 
@@ -136,3 +138,46 @@ window.addEventListener('storage',event=>{
  if(event.newValue===null){labels={};savedEnabled=false;saveLabels.checked=false;renderWorkers();renderSavedLabels();labelStatus.textContent='Saved labels were removed in another tab.';}
  else if(savedEnabled){try{labels=parseLabels(event.newValue);if(!workers.contains(document.activeElement))renderWorkers();renderSavedLabels();}catch{labels={};savedEnabled=false;saveLabels.checked=false;renderWorkers();renderSavedLabels();labelStatus.textContent='Saved labels changed to an unreadable format; local saving is off.';}}
 });
+
+let alertMonitor=null,desktopAlerts=false,alertEpoch=0;
+const alertState=document.querySelector('#alert-state'),notificationState=document.querySelector('#notification-state'),alertEvents=document.querySelector('#alert-events'),desktopButton=document.querySelector('#desktop-alerts');
+const notifications=new Set();
+document.querySelector('#alert-controls').disabled=false;
+function stopAlerts(){
+ alertEpoch++;alertMonitor=null;desktopAlerts=false;desktopButton.disabled=true;alertEvents.replaceChildren();
+ for(const notification of notifications)notification.close();notifications.clear();
+ alertState.textContent='Alerts are off.';notificationState.textContent='Browser notifications are off.';
+}
+document.querySelector('#stop-alerts').addEventListener('click',stopAlerts);
+document.querySelector('#alert-settings').addEventListener('submit',event=>{
+ event.preventDefault();stopAlerts();
+ if(!selected){alertState.textContent='Look up a mining address before enabling alerts.';return;}
+ try{alertMonitor=createAlertMonitor({hashDropPercent:Number(document.querySelector('#alert-drop').value),minimumWorkers:Number(document.querySelector('#alert-workers').value)});
+ desktopButton.disabled=false;alertState.textContent='Session alerts enabled. Waiting for new observations; no extra requests are made.';
+ }catch(error){alertState.textContent=error.message;}
+});
+desktopButton.addEventListener('click',async()=>{
+ if(!alertMonitor)return;
+ const epoch=alertEpoch;
+ if(!isSecureContext||!('Notification' in window)){notificationState.textContent='Browser notifications are unavailable here. On-page alerts remain enabled.';return;}
+ try{
+ const permission=await Notification.requestPermission();
+ if(epoch!==alertEpoch||!alertMonitor)return;
+ desktopAlerts=permission==='granted';notificationState.textContent=desktopAlerts?'Browser notifications enabled for this visit.':'Browser permission was not granted. On-page alerts remain enabled.';
+ }catch{if(epoch===alertEpoch)notificationState.textContent='Browser notifications could not be enabled. On-page alerts remain enabled.';}
+});
+function checkAlerts(data,epoch){
+ if(!alertMonitor||epoch!==alertEpoch)return;
+ const events=alertMonitor.sample(data,performance.now());
+ const baseline=alertMonitor.baseline(),settings=alertMonitor.settings();alertState.textContent=baseline===null?'Session alerts enabled; waiting for a positive hashrate baseline.':`Session alerts enabled. Baseline: ${format(baseline)} H/s; drop threshold ${settings.hashDropPercent}%; minimum workers ${settings.minimumWorkers}. Checks use subsequent lookups.`;
+ for(const event of events){
+ const item=document.createElement('li');item.textContent=`${new Date().toLocaleString()}: ${event.message}`;alertEvents.prepend(item);
+ while(alertEvents.children.length>20)alertEvents.lastElementChild.remove();
+ if(desktopAlerts){try{
+ if(Notification.permission!=='granted')throw new Error('permission unavailable');
+ const notification=new Notification('Monzero mining observation',{body:'A session monitoring condition was detected. Open your dashboard for details.',tag:'monzero-session-'+event.kind});notifications.add(notification);
+ notification.onclose=()=>notifications.delete(notification);
+ setTimeout(()=>{notification.close();notifications.delete(notification);},30000);
+ }catch{desktopAlerts=false;notificationState.textContent='Browser notification delivery is unavailable. Check the on-page alerts.';}}
+ }
+}

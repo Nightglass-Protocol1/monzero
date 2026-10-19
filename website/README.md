@@ -217,3 +217,26 @@ addresses, activity or raw worker names. Users can forget saved labels, switch
 saving off or clear the dashboard to remove them. Storage failures are reported
 without claiming deletion succeeded. Labels are notes, not proof of machine
 identity. Auto-refresh pauses while a worker-label control has focus.
+
+### Session mining alerts
+
+The pool dashboard has separate opt-ins for in-memory monitoring and browser
+notifications. Monitoring adds no requests and uses the existing manual/visible-tab
+refreshes. It evaluates a configurable decline from the first positive hashrate
+reading, minimum connected-worker count and repeated failed lookups. Unknown data
+is not zero; worker-count changes are not individual worker identification.
+Two qualifying observations must be 30–90 seconds apart; duplicates/old server
+timestamps are ignored, gaps and unknown metrics break consecutive counts, and
+healthy readings reset conditions even if they arrive too quickly to count up.
+Continuing conditions are latched; after recovery, ten-minute per-condition
+cooldowns apply. Baselines, alerts and notification opt-in clear on address change,
+Stop, Clear or page close. In-flight lookups from before enabling are excluded.
+
+Browser delivery follows the user-gesture and secure-context requirements in
+[MDN's Notifications API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API).
+Permission alone never enables delivery on a later visit. Generic notifications
+omit addresses, labels and amounts. Unsupported delivery leaves on-page alerts
+working. Permission and already displayed OS notifications may outlive the tab.
+This is not a background monitoring service: hidden tabs and focused worker-label
+controls pause automatic refresh. No email/Telegram integration or service worker
+was introduced. Payout and network-difficulty notifications remain outstanding.

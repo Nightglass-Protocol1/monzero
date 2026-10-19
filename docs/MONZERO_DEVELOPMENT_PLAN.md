@@ -703,3 +703,22 @@ test executable and current source QML with mocked replies. These do not validat
 the changed C++ binary or reproduce the Windows daemon disconnect. Builds and
 mining remain stopped; no release replacement. Details in the GUI worktree's
 `docs/WINDOWS_MINING_FOLLOWUP_20261019.md`. Original root cause remains open.
+
+### Session mining alerts — 2026-10-19
+
+Implemented opt-in monitoring of pool-reported hashrate drops, worker-count
+thresholds and repeated lookup failures, with separate browser-notification
+consent. No extra API requests or browser persistence; generic notification text
+contains no address, label or amount. Bounded memory history, consecutive-sample
+checks, per-condition deduplication and cooldowns apply. Pauses, unknown metrics,
+shared worker identities and lack of background monitoring are disclosed.
+
+Claude reviewed the code. Fixes cover rapid healthy readings, observations from
+requests begun before enabling, server-time gaps and notification-permission
+races. Eight model tests passed. Chromium at 390/1440px passed opt-in, thresholds,
+deduplication, no-extra-request counts, failed lookups, clear/address changes,
+permission denial and late permission resolution. Existing dashboard label/chart
+regressions also passed; mobile controls were visually inspected. Browser delivery
+was mocked for privacy and deterministic tests, not verified across real OS
+notification centers. No deployment, mining or builds. Payout/difficulty alerts
+and wider network/community work remain open.
