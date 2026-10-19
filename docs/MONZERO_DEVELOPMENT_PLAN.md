@@ -594,3 +594,29 @@ including pending-unit conversion and time-coordinate checks. Opt-out and addres
 edit browser checks were added during review (they were absent from Claude's
 initial snapshot). Historical pool data is still unavailable; session observations
 do not replace it.
+
+### Asset cache and hosting acceptance — 2026-10-19
+
+Read-only public probes returned HTTPS 200 on the homepage with CSP, HSTS,
+nosniff, frame, referrer and permissions headers. The live node endpoint rejected
+HEAD with 405/Allow POST/no-store and returned mainnet data on POST. It still uses
+the previous observation format: the new website/API changes are not deployed.
+These spot checks do not establish every production route or PHP dependency.
+
+Versioned the modified homepage classic script and shared mining stylesheet to
+avoid mixing new markup with seven-day cached files. Stable module URLs now
+require revalidation in both Apache and the Nginx example; benchmark catalog
+requests also revalidate. Isolated Apache 2.4.69 and Nginx 1.30.5 checks passed,
+including JavaScript module MIME, no-cache on 200/304, inherited security headers,
+checksum MIME, ordinary CSS caching and redirects. The Apache test separates
+static policy from HTTPS rewriting and does not claim production PHP/TLS coverage.
+Claude source review and full Release 1 regression are in progress.
+
+Claude review completed. Added explicit inherited-expiry suppression in Apache
+and a single revalidation header, tested under server-wide seven-day expiry.
+Catalog JSON now revalidates in both server configurations as well as its fetch
+request. Both server checks passed after those fixes, including conditional 304
+responses. The full interpreted website regression suite completed successfully.
+No new production deployment or native build was performed. Release acceptance
+still requires a concrete staged deployment/rollback, real pool integration and
+remaining feature/support decisions; local test success does not close those gates.

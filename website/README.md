@@ -175,3 +175,26 @@ The homepage therefore shows supply unavailable rather than reusing that value.
 Do not treat `circulating_supply` or `total_supply` as verified totals without
 checking the anchor against a trusted unrestricted node and accounting for reward
 penalties and the intended supply definition. GMP is required by the calculation.
+
+### Apache static policy regression check
+
+Run `python3 tests/website/check_apache.py` where Apache is available. Override
+`HTTPD_BINARY`, `HTTPD_MODULES` and `HTTPD_MIME_TYPES` for the local distribution.
+It starts a temporary loopback-only instance using the repository `.htaccess`.
+Static MIME, cache and security headers (including errors and conditional module
+responses) are tested without the rewrite module, then HTTPS redirects are
+checked in a separate run with rewrite enabled. It does not install configuration,
+exercise PHP, or prove TLS/proxy behavior on the production host.
+
+Stable `.mjs` entry points/imports must revalidate (`Cache-Control: no-cache`),
+including 304 responses. CSS and classic JS retain the existing seven-day cache;
+change their URL version whenever their contents change. Release 1 updates the
+homepage script and shared mining CSS versions. The benchmark catalog fetch also
+requests revalidation rather than silently retaining an old publication snapshot.
+
+Apache disables inherited expiry rules for modules and catalog JSON and clears
+an ordinary Cache-Control header before setting the revalidation policy. The
+regression fixture deliberately enables server-wide expiry to check that only
+one no-cache header survives. Production acceptance must verify `mod_headers`,
+`mod_mime`, appropriate `.htaccess` overrides and the resulting public headers;
+`IfModule` guards are compatibility measures, not proof that a host enforces them.

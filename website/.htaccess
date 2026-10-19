@@ -45,3 +45,15 @@ Options -Indexes
     Header set Content-Disposition "attachment"
   </IfModule>
 </FilesMatch>
+
+# Module filenames are stable across releases; revalidate rather than use
+# a heuristic browser cache lifetime for imports and entry modules.
+<FilesMatch "(?:\.mjs$|^catalog\.json$)">
+  <IfModule mod_expires.c>
+    ExpiresActive Off
+  </IfModule>
+  <IfModule mod_headers.c>
+    Header unset Cache-Control
+    Header always set Cache-Control "no-cache"
+  </IfModule>
+</FilesMatch>
