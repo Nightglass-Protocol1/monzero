@@ -17,7 +17,7 @@ def request(port,path,method='GET',headers=None):
 with tempfile.TemporaryDirectory(prefix='monzero-nginx-') as directory:
  tmp=Path(directory);site=tmp/'site';site.mkdir();webport=free_port();cgiport=free_port()
  while cgiport==webport:cgiport=free_port()
- for name in ['index.html','styles.css','site-nav.js','assets/logo.webp','checksum.sha256','module.mjs','mining/benchmarks/catalog.json','network/data/24h.json','.hidden.php']:
+ for name in ['index.html','styles.css','site-nav.js','assets/logo.webp','checksum.sha256','module.mjs','mining/benchmarks/catalog.json','network/data/24h.json','community/bounties/catalog.json','.hidden.php']:
   p=site/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('fixture')
  endpoint=site/'api/node-info/index.php';endpoint.parent.mkdir(parents=True)
  # Real adapter handles method rejection before any network request.
@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-nginx-') as directory:
     break
    except OSError:time.sleep(.1)
   else:raise RuntimeError('Preview servers did not start')
-  for path,expected in [('/',200),('/styles.css',200),('/site-nav.js',200),('/checksum.sha256',200),('/module.mjs',200),('/mining/benchmarks/catalog.json',200),('/network/data/24h.json',200),('/assets/logo.webp',200),('/missing',404),('/.hidden.php',403),('/api/node-info/',405),('/api/node-info/index.php',405)]:
+  for path,expected in [('/',200),('/styles.css',200),('/site-nav.js',200),('/checksum.sha256',200),('/module.mjs',200),('/mining/benchmarks/catalog.json',200),('/network/data/24h.json',200),('/community/bounties/catalog.json',200),('/assets/logo.webp',200),('/missing',404),('/.hidden.php',403),('/api/node-info/',405),('/api/node-info/index.php',405)]:
    status,headers,body=request(webport,path);assert status==expected,(path,status,body)
    for key in ['Content-Security-Policy','X-Content-Type-Options','X-Frame-Options','Referrer-Policy','Permissions-Policy','Strict-Transport-Security']:
     assert headers.get(key),(path,key)
@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='monzero-nginx-') as directory:
     assert 'no-cache' in headers['Cache-Control']
     cached,cache_headers,_=request(webport,path,headers={'If-None-Match':headers['ETag']})
     assert cached==304 and 'no-cache' in cache_headers['Cache-Control'] and cache_headers.get('Content-Security-Policy')
-   if path in ['/mining/benchmarks/catalog.json','/network/data/24h.json']:assert 'no-cache' in headers['Cache-Control']
+   if path in ['/mining/benchmarks/catalog.json','/network/data/24h.json','/community/bounties/catalog.json']:assert 'no-cache' in headers['Cache-Control']
    if path=='/checksum.sha256':assert headers['Content-Type'].startswith('text/plain')
    if path in ['/styles.css','/site-nav.js','/checksum.sha256']:assert 'max-age=604800' in headers['Cache-Control']
   class NoRedirect(urllib.request.HTTPRedirectHandler):

@@ -993,3 +993,106 @@ requests while hidden and resume while visible. This is deterministic browser
 logic coverage, not operating-system background lifecycle testing. All scenarios
 passed alongside the existing range, outage, timeout and alert checks. No product
 changes were needed. No builds, mining or production deployment ran.
+
+### Bounty board contract — implementation started, 2026-10-19
+
+Added the bounty catalog model with required category, task description,
+difficulty, acceptance criteria, submission/discussion instructions, maintainer,
+reviewer and status fields. Rewards use exact decimal-string XMZ atomic units.
+Funded/paid claims require dated funding evidence; completed tasks require
+completion evidence and paid tasks additionally require payment evidence.
+These checks validate record consistency, not independent proof of custody or
+payment. Maintainer review remains necessary and no automated payouts exist.
+
+The real catalog is empty: no tasks, rewards or funding claims were fabricated.
+Five focused test groups pass, including missing evidence, conflicting statuses,
+invalid dates/URLs, duplicate IDs and maximum atomic-amount precision. Tests are
+included in the website runner. Claude's contract review is pending. The board
+UI and authenticated moderation/publication workflow remain unfinished; no public
+roadmap completion claim is made. No builds, mining or deployment ran.
+
+### Bounty board interface — local draft, 2026-10-19
+
+Implemented the read-only board at `/community/bounties/` with category/status/
+funding filters, search, twenty-record pagination, exact XMZ reward display and
+separate funding/completion/payment evidence links. All record text uses DOM text
+nodes, not HTML interpolation. The bounded catalog fetch clears failed data and
+distinguishes unavailable from an empty catalog. The real catalog remains empty.
+
+Local desktop/mobile checks passed empty and outage states, navigation clearance,
+no horizontal page overflow and disabled controls without JavaScript. Populated
+fixture/filter/pagination browser acceptance is still pending. Claude's contract
+review completed without blockers but identified evidence-date/status and input
+coverage improvements to address before publishing reviewed listings. Authenticated
+moderation and public submissions remain unfinished. No deployment, builds or
+mining ran; no public-roadmap completion claim is made.
+
+### Bounty contract review fixes — 2026-10-19
+
+Added required completion/payment check dates, future-date rejection, exact field
+allowlists, surrogate/line-separator rejection and multiline prose support.
+Cancelled tasks cannot retain a funded label. Evidence dates are displayed beside
+the links. The actual empty catalog is validated by tests and fixture records
+are rejected in that production-catalog check. Seven test groups pass.
+
+Retained uint64 atomic precision rather than treating MONEY_SUPPLY as a proven
+lifetime cap: the core reward code also applies FINAL_SUBSIDY_PER_MINUTE. A URL
+or reviewer name remains evidence to inspect, not automated proof of funding or
+separate-person review. Arbitrary HTTPS evidence hosts are still allowed for
+reviewed records; no automated fetching occurs. Further status/URL branch tests,
+populated browser acceptance and authenticated moderation remain outstanding.
+No builds, mining or deployment ran.
+
+### Bounty populated-browser acceptance — 2026-10-19
+
+Added an isolated browser fixture suite without modifying the real empty catalog.
+At 390/1440px it verifies twenty-item pagination, category/status/funding/search
+filters, exact atomic rewards, evidence links, literal rendering of HTML-like
+text, empty/malformed/outage states and recovery, navigation clearance and
+no-JavaScript disabled controls. The suite passes and is in the website runner.
+
+Nginx now explicitly revalidates the bounty catalog; the existing Apache catalog
+rule already covers its filename. Nginx and Apache hosting checks pass. Claude's
+UI review is running. No reviewed tasks or funded rewards have been published;
+authenticated moderation and submission workflows remain unfinished. No native
+builds, mining or production deployment ran.
+
+### Bounty board additional validation — 2026-10-19
+
+Eight contract test groups now pass, including remaining conflicting status/
+evidence combinations, invalid discussion links, currency/date mismatches and
+catalog bounds. The community hub links to the local read-only board while
+explicitly stating that its catalog is empty and submissions are closed. Mobile
+visual inspection confirmed usable filters and clear empty/funding wording.
+The board has been added to shared navigation acceptance; that run and Claude's
+UI review are still in progress. No deployment, native builds or mining ran.
+
+### Bounty UI review fixes — 2026-10-19
+
+Claude's UI review completed. Fixed long-token mobile overflow and pagination
+focus: the first newly revealed task receives focus. Refresh now uses aria-disabled
+with the existing busy guard so the focused control is not removed from keyboard
+navigation. Browser fixtures include long titles/criteria and pagination focus;
+checks pass at both widths. All fifteen shared-navigation routes also passed.
+
+Future catalog dates now produce a specific clock/catalog-date explanation
+rather than an outage claim; strict date validation remains. Evidence checked-at
+dates are review dates, not payment/completion event dates, so a chronological
+ordering rule was not inferred from them. Eight contract groups pass. Additional
+paid/completed rendering and transport/focus edge coverage remain pending.
+No production deployment, builds or mining ran.
+
+### Read-only bounty board verification checkpoint — 2026-10-19
+
+Completed the remaining focused browser cases: completed/paid fixture listings
+render distinct dated evidence links; oversized responses and timed-out requests
+clear listings; refresh retains keyboard focus while pending and after timeout;
+a subsequent successful refresh recovers. Desktop and mobile runs pass. The
+fixtures remain isolated from the real empty catalog.
+
+The read-only board, contract and tests are ready as a local implementation
+checkpoint. The public roadmap explicitly distinguishes this from authenticated
+moderation, submissions and payout operations, which are not enabled. Eight
+contract groups, populated browser acceptance, fifteen-page navigation and
+Apache/Nginx hosting checks have passed. Claude's contract and UI reviews were
+reconciled as recorded above. No production deployment, native builds or mining.
