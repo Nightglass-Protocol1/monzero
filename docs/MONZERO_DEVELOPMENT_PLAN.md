@@ -768,3 +768,30 @@ stats page rendered this live-source response without JavaScript errors. This
 is not independent consensus validation or a production deployment. Upstream
 HTTP trust, archival storage and broader rate controls remain open. No local
 mining or builds ran.
+
+### Persistent network observations foundation — 2026-10-19
+
+Added a Python/SQLite collector because the current PHP runtime has no PDO
+database drivers. It retains one dated tip observation per minute from the v2
+statistics adapter, with strict shape/time checks, fixed sources, bounded child
+transport and no source mixing. This is sampled observation history, not a
+canonical chain index. It does not yet collect emission, supply, node versions,
+node counts or block-interval distributions.
+
+Private storage (0700 directory/0600 database), immediate migration/insert
+transactions, consistent export snapshots and atomic per-file JSON publishing
+are implemented. All six requested ranges export at most 721 buckets; gaps stay
+empty. Exact difficulty extrema, approximate per-observation means, sample/sync
+counts and tip-age bounds retain important data limitations. Export-only mode
+requires an existing database and opens it read-only, with no source request.
+
+Claude reviewed the foundation and concurrency follow-up. Eighteen tests passed
+covering initialization/reopen, backup round trip, overlapping collectors,
+source/clock conflicts, minute cadence, malformed inputs, range bounds, exact
+extrema, permission/symlink/schema rejection, atomic export, wrong-path protection
+and bounded HTTP errors/redirects/oversize/timeout. Two real mainnet observations
+were collected through the local preview and exported to
+`core/build/network-history-public-20261019`. No continuous collector or production
+deployment was enabled. The `/network/` consumer, staleness presentation and
+additional analytics metrics remain next work. Operational notes are in
+`utils/website/NETWORK_HISTORY.md`. No builds or mining ran.

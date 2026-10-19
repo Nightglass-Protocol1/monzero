@@ -273,3 +273,12 @@ a five-second cooldown; success caches for 60 seconds and downstream max-age use
 remaining lifetime. Corrupt, future-dated or malformed cached observations are
 rejected. Source errors are not echoed or logged verbatim. Historical archival
 storage and broader edge rate controls are still separate remaining work.
+
+### Historical network observation collector
+
+The interpreted collector and private SQLite/archive export design are documented
+in [`utils/website/NETWORK_HISTORY.md`](../utils/website/NETWORK_HISTORY.md). It
+exports bounded public summaries for 24h/7d/30d/90d/1y/all ranges, while retaining
+the database outside the website. The `/network/` consumer and production job
+configuration are not yet implemented/deployed. This is tip-observation history,
+not a canonical block index; missing metrics are not fabricated.
