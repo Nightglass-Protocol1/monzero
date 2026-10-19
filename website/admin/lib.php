@@ -3,6 +3,7 @@ declare(strict_types=1);
 // Invite-only administration: accounts, delegated permissions, sessions, audit log.
 // The database lives outside the document root. No secrets are hardcoded here.
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
+require_once dirname(__DIR__) . '/lib/auth.php';
 
 const ADMIN_PERMISSIONS = [
     'admins.invite' => 'Invite admins (invites need owner approval)',
@@ -20,8 +21,7 @@ const ADMIN_PERMISSIONS = [
 const ADMIN_TOKEN_TTL = 172800;        // setup and invite links: 48 hours
 const ADMIN_SESSION_IDLE = 1800;       // 30 minutes
 const ADMIN_SESSION_MAX = 28800;       // 8 hours
-const ADMIN_PASSWORD_MIN = 12;
-const ADMIN_PASSWORD_MAX = 256;
+const ADMIN_PASSWORD_MIN = AUTH_PASSWORD_MIN;
 
 function adminDbPath(): string {
     $configured = getenv('MONZERO_ADMIN_DB');
@@ -105,11 +105,7 @@ function adminAudit(?int $actor, string $action, array $detail = []): void {
         ->execute([time(), $actor, $action, json_encode($detail, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
 }
 
-function adminEmail(mixed $value): ?string {
-    if (!is_string($value)) return null;
-    $email = strtolower(trim($value));
-    return strlen($email) <= 254 && filter_var($email, FILTER_VALIDATE_EMAIL) && !preg_match('/[\r\n]/', $email) ? $email : null;
-}
+function adminEmail(mixed $value): ?string { return authEmail($value); }
 
 function adminPermissions(array $user): array {
     if ((int)$user['is_owner'] === 1) return array_keys(ADMIN_PERMISSIONS);
@@ -130,21 +126,12 @@ function adminGrantable(array $grantor, array $requested): array {
     return array_values(array_intersect(array_keys(ADMIN_PERMISSIONS), $requested));
 }
 
-function adminHashPassword(string $password): string {
-    return password_hash($password, defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT);
-}
+function adminHashPassword(string $password): string { return authHashPassword($password); }
 
-function adminPasswordProblem(string $password, string $confirm, string $email): ?string {
-    if ($password !== $confirm) return 'The passwords do not match.';
-    $length = mb_strlen($password);
-    if ($length < ADMIN_PASSWORD_MIN) return 'Use at least ' . ADMIN_PASSWORD_MIN . ' characters.';
-    if ($length > ADMIN_PASSWORD_MAX) return 'That password is too long.';
-    if (stripos($password, explode('@', $email)[0]) !== false || preg_match('/\A(.)\1+\z/u', $password)) return 'Choose a password that does not contain your email name or repeat one character.';
-    return null;
-}
+function adminPasswordProblem(string $password, string $confirm, string $email): ?string { return authPasswordProblem($password, $confirm, $email); }
 
-function adminRandomToken(): string { return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '='); }
-function adminTokenHash(string $token): string { return hash('sha256', $token); }
+function adminRandomToken(): string { return authRandomToken(); }
+function adminTokenHash(string $token): string { return authTokenHash($token); }
 
 // Create a setup or invite link token; returns the plain token (never stored).
 function adminIssueToken(int $userId, string $purpose, string $state, ?int $createdBy): string {
@@ -164,14 +151,7 @@ function adminTokenUser(string $token): ?array {
     return $stmt->fetch() ?: null;
 }
 
-function adminMail(string $to, string $subject, string $body): bool {
-    $log = getenv('MONZERO_ADMIN_MAIL_LOG');
-    if (is_string($log) && $log !== '') {
-        return file_put_contents($log, json_encode(['to' => $to, 'subject' => $subject, 'body' => $body]) . "\n", FILE_APPEND | LOCK_EX) !== false;
-    }
-    $headers = "From: Monzero website <noreply@monzero.org>\r\nReply-To: security@monzero.org\r\nContent-Type: text/plain; charset=utf-8\r\nAuto-Submitted: auto-generated";
-    return mail($to, $subject, $body, $headers, '-fnoreply@monzero.org');
-}
+function adminMail(string $to, string $subject, string $body): bool { return authMail($to, $subject, $body, 'MONZERO_ADMIN_MAIL_LOG'); }
 
 function adminSendLink(array $user, string $token, string $purpose): bool {
     $link = adminBaseUrl() . '/admin/?setup=' . $token;
@@ -220,9 +200,7 @@ function adminRecordFailure(string $email): void {
     $stmt->execute([adminClientKey(), time()]);
 }
 
-function adminSecureRequest(): bool {
-    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? '') === '443';
-}
+function adminSecureRequest(): bool { return authSecureRequest(); }
 
 function adminCookieName(): string { return adminSecureRequest() ? '__Host-mzadmin' : 'mzadmin'; }
 
@@ -271,44 +249,16 @@ function adminDeny(string $message, int $status = 403): never {
     exit;
 }
 
-function adminH(mixed $value): string { return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+function adminH(mixed $value): string { return authH($value); }
 
 // --- TOTP (RFC 6238, SHA-1, 30 s, 6 digits) ---
-function adminBase32Encode(string $bytes): string {
-    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    $bits = '';
-    foreach (str_split($bytes) as $c) $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT);
-    $out = '';
-    foreach (str_split($bits, 5) as $chunk) $out .= $alphabet[bindec(str_pad($chunk, 5, '0'))];
-    return $out;
-}
+function adminBase32Encode(string $bytes): string { return authBase32Encode($bytes); }
 
-function adminBase32Decode(string $text): string {
-    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    $bits = '';
-    foreach (str_split(strtoupper($text)) as $c) {
-        $i = strpos($alphabet, $c);
-        if ($i === false) return '';
-        $bits .= str_pad(decbin($i), 5, '0', STR_PAD_LEFT);
-    }
-    $out = '';
-    foreach (str_split($bits, 8) as $byte) if (strlen($byte) === 8) $out .= chr(bindec($byte));
-    return $out;
-}
+function adminBase32Decode(string $text): string { return authBase32Decode($text); }
 
-function adminTotp(string $secret, int $counter): string {
-    $hash = hash_hmac('sha1', pack('J', $counter), adminBase32Decode($secret), true);
-    $offset = ord($hash[19]) & 0x0f;
-    $value = ((ord($hash[$offset]) & 0x7f) << 24) | (ord($hash[$offset + 1]) << 16) | (ord($hash[$offset + 2]) << 8) | ord($hash[$offset + 3]);
-    return str_pad((string)($value % 1000000), 6, '0', STR_PAD_LEFT);
-}
+function adminTotp(string $secret, int $counter): string { return authTotp($secret, $counter); }
 
-function adminTotpValid(string $secret, string $code): bool {
-    if (!preg_match('/\A\d{6}\z/', $code)) return false;
-    $counter = intdiv(time(), 30);
-    foreach ([-1, 0, 1] as $drift) if (hash_equals(adminTotp($secret, $counter + $drift), $code)) return true;
-    return false;
-}
+function adminTotpValid(string $secret, string $code): bool { return authTotpValid($secret, $code); }
 
 // --- Page shell ---
 function adminPage(string $title, string $body, ?array $user): void {

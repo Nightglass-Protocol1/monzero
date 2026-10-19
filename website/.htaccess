@@ -13,6 +13,10 @@ Options -Indexes
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "DENY"
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://chainquiry.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  # The faucet loads Cloudflare Turnstile (bot check): allow only its script and frame there.
+  <If "%{REQUEST_URI} =~ m#^/faucet(/|$)#">
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self'; img-src 'self' data: https://chainquiry.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  </If>
   Header always set Permissions-Policy "camera=(), geolocation=(), microphone=()"
   Header always set Strict-Transport-Security "max-age=86400"
 </IfModule>

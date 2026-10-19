@@ -57,8 +57,10 @@ python3 tests/website/test_api_v1.py
 node --check website/mining/leaderboard/leaderboard.mjs
 node --test tests/website/leaderboard.test.mjs
 python3 tests/website/check_leaderboard.py
-php -l website/api/faucet/index.php
-python3 tests/website/test_faucet_status.py
 php -l website/admin/lib.php; php -l website/admin/index.php; php -l website/admin/bootstrap.php
 # Admin storage needs pdo_sqlite (present on the production host); say so loudly when missing.
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_admin.py; else echo "SKIPPED test_admin.py: this PHP lacks pdo_sqlite (run with PHP 8.3 + pdo_sqlite)"; fi
+for f in website/lib/auth.php website/lib/xmz-address.php website/faucet/lib.php website/faucet/index.php website/api/faucet/index.php website/api/faucet/worker/index.php; do php -l "$f"; done
+python3 -m py_compile utils/faucet/faucet_worker.py
+# The faucet needs pdo_sqlite and gmp (both on the production host).
+if php -m | grep -qx pdo_sqlite && php -m | grep -qx gmp; then python3 tests/website/test_faucet.py; else echo "SKIPPED test_faucet.py: this PHP lacks pdo_sqlite or gmp (run with PHP 8.3 + pdo_sqlite + gmp)"; fi
