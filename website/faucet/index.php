@@ -34,7 +34,7 @@ function page(string $title, string $body, ?array $member = null, bool $turnstil
 
 function notice(string $text, bool $error = false): string { return '<p class="notice' . ($error ? ' error" role="alert"' : '" role="status"') . '>' . authH($text) . '</p>'; }
 function field(string $name): string { $v = $_POST[$name] ?? ''; return is_string($v) ? $v : ''; }
-function turnstileWidget(): string { return '<div class="cf-turnstile" data-sitekey="' . authH(faucetConfig()['turnstile_site_key']) . '" data-theme="dark"></div>'; }
+function turnstileWidget(string $action): string { return '<div class="cf-turnstile" data-sitekey="' . authH(faucetConfig()['turnstile_site_key']) . '" data-action="' . authH($action) . '" data-theme="dark"></div>'; }
 function csrf(array $member): string { return '<input type="hidden" name="csrf" value="' . authH($member['csrf']) . '">'; }
 function go(string $query = ''): never { header('Location: /faucet/' . ($query ? '?' . $query : ''), true, 303); exit; }
 
@@ -55,7 +55,7 @@ function loginForm(string $error = '', int $status = 200): void {
             . '<label>Email<input type="email" name="email" autocomplete="username" required></label>'
             . '<label>Password<input type="password" name="password" autocomplete="current-password" required></label>'
             . '<label>Authenticator code<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Leave empty if not set up yet"></label>'
-            . turnstileWidget() . '<button type="submit">Sign in</button></form>'
+            . turnstileWidget('login') . '<button type="submit">Sign in</button></form>'
             . '<p><a href="/faucet/?view=signup">Create an account</a> · <a href="/faucet/?view=forgot">Forgot password</a> · <a href="/faucet/?view=resend">Resend confirmation email</a></p></section>'
             : notice('Accounts are not open yet. Check back soon.')) . rules(), null, $open);
 }
@@ -76,7 +76,7 @@ if ($method === 'POST') {
     $public = ['signup', 'login', 'resend', 'forgot', 'reset'];
     if (in_array($do, $public, true)) {
         if (!faucetAccountsOpen()) { loginForm('Accounts are not open yet.', 503); exit; }
-        if ($do !== 'reset' && !faucetTurnstileOk($_POST['cf-turnstile-response'] ?? null)) {
+        if ($do !== 'reset' && !faucetTurnstileOk($_POST['cf-turnstile-response'] ?? null, $do)) {
             if ($do === 'signup') { http_response_code(400); signupForm('The bot check did not pass. Please try again.'); exit; }
             loginForm('The bot check did not pass. Please try again.', 400); exit;
         }
@@ -180,7 +180,7 @@ if ($method === 'POST') {
             faucetEvent($id, 'address.changed', ['kind' => $parsed['kind']]);
             go('msg=address');
         case 'claim':
-            if (!faucetTurnstileOk($_POST['cf-turnstile-response'] ?? null)) { http_response_code(400); dashboard($member, 'The bot check did not pass. Please try again.'); exit; }
+            if (!faucetTurnstileOk($_POST['cf-turnstile-response'] ?? null, 'claim')) { http_response_code(400); dashboard($member, 'The bot check did not pass. Please try again.'); exit; }
             // Serialise claims so concurrent requests cannot both pass the limits.
             $db->exec('BEGIN IMMEDIATE');
             $now = time();
@@ -201,14 +201,14 @@ function signupForm(string $error = ''): void {
         ? '<form method="post" action="/faucet/?do=signup" class="stack"><label>Email<input type="email" name="email" autocomplete="email" required></label>'
             . '<label>Password (at least ' . AUTH_PASSWORD_MIN . ' characters)<input type="password" name="password" autocomplete="new-password" minlength="' . AUTH_PASSWORD_MIN . '" required></label>'
             . '<label>Repeat password<input type="password" name="confirm" autocomplete="new-password" required></label>'
-            . turnstileWidget() . '<button type="submit">Create account</button></form>'
+            . turnstileWidget('signup') . '<button type="submit">Create account</button></form>'
             . '<p>After confirming your email you will set up an authenticator app (such as Aegis, 2FAS, Google Authenticator or 1Password). It is required to claim.</p><p><a href="/faucet/">Back to sign in</a></p>'
         : notice('Accounts are not open yet.')), null, faucetAccountsOpen());
 }
 
 function emailForm(string $title, string $action, string $intro): void {
     page($title, '<p>' . authH($intro) . '</p><form method="post" action="/faucet/?do=' . $action . '" class="stack"><label>Email<input type="email" name="email" autocomplete="email" required></label>'
-        . turnstileWidget() . '<button type="submit">Send</button></form><p><a href="/faucet/">Back to sign in</a></p>', null, true);
+        . turnstileWidget($action) . '<button type="submit">Send</button></form><p><a href="/faucet/">Back to sign in</a></p>', null, true);
 }
 
 function resetForm(string $token, array $target, string $error = ''): void {
@@ -234,7 +234,7 @@ function dashboard(array $member, string $error = ''): void {
     $db = faucetDb();
     $flash = isset($_GET['msg'], FAUCET_MESSAGES[$_GET['msg']]) ? notice(FAUCET_MESSAGES[$_GET['msg']]) : '';
     $block = faucetClaimBlock($member, time());
-    $claim = $block ? notice($block) : '<form method="post" action="/faucet/?do=claim" class="stack">' . csrf($member) . turnstileWidget()
+    $claim = $block ? notice($block) : '<form method="post" action="/faucet/?do=claim" class="stack">' . csrf($member) . turnstileWidget('claim')
         . '<button type="submit">Claim ' . authH(faucetFormatXmz(faucetConfig()['amount_atomic'])) . ' XMZ</button></form>';
     $stmt = $db->prepare('SELECT * FROM claims WHERE member_id = ? ORDER BY id DESC LIMIT 20');
     $stmt->execute([$member['id']]);

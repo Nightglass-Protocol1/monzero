@@ -1,7 +1,7 @@
 """Faucet end to end: accounts (email, password, mandatory TOTP), Turnstile, address rules,
 24-hour/address/network/budget limits, the signed worker interface and the real payout worker
 against a fake wallet RPC. Needs PHP with pdo_sqlite and gmp (production has both)."""
-import base64,hashlib,hmac,http.server,json,os,re,secrets,socket,sqlite3,struct,subprocess,sys,tempfile,threading,time
+import urllib.parse,base64,hashlib,hmac,http.server,json,os,re,secrets,socket,sqlite3,struct,subprocess,sys,tempfile,threading,time
 from pathlib import Path
 import requests
 root=Path(__file__).resolve().parents[2]
@@ -21,10 +21,16 @@ def totp(secret,offset=0):
 def serve(handler):
  s=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler);threading.Thread(target=s.serve_forever,daemon=True).start();return s
 
+seen=set()
 class Turnstile(http.server.BaseHTTPRequestHandler):
  def do_POST(self):
   form=dict(x.split('=',1) for x in self.rfile.read(int(self.headers['Content-Length'])).decode().split('&'))
-  body=json.dumps({'success':form.get('response')=='good' and form.get('secret')=='test-secret'}).encode()
+  token=urllib.parse.unquote(form.get('response',''));ok=token.startswith('good') and form.get('secret')=='test-secret'
+  action=token.split(':',1)[1] if ':' in token else ''
+  host='evil.test' if token.startswith('goodhost') else 'faucet.test'
+  if token in seen:ok=False
+  seen.add(token)
+  body=json.dumps({'success':ok,'action':action,'hostname':host}).encode()
   self.send_response(200);self.end_headers();self.wfile.write(body)
  def log_message(self,*a):pass
 
@@ -48,8 +54,9 @@ with tempfile.TemporaryDirectory() as tmp:
  base=f'http://127.0.0.1:{port}';secret_hex=secrets.token_hex(32)
  def config(**over):
   c=dict(enabled=True,amount_atomic=AMOUNT,daily_cap_atomic=str(3*int(AMOUNT)),cooldown_seconds=86400,per_client_daily=5,signups_per_client_daily=10,
-   turnstile_site_key='test-site',turnstile_secret='test-secret',turnstile_verify_url=f'http://127.0.0.1:{turnstile.server_port}/',worker_secret=secret_hex,base_url=base);c.update(over)
+   turnstile_site_key='test-site',turnstile_secret='test-secret',turnstile_verify_url=f'http://127.0.0.1:{turnstile.server_port}/',turnstile_hostnames=['faucet.test'],worker_secret=secret_hex,base_url=base);c.update(over)
   def php(v):
+   if isinstance(v,list):return '['+','.join(php(x) for x in v)+']'
    if isinstance(v,bool):return 'true' if v else 'false'
    if isinstance(v,int):return str(v)
    return "'"+str(v).replace("\\","\\\\").replace("'","\\'")+"'"
@@ -58,7 +65,10 @@ with tempfile.TemporaryDirectory() as tmp:
  env={**os.environ,'MONZERO_FAUCET_DB':str(db),'MONZERO_FAUCET_CONFIG':str(cfg),'MONZERO_FAUCET_MAIL_LOG':str(mail)}
  server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(root/'website')],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  def mails(to):return [json.loads(l) for l in mail.read_text().splitlines() if json.loads(l)['to']==to] if mail.exists() else []
- def post(s,do,data,**kw):return s.post(base+f'/faucet/?do={do}',data=data,allow_redirects=False,**kw)
+ def post(s,do,data,**kw):
+  # 'good' means: a fresh single-use token issued for this form's action on our hostname.
+  if data.get('cf-turnstile-response')=='good':data={**data,'cf-turnstile-response':f'good{secrets.token_hex(6)}:{do}'}
+  return s.post(base+f'/faucet/?do={do}',data=data,allow_redirects=False,**kw)
  def csrf(s):return re.search(r'name="csrf" value="([^"]+)"',s.get(base+'/faucet/').text).group(1)
  def member(email,address,offset=0):
   s=requests.Session()
@@ -108,6 +118,11 @@ with tempfile.TemporaryDirectory() as tmp:
   # CSRF and origin protection.
   assert post(a,'claim',{'cf-turnstile-response':'good'}).status_code==403
   assert post(a,'claim',{'csrf':csrf(a),'cf-turnstile-response':'good'},headers={'Origin':'https://evil.example'}).status_code==403
+  # Turnstile tokens must match the form, our hostname, and be fresh.
+  assert post(a,'claim',{'csrf':csrf(a),'cf-turnstile-response':f'good{secrets.token_hex(6)}:login'}).status_code==400
+  assert post(a,'claim',{'csrf':csrf(a),'cf-turnstile-response':f'goodhost{secrets.token_hex(6)}:claim'}).status_code==400
+  used=f'good{secrets.token_hex(6)}:login';assert post(requests.Session(),'login',{'email':'alice@example.org','password':PW,'code':totp(sec,1),'cf-turnstile-response':used}).status_code==303
+  assert post(requests.Session(),'login',{'email':'alice@example.org','password':PW,'cf-turnstile-response':used}).status_code==400
   # Claim: bot check, then once per 24 hours.
   assert post(a,'claim',{'csrf':csrf(a),'cf-turnstile-response':'bad'}).status_code==400
   assert post(a,'claim',{'csrf':csrf(a),'cf-turnstile-response':'good'}).status_code==303

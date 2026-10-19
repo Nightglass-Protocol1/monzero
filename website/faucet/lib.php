@@ -23,6 +23,7 @@ const FAUCET_DEFAULTS = [
     'turnstile_site_key' => '',
     'turnstile_secret' => '',
     'turnstile_verify_url' => 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    'turnstile_hostnames' => ['monzero.org', 'www.monzero.org'],  // pages the token must come from
     'worker_secret' => '',
     'trusted_proxies' => [],                // e.g. Cloudflare ranges, only if the site is proxied
     'base_url' => 'https://monzero.org',
@@ -188,16 +189,22 @@ function faucetLimitCount(string $key, int $window): int {
 }
 function faucetLimitHit(string $key): void { faucetDb()->prepare('INSERT INTO limits (key, at) VALUES (?, ?)')->execute([$key, time()]); }
 
-// Server-side Turnstile check. Any failure, timeout or malformed reply counts as failed.
-function faucetTurnstileOk(mixed $token): bool {
+// Server-side Turnstile check (Cloudflare siteverify). The token must succeed, have been issued
+// for this form's action and on one of our hostnames; tokens are single-use at Cloudflare.
+const FAUCET_TURNSTILE_ACTIONS = ['signup', 'login', 'resend', 'forgot', 'claim'];
+
+function faucetTurnstileOk(mixed $token, string $action): bool {
     $config = faucetConfig();
-    if (!is_string($token) || $token === '' || strlen($token) > 2048 || $config['turnstile_secret'] === '') return false;
+    if (!in_array($action, FAUCET_TURNSTILE_ACTIONS, true) || !is_string($token) || $token === '' || strlen($token) > 2048 || $config['turnstile_secret'] === '') return false;
     $body = http_build_query(['secret' => $config['turnstile_secret'], 'response' => $token, 'remoteip' => faucetClientIp()]);
     $context = stream_context_create(['http' => ['method' => 'POST', 'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-        'content' => $body, 'timeout' => 5, 'ignore_errors' => true, 'follow_location' => 0]]);
+        'content' => $body, 'timeout' => 10, 'ignore_errors' => true, 'follow_location' => 0]]);
     $reply = @file_get_contents($config['turnstile_verify_url'], false, $context, 0, 65536);
-    $data = is_string($reply) ? json_decode($reply, true) : null;
-    return is_array($data) && ($data['success'] ?? null) === true;
+    $status = isset($http_response_header[0]) && preg_match('#\AHTTP/\S+\s+200\b#', $http_response_header[0]);
+    $data = $status && is_string($reply) ? json_decode($reply, true) : null;
+    $hostnames = is_array($config['turnstile_hostnames']) ? $config['turnstile_hostnames'] : [];
+    return is_array($data) && ($data['success'] ?? null) === true && ($data['action'] ?? null) === $action
+        && is_string($data['hostname'] ?? null) && in_array(strtolower($data['hostname']), $hostnames, true);
 }
 
 function faucetCookieName(): string { return authSecureRequest() ? '__Host-mzfaucet' : 'mzfaucet'; }
