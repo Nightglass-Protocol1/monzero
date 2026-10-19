@@ -437,3 +437,30 @@ mining-page navigation without a toggle. Scoped mining-header styles now keep
 those links visible at every width, preserving the owner's preferred existing
 navigation elsewhere. All 36 navigation checks passed, including mining-link
 visibility at 390px with and without JavaScript. No production deployment.
+
+### Benchmark contributor validation — 2026-10-19
+
+Added a downloadable Draft 2020-12 JSON Schema for editor assistance and a Node
+CLI that invokes the same authoritative catalog validator as the browser. The
+schema documents cross-field checks that require the runtime validator. Updated
+HTML and Markdown submission guidance with the commands and review boundaries.
+A scoped GitHub Actions workflow runs catalog validation and its regression tests
+on relevant pushes and pull requests; it has read-only repository permissions.
+The workflow has not yet run on GitHub and does not publish submissions.
+
+Verified locally: schema validity and empty production catalog; six runtime
+regression tests; CLI failure for invalid dates and missing files; benchmark
+browser checks at 1440px and 390px. Catalog remains empty pending sourced,
+reviewed measurements. Human evidence and duplicate-measurement review remain
+required. Claude source review is pending in
+`core/build/claude-benchmark-publication-review-20261019.txt` outside this worktree.
+
+Claude review completed. Fixed raw URL normalization/length/control-character
+gaps, equivalent evidence-URL comparisons, invisible descriptive text and
+non-finite efficiency calculations. The CLI rejects future catalog dates;
+checkout no longer persists its credential. Eight runtime regression tests pass,
+including the new cases. The full website suite passed before these focused
+validator fixes; subsequent benchmark browser checks cover the changed module.
+Branch-protection/reviewer configuration is not established by a local workflow;
+no invented maintainer allowlist or automatic verification claims were added.
+Numeric plausibility and independence of evidence remain human review duties.

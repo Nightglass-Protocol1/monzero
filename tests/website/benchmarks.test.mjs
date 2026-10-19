@@ -15,3 +15,17 @@ test('strict publication fields and consistent power evidence',()=>{
  assert.throws(()=>validateCatalog(wrap([{...a,status:'verified',verified_by:'Reviewer',verification_url:a.source_url}])));
  validateCatalog(wrap([{...a,power_watts:null,power_basis:'unknown'}]));
 });
+
+test('reject ambiguous evidence URLs and invisible descriptive text',()=>{
+ for(const source_url of ['https://@example.test','https:example.test','https://example.test/\npath','https://example.test/\u202eimage','https://example.test/\\path','https://example.test/'+ 'a'.repeat(2048)])
+  assert.throws(()=>validateCatalog(wrap([{...a,source_url}])));
+ for(const model of ['\u200b','AMD\u200b','\ud800','CPU\u2028model'])
+  assert.throws(()=>validateCatalog(wrap([{...a,model}])));
+ for(const verification_url of [a.source_url+'#',a.source_url+'?',a.source_url+'#evidence','https://EXAMPLE.test:443/a'])
+  assert.throws(()=>validateCatalog(wrap([{...a,status:'verified',verified_by:'Reviewer',verification_url}])));
+});
+test('overflowing calculated efficiency is unavailable rather than ranked first',()=>{
+ const extreme={...a,id:'fixture-extreme',hashrate_hps:1e308,power_watts:1e-10};
+ assert.equal(efficiency(extreme),null);
+ assert.equal(selectRecords([extreme,a],{sort:'efficiency'})[0].id,a.id);
+});

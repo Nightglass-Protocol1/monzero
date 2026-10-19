@@ -16,6 +16,7 @@ node --check website/mining/dashboard/dashboard.mjs
 python3 tests/website/check_pool_dashboard.py
 
 node --check website/mining/benchmarks/benchmarks.mjs
+node utils/website/validate_benchmarks.mjs
 node --test tests/website/benchmarks.test.mjs
 python3 tests/website/check_benchmarks.py
 

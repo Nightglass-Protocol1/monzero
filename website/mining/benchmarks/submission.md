@@ -30,3 +30,27 @@ Unknown power requires null watts; known power requires wall or cpu-package.
 No extra fields are permitted. Reproduction evidence must use a different URL
 from the original source. Reviewer judgement is still required to establish that
 the report is an independent measurement; schema validity does not prove that.
+
+## Validate before submitting
+
+Run `node utils/website/validate_benchmarks.mjs` from the repository root.
+To check a separate candidate file, append its path. Then run
+`node --test tests/website/benchmarks.test.mjs`. No build or mining is required.
+
+`catalog.schema.json` provides a JSON Schema for editor assistance. The Node
+validator is authoritative for cross-field rules, unique IDs and calendar dates;
+JSON Schema alone cannot enforce all of these. The pull-request workflow runs
+the same runtime validator and regression tests. Passing validation does not
+verify the measurement or authorize publication; evidence and reproduction
+claims still need maintainer review.
+
+Evidence URLs must use explicit `https://`, contain no credentials, backslashes,
+whitespace or invisible control/format characters, and be at most 2048 characters.
+Normalized URLs differing only in hostname case, default port or fragment do
+not count as separate evidence. Descriptive text must contain no Unicode
+control, format, surrogate, line-separator or paragraph-separator characters.
+The CLI rejects catalog dates later than the current UTC date.
+
+The workflow is a validation signal, not an enforced publication gate: repository
+maintainers must configure their branch protection and review policy. Do not
+mark this path-filtered workflow as required for every unrelated pull request.
