@@ -195,3 +195,41 @@ Do not report placeholder/unavailable integrations as completed features.
 - 2026-10-19: isolated worktree created; route/source inventory and initial
   phased plan recorded. Claude architecture review running. No site changes
   deployed; no mining or builds restarted.
+
+
+### Claude review reconciled
+
+Claude completed its source-only review (`core/build/claude-website-analysis-20261019.txt`).
+Confirmed the no-build static/PHP architecture and separate profile SQLite service.
+Additional findings: `.htaccess` enforces same-origin scripts/connections; Nginx
+example lacks index.php routing parity and bypasses readiness fields on one
+node-info route. Existing menus differ. These require regression checks, not a
+blanket rewrite. Preserve CSP and avoid inline/CDN scripts.
+
+Release 1 benchmarks can use reviewed JSON plus GitHub PR submissions, avoiding
+an unauthenticated write endpoint or premature admin/database dependency.
+Telegram is explicitly supplied by the owner; no further confirmation is needed.
+Pool API support and actual production PHP extensions remain to be verified.
+Do not adopt suggested guessed pool fees, address-prefix-only validation, or
+unverified market assumptions as verified facts. The calculator leaves market
+outputs unavailable and pool fee editable, initially zero and clearly labelled.
+
+Calculator implementation has started as an isolated additive route, reusing the
+existing allowlisted explorer endpoint. It refuses wrong-network, unsynchronized,
+old or malformed observations; uses the observed reward including fees; expires
+observations/results after five minutes; keeps inputs in the current tab only.
+Ten pure calculation tests pass, and both module syntax checks pass. Browser,
+upstream integration and complete Release 1 acceptance are still pending.
+No deployment, mining or build was performed.
+
+
+- Calculator verification follow-up: Chromium checks passed at 1440px and 390px
+  with explicitly synthetic test fixtures, no horizontal overflow or JS errors,
+  correct zero-hashrate behavior, invalidation after input changes and clearing
+  on upstream failure. Visual inspection found and fixed inherited header overlap.
+  Reusable browser check: `tests/website/check_calculator_browser.py` (requires
+  installed PHP, Chromium and Python Playwright; does not build or mine).
+- A bounded read-only live explorer request confirmed mainnet status, synchronized
+  node, matching height/header, 120-second target, numeric difficulty and an exact
+  safe-integer atomic reward. This verifies the current input contract, not future
+  availability or all browser integration. Calculator remains unpublished.
