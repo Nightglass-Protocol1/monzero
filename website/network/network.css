@@ -5,3 +5,6 @@ main{max-width:1100px;margin:auto;padding:32px 20px}main>p{max-width:75ch}.card{
 #hash-chart,#difficulty-chart{overflow-x:auto}
 #hash-chart svg,#difficulty-chart svg{min-width:700px}
 caption{text-align:left;padding:12px 0;font-weight:600}
+#block-distribution{overflow-x:auto}
+
+#block-distribution svg{min-width:640px}

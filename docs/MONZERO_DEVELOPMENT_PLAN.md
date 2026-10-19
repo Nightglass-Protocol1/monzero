@@ -862,3 +862,37 @@ links to network history with local-only status. Browser fixture checks now also
 pass pending-range cancellation and timeout/recovery, without waiting on upstream
 services. Claude's timer review found no blockers. Added isolated Python startup, more timeout headroom and ignored interrupted-publish temporary files. Worktree removal requires stopping/reconfiguring the timer; this is documented. The preview unit's presence was confirmed with systemctl, contrary to the review's missing-unit concern. Production collection/deployment
 and additional network metrics remain unfinished. No builds or mining ran.
+
+### Recent block analytics — implementation under review, 2026-10-19
+
+Added an independent recent-block panel to `/network/`: current chain height,
+observed height/time window, timestamp-derived production rate and five interval
+distribution bins. The panel explicitly covers up to 720 recent blocks rather
+than pretending the historical range selector has complete block archives.
+Backwards timestamp intervals are counted/excluded and suppress the rate;
+single-block and zero-span windows have no rate. Unknown data remains unavailable.
+
+Four calculation/contract test groups passed, including bin boundaries, malformed
+metadata, incomplete windows, backwards clocks and zero spans. Isolated browser
+checks passed at 390/1440px with a known 30-block/hour fixture and outage recovery.
+A real mainnet preview returned 720 blocks at chain height 12,558, with 719 valid
+intervals, without mobile overflow. Claude's read-only review is still running.
+Historical block distribution/production archives, emission and node metrics
+remain unfinished. No production deployment, builds or mining ran.
+
+### Recent block analytics review and verification — 2026-10-19
+
+Claude's review is complete. The production rate now explicitly uses the first
+and last timestamps; internal backwards steps are counted separately rather than
+silently preventing an endpoint estimate. Zero/nonpositive spans remain
+unavailable. The page explains that miner-set timestamps and excluded backwards
+steps can bias the distribution; syncing-node and future-tip warnings appear
+beside the figures. Unused mean/maximum calculations were removed.
+
+Added the interval histogram with exact counts/percentages in its accompanying
+accessible table. Six calculation tests pass, including the complete 720-block
+window above genesis and calendar/type boundaries. Desktop/mobile browser checks
+pass known histogram values, syncing/future-tip warnings and outage/recovery.
+The real mainnet histogram was visually inspected. The public roadmap records
+this recent-window scope, not historical block analytics completion. No native
+builds, mining or production deployment ran.

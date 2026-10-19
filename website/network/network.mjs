@@ -1,3 +1,4 @@
+import {summarizeBlocks} from './blocks.mjs';
 import {validateHistory,historyFreshness,ranges} from './history.mjs';
 const $=id=>document.getElementById(id);
 const date=n=>new Date(n*1000).toISOString().replace('T',' ').replace('.000Z',' UTC');
@@ -44,3 +45,35 @@ async function load(){
  finally{clearTimeout(timeout);}
 }
 $('range').disabled=false;$('refresh').disabled=false;$('range').addEventListener('change',load);$('refresh').addEventListener('click',load);setInterval(status,30000);load();
+
+let recent=null,blocksBusy=false;
+function blockStatus(){
+ if(!recent)return;
+ const age=Date.now()/1000-recent.generatedAt;
+ const text=`${age<0?'Clock mismatch; freshness cannot be verified':age>300?'Historical snapshot — over five minutes old':'Recent snapshot'} · observed ${date(recent.generatedAt)}${recent.synchronized?'':' · public node syncing'}`;
+ if($('block-status').textContent!==text)$('block-status').textContent=text;
+}
+async function loadBlocks(){
+ if(blocksBusy)return;blocksBusy=true;recent=null;$('refresh-blocks').disabled=true;
+ $('block-status').textContent='Loading recent blocks…';$('block-summary').textContent='';$('block-distribution').replaceChildren();
+ const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),10000);
+ try{
+  const response=await fetch('/stats/api.php',{signal:abort.signal,cache:'no-cache'});if(!response.ok)throw Error('Unavailable');
+  const value=summarizeBlocks(JSON.parse(await readBounded(response)));
+  $('block-summary').textContent=`${value.synchronized?'':'Syncing node — this may be an outdated view. '}${value.lastTimestamp>value.generatedAt?'Latest block timestamp is ahead of observation time; interpret the rate cautiously. ':''}Chain height ${value.height}. ${value.blockCount} blocks, heights ${value.firstHeight}–${value.lastHeight}; ${date(value.firstTimestamp)} to ${date(value.lastTimestamp)}. Endpoint-timestamp production rate: ${value.blocksPerHour===null?'unavailable':number(value.blocksPerHour)+' blocks/hour'}. ${value.backwards} backwards timestamp intervals excluded; ${value.validIntervals} nonnegative intervals counted.`;
+  const table=document.createElement('table'),caption=document.createElement('caption');caption.textContent='Recent block interval distribution';table.append(caption);
+  const header=document.createElement('tr');for(const label of ['Interval','Count','Share of nonnegative intervals']){const th=document.createElement('th');th.scope='col';th.textContent=label;header.append(th);}const head=document.createElement('thead');head.append(header);table.append(head);
+  const body=document.createElement('tbody');for(const bin of value.bins){const row=document.createElement('tr');for(const text of [bin.label,String(bin.count),value.validIntervals?number(bin.count/value.validIntervals*100)+'%':'Unavailable']){const cell=document.createElement(row.children.length?'td':'th');if(!row.children.length)cell.scope='row';cell.textContent=text;row.append(cell);}body.append(row);}table.append(body);
+  const histogram=svgElement('svg',{viewBox:'0 0 640 260',role:'img','aria-label':'Recent block interval distribution. Bars show percentages of nonnegative timestamp intervals; exact counts are in the following table.'});
+  for(let i=0;i<value.bins.length;i++){
+   const bin=value.bins[i],share=value.validIntervals?bin.count/value.validIntervals*100:0,y=20+i*44;
+   histogram.append(svgElement('text',{x:0,y:y+17},bin.label));
+   histogram.append(svgElement('rect',{x:165,y,width:share*3.7,height:24,class:'sample'}));
+   histogram.append(svgElement('text',{x:550,y:y+17},value.validIntervals?number(share)+'%':'N/A'));
+  }
+  histogram.append(svgElement('text',{x:165,y:250},'0%'),svgElement('text',{x:535,y:250,'text-anchor':'end'},'100% of counted intervals'));
+  $('block-distribution').append(histogram,table);recent=value;blockStatus();
+ }catch{recent=null;$('block-summary').textContent='';$('block-distribution').replaceChildren();$('block-status').textContent='Recent block data is unavailable. No missing intervals have been estimated.';}
+ finally{clearTimeout(timer);blocksBusy=false;$('refresh-blocks').disabled=false;}
+}
+$('refresh-blocks').disabled=false;$('refresh-blocks').addEventListener('click',loadBlocks);setInterval(blockStatus,30000);loadBlocks();

@@ -34,3 +34,4 @@ python3 tests/website/test_network_history.py
 node --test tests/website/network-history.test.mjs
 node --check website/network/network.mjs
 python3 tests/website/check_network_history.py
+node --test tests/website/network-blocks.test.mjs

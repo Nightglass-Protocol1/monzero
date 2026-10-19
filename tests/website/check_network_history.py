@@ -35,8 +35,28 @@ with tempfile.TemporaryDirectory(prefix='monzero-history-browser-') as directory
      if mode[0]=='malformed':data={**data,'archive_last_observed_at':now}
      if mode[0]=='empty':data={**data,'archive_samples':0,'archive_first_observed_at':None,'archive_last_observed_at':None,'sources':[],'points':[]}
      route.fulfill(content_type='application/json',body=json.dumps(data))
+    block_mode=['normal']
+    block_fixture={'schema':'monzero-chain-charts-v2','network':'mainnet','target_seconds':120,'generated_at':now,'height':4,'synchronized':True,'blocks':[{'height':i+1,'timestamp':now-240+i*120,'difficulty':1200,'transactions':0} for i in range(3)]}
+    def block_response(route):
+     if block_mode[0]=='outage':route.fulfill(status=503,body='Unavailable');return
+     route.fulfill(content_type='application/json',body=json.dumps(block_fixture))
+    page.route('**/stats/api.php',block_response)
     page.route('**/network/data/*.json',respond)
     page.goto(f'http://127.0.0.1:{port}/network/')
+    page.wait_for_function("document.getElementById('block-summary').textContent.includes('30 blocks/hour')")
+    assert page.locator('#block-distribution tbody tr').count()==5
+    assert page.locator('#block-distribution svg rect').count()==5
+    assert page.locator('#block-distribution svg rect').nth(2).get_attribute('width')=='370'
+    block_fixture['synchronized']=False;block_fixture['blocks'][-1]['timestamp']=now+120
+    page.click('#refresh-blocks')
+    page.wait_for_function("document.getElementById('block-summary').textContent.includes('Syncing node')")
+    assert 'ahead of observation time' in page.locator('#block-summary').inner_text()
+    block_fixture['synchronized']=True;block_fixture['blocks'][-1]['timestamp']=now
+    block_mode[0]='outage';page.click('#refresh-blocks')
+    page.wait_for_function("document.getElementById('block-status').textContent.includes('unavailable')")
+    assert page.locator('#block-summary').inner_text()==''
+    block_mode[0]='normal';page.click('#refresh-blocks')
+    page.wait_for_function("document.getElementById('block-summary').textContent.includes('30 blocks/hour')")
     for name in history.RANGES:
      page.select_option('#range',name)
      page.wait_for_function("document.getElementById('status').textContent.includes('Historical data')")
