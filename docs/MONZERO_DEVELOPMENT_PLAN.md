@@ -1236,3 +1236,16 @@ production catalog and the status, venue, fee, link and duplicate rules. A
 browser test covers the real tracker, a fixture live venue (literal text,
 noopener), and invalid/outage clearing at 390/1440px. Navigation passes on 20
 routes. No deployment.
+
+### Ecosystem directory — 2026-10-19 (Claude)
+
+Added `/ecosystem/` from a reviewed `catalog.json` (`monzero-ecosystem-v1`):
+search, category (the brief's eight) and operator filters. Every entry is
+labelled project-operated or third-party; third-party entries must use external
+HTTPS URLs, and exchanges are rejected here because they belong to the dated
+exchange tracker. Ten entries come only from links the site already publishes:
+pool, wallets, explorer, network history, source, merchant guide, whitepaper,
+mining guide, Telegram and the third-party Chainquiry listing. Submissions go
+through GitHub issues with maintainer review until authenticated moderation
+exists. Unit and browser tests (filters, labels, noopener, outage clearing,
+390/1440px) pass. Linked from the homepage. No deployment.

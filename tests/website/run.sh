@@ -49,3 +49,6 @@ python3 tests/website/check_payment_request.py
 node --check website/exchanges/exchanges.mjs
 node --test tests/website/exchanges.test.mjs
 python3 tests/website/check_exchanges.py
+node --check website/ecosystem/ecosystem.mjs
+node --test tests/website/ecosystem.test.mjs
+python3 tests/website/check_ecosystem.py
