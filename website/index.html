@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="styles.css?v=20261011-hero">
   <link rel="stylesheet" href="theme.css?v=20261021-unified">
   <link rel="stylesheet" href="site-nav.css?v=20261020-sub">
-  <link rel="stylesheet" href="homepage-tools.css?v=20261019">
+  <link rel="stylesheet" href="homepage-tools.css?v=20261020">
   <link rel="canonical" href="https://monzero.org/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Monzero">
@@ -114,6 +114,11 @@
           <p><span>Secondary P2P · US</span><code>node2.monzero.org:6174</code><button class="copy" data-copy="node2.monzero.org:6174">Copy</button></p>
           <p><span>Restricted RPC</span><code>node.monzero.org:6175</code><button class="copy" data-copy="node.monzero.org:6175">Copy</button></p>
         </div>
+      </div>
+      <div class="live-tiles" aria-live="polite">
+        <a class="live-tile" href="network/nodes/"><span class="tile-label">Nodes observed</span><strong id="tile-nodes">—</strong><small id="tile-nodes-detail">Counted by country only</small></a>
+        <a class="live-tile" href="faucet/"><span class="tile-label">Faucet</span><strong id="tile-faucet">—</strong><small id="tile-faucet-detail">0.1 XMZ every 24 hours</small></a>
+        <a class="live-tile" href="status/"><span class="tile-label">Services</span><strong id="tile-status">—</strong><small id="tile-status-detail">Node, pool, faucet and data feeds</small></a>
       </div>
     </section>
 
@@ -313,5 +318,6 @@
   <script src="app.js?v=20261019-network"></script>
   <script src="site-nav.js?v=20261020-sub" defer></script>
   <script src="fund/summary.js?v=20261017" defer></script>
+  <script src="homepage-live.js?v=20261020" defer></script>
 </body>
 </html>

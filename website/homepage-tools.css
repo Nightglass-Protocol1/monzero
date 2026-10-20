@@ -9,3 +9,15 @@
 .ecosystem-note { margin:24px 0 0; }
 @media(max-width:1000px) { .ecosystem-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:620px) { .ecosystem-grid { grid-template-columns:1fr; } .ecosystem-grid article { padding:20px; } }
+
+/* Live tiles under "Connect": node census, faucet and service status. */
+.live-tiles { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+#network { row-gap: 40px; }  /* the section had one row before the tiles; its column gap is unchanged */
+.live-tile { display: flex; flex-direction: column; gap: 6px; padding: 20px 22px; border: 1px solid var(--line); border-radius: var(--radius, 12px); background: var(--surface, #101a24); color: inherit; text-decoration: none; transition: border-color .15s ease; }
+.live-tile:hover, .live-tile:focus-visible { border-color: var(--accent, #69d5c2); }
+.live-tile .tile-label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.live-tile strong { font-size: 22px; font-weight: 600; color: var(--ink); }
+.live-tile small { font-size: 13px; color: var(--muted); }
+.live-tile strong.warn { color: #edbc64; } .live-tile strong.down { color: #ef6b6b; }
+@media (max-width: 760px) { .live-tiles { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .live-tile { transition: none; } }
