@@ -52,6 +52,7 @@ python3 tests/website/check_exchanges.py
 node --check website/ecosystem/ecosystem.mjs
 node --test tests/website/ecosystem.test.mjs
 python3 tests/website/check_ecosystem.py
+python3 tests/website/test_node_census.py
 for f in $(find website/api/v1 -name "*.php"); do php -l "$f"; done
 python3 tests/website/test_api_v1.py
 node --check website/mining/leaderboard/leaderboard.mjs

@@ -1337,3 +1337,26 @@ image because host PHP lacks pdo_sqlite; `run.sh` reports SKIPPED when it is
 missing) cover the whole flow including throttling, TOTP, disable/logout,
 audit immutability and that no password appears in mail. Pages showed zero CSP
 violations. Content-editing modules are not built yet; the overview says so.
+
+### Country-level node map — 2026-10-20 (Claude)
+
+Owner rule: nodes are shown by country only, never by region, city or location.
+`utils/nodemap/node_census.py` runs on monzero-eu next to the node. It reads the
+node's own `get_peer_list` (white list, last seen within 24 hours = accepting
+connections) and `get_connections` over the private loopback RPC, drops
+non-global addresses (private, CGNAT, loopback, link-local, documentation, Tor/I2P
+hosts), maps each IP to a country with the offline DB-IP "IP to Country Lite"
+database (CC BY 4.0, refreshed monthly, about 38 MB peak memory) and sends only
+per-country `observed` / `reachable` / `connected` counts. IPs are never written to
+disk and never leave the node. The website ingest `/api/node-census/` takes an
+HMAC-signed request (timestamp ±300 s, single-use nonce), refuses extra keys,
+wrong sums, lowercase codes and censuses older than the stored one, and keeps the
+latest snapshot plus one per UTC day (400 days) in `~/monzero-private/node-census/`.
+Read API `/api/v1/network/nodes/` (optional `?history=daily`); page
+`/network/nodes/` shades a Natural Earth 1:110m country map (built once with
+`utils/nodemap/build_world_svg.py`; small countries appear in the table only) and
+lists every country, with one-vantage-point and lookup-accuracy caveats. Software
+versions are not exposed by the peer list and are not shown. Tests:
+`tests/website/test_node_census.py` (aggregation, filtering, signature, replay,
+ordering, API, no stored IPs, browser under the production CSP at 390/1440 px).
+Deployment: upload the website files, then `bash utils/nodemap/deploy-eu.sh`.
