@@ -5,7 +5,7 @@ set -euo pipefail
 WEB=${WEB_HOST:-monzero-webspace}
 TOKEN=$(ssh -o BatchMode=yes "$WEB" 'php -r '"'"'$c = require getenv("HOME") . "/monzero-private/telegram-config.php"; echo $c["bot_token"];'"'"'' 2>/dev/null)
 [[ "$TOKEN" =~ ^[0-9]{5,15}:[A-Za-z0-9_-]{30,60}$ ]] || { echo "!! no bot token configured on the website"; exit 1; }
-api() { printf 'url = "https://api.telegram.org/bot%s/%s"\n' "$TOKEN" "$1" | curl -sS -m 20 -K - -H 'Content-Type: application/json' -d "${2:-{\}}"; }
+api() { local body=${2:-'{}'}; printf 'url = "https://api.telegram.org/bot%s/%s"\n' "$TOKEN" "$1" | curl -sS -m 20 -K - -H 'Content-Type: application/json' -d "$body"; }
 { api getMe; echo; api getWebhookInfo; echo; api getMyCommands; echo; api getMyDescription; echo; api getMyShortDescription; echo; } | python3 -c '
 import json, sys, time
 me, hook, cmds, desc, short = [json.loads(l)["result"] for l in sys.stdin if l.strip()]
