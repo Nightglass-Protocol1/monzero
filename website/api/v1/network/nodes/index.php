@@ -13,7 +13,8 @@ $data = [
     'countries' => (object)$latest['countries'],
     'geo_database' => $latest['geo_database'],
     'geo_attribution' => 'IP geolocation by DB-IP (https://db-ip.com), CC BY 4.0',
-    'vantage' => 'Peers known to node.monzero.org; not every node on the network.',
+    'vantage' => 'Peers known to ' . implode(' and ', array_map(fn($v) => CENSUS_VANTAGES[$v], $latest['vantages'] ?? ['eu'])) . '; not every node on the network.',
+    'vantages' => $latest['vantages'] ?? ['eu'],
 ];
 if (($_GET['history'] ?? '') === 'daily') {
     $data['history'] = [];

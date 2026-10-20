@@ -1,31 +1,35 @@
 #!/bin/bash
-# Install the country-level node census on monzero-eu and give the website its shared secret.
-# The census reads the node's peer list, maps IPs to countries with the offline DB-IP Lite
-# database and sends only per-country counts to the website every 15 minutes.
-# Safe to re-run. Run from the owner's PC:  bash utils/nodemap/deploy-eu.sh
+# Install the country-level node census on both public nodes (EU and US) and give the website its
+# shared secret. Each node sends one-way daily tags per country (key shared by the two nodes only),
+# so a node seen from both is counted once; the website never receives IP addresses.
+# Safe to re-run. Run from the owner's PC:  bash utils/nodemap/deploy-nodes.sh
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
-EU=${EU_HOST:-monzero-eu} WEB=${WEB_HOST:-monzero-webspace}
+WEB=${WEB_HOST:-monzero-webspace}
 
-echo "== copying the census to $EU"
-scp -q "$HERE/node_census.py" "$EU:/tmp/node_census.py"
-ssh -o BatchMode=yes "$EU" sudo bash -s <<'REMOTE'
+install_host() {  # host vantage private-rpc
+  echo "== installing the census on $1 ($2)"
+  scp -q "$HERE/node_census.py" "$1:/tmp/node_census.py"
+  ssh -o BatchMode=yes "$1" sudo bash -s -- "$2" "$3" <<'REMOTE'
 set -euo pipefail
+VANTAGE=$1 RPC=$2
 id xmznodemap >/dev/null 2>&1 || useradd --system --home /var/lib/xmznodemap --shell /usr/sbin/nologin xmznodemap
 install -d -o xmznodemap -g xmznodemap -m 750 /var/lib/xmznodemap
 install -d -o root -g xmznodemap -m 750 /etc/xmznodemap
 install -d -o root -g root -m 755 /opt/xmznodemap
 install -o root -g root -m 644 /tmp/node_census.py /opt/xmznodemap/node_census.py && rm -f /tmp/node_census.py
-(umask 077; [ -s /etc/xmznodemap/secret ] || openssl rand -hex 32 > /etc/xmznodemap/secret)
-chown root:xmznodemap /etc/xmznodemap/secret; chmod 640 /etc/xmznodemap/secret
-[ -f /etc/xmznodemap/census.json ] || cat > /etc/xmznodemap/census.json <<'EOF'
-{
-  "node_rpc": "http://127.0.0.1:6185",
-  "site_url": "https://monzero.org",
-  "secret_file": "/etc/xmznodemap/secret",
-  "geo_database": "/var/lib/xmznodemap/dbip-country-lite.csv.gz"
-}
-EOF
+if [ "$VANTAGE" = eu ]; then
+  (umask 077; [ -s /etc/xmznodemap/secret ] || openssl rand -hex 32 > /etc/xmznodemap/secret; [ -s /etc/xmznodemap/salt ] || openssl rand -hex 32 > /etc/xmznodemap/salt)
+  chown root:xmznodemap /etc/xmznodemap/secret /etc/xmznodemap/salt; chmod 640 /etc/xmznodemap/secret /etc/xmznodemap/salt
+fi
+python3 - "$VANTAGE" "$RPC" <<'PY'
+import json, os, sys
+path = "/etc/xmznodemap/census.json"
+cfg = json.load(open(path)) if os.path.exists(path) else {}
+cfg.update({"node_rpc": sys.argv[2], "site_url": cfg.get("site_url", "https://monzero.org"), "secret_file": "/etc/xmznodemap/secret",
+            "geo_database": "/var/lib/xmznodemap/dbip-country-lite.csv.gz", "vantage": sys.argv[1], "salt_file": "/etc/xmznodemap/salt"})
+json.dump(cfg, open(path, "w"), indent=2)
+PY
 chmod 644 /etc/xmznodemap/census.json
 
 # Monthly database refresh: this month's file, else last month's; checked before it replaces the old one.
@@ -96,22 +100,25 @@ EOF
 systemctl daemon-reload
 [ -e /var/lib/xmznodemap/dbip-country-lite.csv.gz ] || systemctl start xmznodemap-geo.service
 systemctl enable --now xmznodemap-geo.timer >/dev/null 2>&1
-echo "== dry run (country totals only)"
-sudo -u xmznodemap python3 -I /opt/xmznodemap/node_census.py --config /etc/xmznodemap/census.json --dry-run > /tmp/xmznodemap-dry.json
-python3 - /tmp/xmznodemap-dry.json <<'PY'
-import json, sys
-p = json.load(open(sys.argv[1]))
-print("  ", p["totals"], "from", p["geo_database"])
-print("   countries:", ", ".join("%s %d" % (code, c["observed"]) for code, c in p["countries"].items()) or "none")
-PY
-rm -f /tmp/xmznodemap-dry.json
 REMOTE
+}
+
+install_host monzero-eu eu http://127.0.0.1:6185
+install_host monzero-us us http://127.0.0.1:6177
+
+echo "== sharing the website secret and the tag salt with monzero-us"
+for f in secret salt; do
+  ssh -o BatchMode=yes monzero-eu sudo cat /etc/xmznodemap/$f \
+    | ssh -o BatchMode=yes monzero-us "sudo bash -c 'umask 027; cat > /etc/xmznodemap/$f; chown root:xmznodemap /etc/xmznodemap/$f; chmod 640 /etc/xmznodemap/$f'"
+done
 
 echo "== giving the website the census secret"
-ssh -o BatchMode=yes "$EU" sudo cat /etc/xmznodemap/secret | ssh -o BatchMode=yes "$WEB" \
+ssh -o BatchMode=yes monzero-eu sudo cat /etc/xmznodemap/secret | ssh -o BatchMode=yes "$WEB" \
   'umask 077; read -r s; case "$s" in *[!0-9a-f]*|"") echo "!! bad secret"; exit 1;; esac; [ ${#s} -eq 64 ] || { echo "!! bad secret"; exit 1; }
    printf "<?php return [\"secret\" => \"%s\"];\n" "$s" > ~/monzero-private/node-census-config.php.tmp && mv ~/monzero-private/node-census-config.php.tmp ~/monzero-private/node-census-config.php && echo "   website config written"'
 
-echo "== first census and timer"
-ssh -o BatchMode=yes "$EU" 'sudo systemctl start xmznodemap.service && sudo systemctl enable --now xmznodemap.timer >/dev/null 2>&1; sudo journalctl -u xmznodemap -n 2 --no-pager -o cat'
-curl -s -m 15 https://monzero.org/api/v1/network/nodes/ | head -c 400; echo
+echo "== first census from each node (counts only shown) and timers"
+for host in monzero-eu monzero-us; do
+  ssh -o BatchMode=yes "$host" 'sudo -u xmznodemap python3 -I /opt/xmznodemap/node_census.py --config /etc/xmznodemap/census.json --dry-run | python3 -c "import sys,json;p=json.load(sys.stdin);print(\"  \",p[\"totals\"])"; sudo systemctl start xmznodemap.service; sudo systemctl enable --now xmznodemap.timer >/dev/null 2>&1; sudo journalctl -u xmznodemap -n 1 --no-pager -o cat'
+done
+curl -s -m 15 https://monzero.org/api/v1/network/nodes/ | python3 -c 'import sys,json;d=json.load(sys.stdin)["data"];print("merged:",d["totals"],"from",d["vantages"])'

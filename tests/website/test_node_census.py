@@ -83,6 +83,26 @@ with tempfile.TemporaryDirectory() as tmp:
   assert not any(ip in stored for ip in ['8.8.8.8','8.8.4.4','81.2.69','1.1.1.1'])
   assert all(oct(p.stat().st_mode&0o777)=='0o600' for p in (private/'node-census').glob('*.json'))
 
+  # Two vantage points: one-way daily tags, a node seen by both counted once, old or other-day reports left out.
+  salt=secrets.token_hex(32);ips=lambda *a:{nc.public_ip(x) for x in a}
+  eu=nc.tagged_census(ips('8.8.8.8','8.8.4.4'),ips('8.8.8.8','81.2.69.5'),db,int(time.time())+20,'eu',salt)
+  us=nc.tagged_census(ips('8.8.8.8'),ips('81.2.69.5','81.2.69.9','1.1.1.1'),db,int(time.time())+21,'us',salt)
+  assert '8.8.8.8' not in json.dumps(eu) and eu['tag_day']==time.strftime('%Y-%m-%d',time.gmtime(eu['observed_at']))
+  assert eu['countries']['US']['reachable'][0] in us['countries']['US']['reachable']  # same address, same tag
+  other=nc.tagged_census(ips('8.8.8.8'),set(),db,int(time.time()),'us','different salt');assert other['countries']['US']['reachable'][0] not in eu['countries']['US']['reachable']
+  code,reply=nc.send(base,secret,eu);assert code==200,(code,reply)
+  code,reply=nc.send(base,secret,us);assert code==200,(code,reply)
+  merged=requests.get(base+'/api/v1/network/nodes/').json()['data']
+  assert merged['vantages']==['eu','us'] and 'node.monzero.org and node2.monzero.org' in merged['vantage']
+  # Union: US {8.8.8.8, 8.8.4.4}, GB {81.2.69.5, 81.2.69.9}, unknown {1.1.1.1}.
+  assert merged['totals']=={'observed':5,'reachable':2,'connected':4},merged['totals']
+  assert merged['countries']['US']=={'observed':2,'reachable':2,'connected':1} and merged['countries']['GB']=={'observed':2,'reachable':0,'connected':2},merged['countries']
+  assert nc.send(base,secret,dict(us,observed_at=us['observed_at']-1))[0]==409  # older than this vantage's last report
+  bad=json.loads(json.dumps(us));bad['observed_at']+=5;bad['countries']['US']['reachable']=['8.8.8.8'];assert nc.send(base,secret,bad)[0]==400
+  bad=json.loads(json.dumps(us));bad['observed_at']+=5;bad['vantage']='mars';assert nc.send(base,secret,bad)[0]==400
+  bad=json.loads(json.dumps(us));bad['observed_at']+=5;bad['tag_day']='2000-01-01';assert nc.send(base,secret,bad)[0]==400
+  stored=''.join(p.read_text() for p in (private/'node-census').glob('*.json'));assert not any(ip in stored for ip in ['8.8.8.8','81.2.69','1.1.1.1'])
+  assert all(len(t)==16 for c in json.loads((private/'node-census/vantage-eu.json').read_text())['countries'].values() for t in c['reachable']+c['connected'])
   # Browser: map under the production CSP, table, legend, no layout overflow.
   from playwright.sync_api import sync_playwright
   csp="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
@@ -94,13 +114,13 @@ with tempfile.TemporaryDirectory() as tmp:
     def with_csp(route):
      resp=route.fetch();route.fulfill(response=resp,headers={**resp.headers,'content-security-policy':csp})
     page.route('**/network/nodes/',with_csp)
-    page.goto(base+'/network/nodes/');page.wait_for_selector('#map svg path.lvl-1')
+    page.goto(base+'/network/nodes/');page.wait_for_selector('#map svg path[class^="lvl-"]')
     assert page.locator('#map svg path[data-cc=US]').get_attribute('class')=='lvl-2'
-    assert page.locator('#map svg path[data-cc=GB]').get_attribute('class')=='lvl-1'
+    assert page.locator('#map svg path[data-cc=GB]').get_attribute('class')=='lvl-2'
     assert page.locator('#map svg path[class]').count()==2
     rows=page.locator('#rows tr');assert rows.count()==3
-    assert 'United States' in rows.nth(0).inner_text() and 'Unknown' in page.locator('#rows').inner_text()
-    assert '4 observed nodes in 2 countries' in page.locator('#status').inner_text()
+    assert 'United Kingdom' in rows.nth(0).inner_text() and 'United States' in rows.nth(1).inner_text() and 'Unknown' in rows.nth(2).inner_text()
+    assert '5 observed nodes in 2 countries' in page.locator('#status').inner_text() and 'node2.monzero.org' in page.locator('#summary').inner_text()
     assert page.locator('#history-rows tr').count()==1
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),width
     assert not errors,errors;page.close()

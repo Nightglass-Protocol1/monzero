@@ -1390,3 +1390,15 @@ sends a signed `heartbeat` every cycle with its balance (and when it halts).
 the owner (`~/monzero-private/status-config.php`, default security@monzero.org)
 only when a check changes state or stays bad for a day. Public output has no
 secrets, addresses or member data. Tests: `tests/website/test_status.py`.
+
+### Node map from two vantage points — 2026-10-20 (Claude)
+
+The census now runs on monzero-eu (private RPC 6185) and monzero-us (6177)
+(`utils/nodemap/deploy-nodes.sh`, replacing `deploy-eu.sh`). With `salt_file`
+set, each node sends `monzero-node-census-v2`: per country, one-way 16-hex tags
+HMAC(HMAC(salt, UTC day), address). The salt exists only on the two nodes, so the
+website cannot reverse a tag, and tags change daily. The ingest keeps only each
+vantage's newest report privately and publishes merged counts (same tag day,
+within 45 minutes), counting a node seen by both once; the public format is
+unchanged apart from `vantages`. Tests cover overlap, ordering, malformed tags,
+wrong day and that no address reaches storage.

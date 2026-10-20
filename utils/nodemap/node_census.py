@@ -19,6 +19,7 @@ Counts per country:
 import argparse, array, bisect, csv, gzip, hashlib, hmac, ipaddress, json, os, re, secrets, sys, time, urllib.request
 
 SCHEMA = "monzero-node-census-v1"
+SCHEMA_TAGGED = "monzero-node-census-v2"  # several vantage points: one-way daily tags instead of counts
 WINDOW_SECONDS = 86400
 UNKNOWN = "ZZ"  # ISO 3166 user-assigned code: IP not in the database
 
@@ -118,6 +119,33 @@ def census(reachable, connected, db, now):
     }
 
 
+def day_key(salt, now):
+    """Daily key shared by the vantage nodes only; the website never has the salt."""
+    day = time.strftime("%Y-%m-%d", time.gmtime(now))
+    return day, hmac.new(salt.encode(), day.encode(), hashlib.sha256).digest()
+
+
+def tag(key, ip):
+    """One-way 64-bit tag: equal for the same address on every vantage node that day, useless without the key."""
+    return hmac.new(key, ip.packed, hashlib.sha256).hexdigest()[:16]
+
+
+def tagged_census(reachable, connected, db, now, vantage, salt):
+    """Per-country tag lists, so the website can count a node seen from two vantage points once."""
+    day, key = day_key(salt, now)
+    countries = {}
+    for ip in reachable | connected:
+        entry = countries.setdefault(db.country(ip), {"reachable": [], "connected": []})
+        if ip in reachable:
+            entry["reachable"].append(tag(key, ip))
+        if ip in connected:
+            entry["connected"].append(tag(key, ip))
+    for entry in countries.values():
+        entry["reachable"].sort(); entry["connected"].sort()
+    return {"schema": SCHEMA_TAGGED, "vantage": vantage, "tag_day": day, "observed_at": now, "window_seconds": WINDOW_SECONDS,
+            "countries": dict(sorted(countries.items())), "geo_database": db.version}
+
+
 def send(site_url, secret, payload, timeout=30):
     body = json.dumps(payload, separators=(",", ":")).encode()
     ts, nonce = str(int(time.time())), secrets.token_hex(16)
@@ -144,15 +172,21 @@ def main():
         config = json.load(f)
     db = CountryDB(config["geo_database"])
     now = int(time.time())
-    payload = census(*collect(config.get("node_rpc", "http://127.0.0.1:6185"), now), db, now)
+    reachable, connected = collect(config.get("node_rpc", "http://127.0.0.1:6185"), now)
+    if config.get("salt_file"):
+        salt = open(config["salt_file"], encoding="utf-8").read().strip()
+        payload = tagged_census(reachable, connected, db, now, config["vantage"], salt)
+    else:
+        payload = census(reachable, connected, db, now)
     if args.dry_run:
-        print(json.dumps(payload, indent=2))
+        # Print counts only; tags are not useful to a person reading the output.
+        print(json.dumps(census(reachable, connected, db, now), indent=2))
         return
     secret = open(config["secret_file"], encoding="utf-8").read().strip()
     code, reply = send(config.get("site_url", "https://monzero.org"), secret, payload)
     if code != 200:
         sys.exit(f"website refused the census: HTTP {code} {reply}")
-    print(f"sent: {payload['totals']['observed']} nodes in {len(payload['countries'])} countries")
+    print(f"sent: {len(reachable | connected)} nodes in {len(payload['countries'])} countries")
 
 
 if __name__ == "__main__":

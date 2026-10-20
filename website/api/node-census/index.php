@@ -32,16 +32,34 @@ if (isset($nonces[$nonce])) reply(409, ['error' => 'Replayed']);
 $nonces[$nonce] = $now;
 
 $payload = json_decode($body, true);
-if ($problem = censusProblem($payload, $now)) reply(400, ['error' => "Invalid census ($problem)"]);
+if (is_array($payload) && ($payload['schema'] ?? null) === CENSUS_TAGGED_SCHEMA) {
+    // One vantage's tags: keep only its newest report (private), then publish the merged counts.
+    if ($problem = censusTaggedProblem($payload, $now)) reply(400, ['error' => "Invalid census ($problem)"]);
+    $name = 'vantage-' . $payload['vantage'] . '.json';
+    $previous = censusRead($name);
+    if ($previous && is_int($previous['observed_at'] ?? null) && $payload['observed_at'] <= $previous['observed_at']) reply(409, ['error' => 'Older than the stored census']);
+    try {
+        censusWrite('nonces.json', $nonces);
+        censusWrite($name, $payload);
+        $reports = [];
+        foreach (array_keys(CENSUS_VANTAGES) as $v) {
+            $r = censusRead("vantage-$v.json");
+            if ($r && censusTaggedProblem($r, (int)$r['observed_at']) === null) $reports[] = $r;
+        }
+        $payload = censusMerge($reports);
+    } catch (Throwable $e) { reply(503, ['error' => 'Storage unavailable']); }
+} else {
+    if ($problem = censusProblem($payload, $now)) reply(400, ['error' => "Invalid census ($problem)"]);
+}
 $latest = censusRead('latest.json');
-if ($latest && is_int($latest['observed_at'] ?? null) && $payload['observed_at'] <= $latest['observed_at']) reply(409, ['error' => 'Older than the stored census']);
+if ($latest && is_int($latest['observed_at'] ?? null) && $payload['observed_at'] < $latest['observed_at']) reply(409, ['error' => 'Older than the stored census']);
 
 try {
     censusWrite('nonces.json', $nonces);
     censusWrite('latest.json', $payload);
     // One snapshot per UTC day (the day's latest), kept for CENSUS_HISTORY_DAYS.
     $daily = censusRead('daily.json') ?? [];
-    $daily[gmdate('Y-m-d', $payload['observed_at'])] = ['observed_at' => $payload['observed_at'], 'totals' => $payload['totals'], 'countries' => $payload['countries']];
+    $daily[gmdate('Y-m-d', $payload['observed_at'])] = ['observed_at' => $payload['observed_at'], 'totals' => $payload['totals'], 'countries' => $payload['countries']] + (isset($payload['vantages']) ? ['vantages' => $payload['vantages']] : []);
     ksort($daily);
     censusWrite('daily.json', array_slice($daily, -CENSUS_HISTORY_DAYS, null, true));
 } catch (Throwable $e) { reply(503, ['error' => 'Storage unavailable']); }
