@@ -1,5 +1,22 @@
 # Faucet payout worker
 
+## Quick path (scripts)
+
+Run from the owner's PC, in order:
+
+1. `bash utils/faucet/deploy-eu.sh` creates the `xmzfaucet` user, the faucet wallet (RPC on
+   127.0.0.1:6192), `worker.json` with payouts off and both systemd units. It then gives the
+   website the worker secret through `faucet-config-set.php` and checks the signature while
+   claims are paused. It prints the faucet address. Re-running it keeps the existing wallet and secrets.
+2. `bash utils/faucet/show-seed.sh` in your own terminal: write the 25 words down offline.
+   A copy of the wallet files is also kept in `/root/xmzfaucet-backup/` on the node.
+3. Send a few days of payouts to the faucet address and wait until they unlock.
+4. `bash utils/faucet/enable-payouts.sh` refuses unless the unlocked balance is at least one
+   day's cap plus the reserve, then turns on worker payouts and website claims.
+   Emergency stop: `ssh monzero-webspace php ~/monzero-private/faucet-config-set.php enabled false`.
+
+The sections below describe the same setup by hand.
+
 The website (`/faucet/`) only queues claims. This worker pays them from a dedicated
 faucet hot wallet on a server you control (the EU node). The website never sees a key.
 
@@ -34,7 +51,7 @@ and run its RPC on loopback with a login:
 ```
 monzero-wallet-rpc --wallet-file /var/lib/xmzfaucet/faucet --password-file /etc/xmzfaucet/wallet.pass \
   --daemon-address 127.0.0.1:6185 --trusted-daemon \
-  --rpc-bind-ip 127.0.0.1 --rpc-bind-port 6191 --rpc-login faucet:<random>
+  --rpc-bind-ip 127.0.0.1 --rpc-bind-port 6192 --rpc-login faucet:<random>
 ```
 
 Fund it with a few days of payouts only (5 XMZ/day at the default cap).
@@ -47,7 +64,7 @@ Fund it with a few days of payouts only (5 XMZ/day at the default cap).
 {
   "site_url": "https://monzero.org",
   "worker_secret": "same value as on the website",
-  "wallet_rpc": "http://127.0.0.1:6191/json_rpc",
+  "wallet_rpc": "http://127.0.0.1:6192/json_rpc",
   "wallet_user": "faucet",
   "wallet_password_file": "/etc/xmzfaucet/rpc.pass",
   "journal": "/var/lib/xmzfaucet/journal.jsonl",
