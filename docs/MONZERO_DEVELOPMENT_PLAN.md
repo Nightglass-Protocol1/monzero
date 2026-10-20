@@ -1488,3 +1488,15 @@ UTC day (30 days, `index.json`), all live-owned for deploys. If fewer than 5
 outlets answer, the published news is kept. German and Japanese outlets
 (BTC-ECHO, CoinPost) are not ranked because their headlines cannot be grouped
 with English coverage. Tests: `tests/website/test_news.py`.
+
+### Major news to the Telegram group, no duplicates — 2026-10-20 (Claude)
+
+After each news upload the site posts stories covered by at least
+`feed_news_min_outlets` (default 4; 0 = off) outlets to the group, with the link
+preview, at most 3 per upload and `feed_news_daily_max` (default 12) per UTC day.
+The first run only records current stories. Duplicates are prevented by: any
+article link already posted in the last 3 days; a headline similar to one posted
+in the last 3 days (same rule as the collector's grouping); recording each story
+before sending, so a lost reply is never retried (only a clear refusal is); and
+the news ingest lock, so runs never overlap. Announcements are also posted at most
+once (the admin button reports "already in the Telegram group").

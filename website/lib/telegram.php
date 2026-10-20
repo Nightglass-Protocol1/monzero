@@ -27,6 +27,9 @@ function tgConfig(): ?array {
         'feed_chat' => is_string($c['feed_chat'] ?? null) && preg_match('/\A(@[A-Za-z][A-Za-z0-9_]{4,31}|-?\d{5,20})\z/', $c['feed_chat']) ? $c['feed_chat'] : null,
         'feed_pin' => ($c['feed_pin'] ?? true) === true,
         'feed_pool_hours' => is_int($c['feed_pool_hours'] ?? null) && $c['feed_pool_hours'] >= 0 && $c['feed_pool_hours'] <= 168 ? $c['feed_pool_hours'] : 24,
+        // Major news to the group: stories covered by at least this many outlets (0 = off), capped per day.
+        'feed_news_min_outlets' => is_int($c['feed_news_min_outlets'] ?? null) && $c['feed_news_min_outlets'] >= 0 && $c['feed_news_min_outlets'] <= 30 ? $c['feed_news_min_outlets'] : 4,
+        'feed_news_daily_max' => is_int($c['feed_news_daily_max'] ?? null) && $c['feed_news_daily_max'] >= 1 && $c['feed_news_daily_max'] <= 50 ? $c['feed_news_daily_max'] : 12,
         'pool_stats' => is_string($c['pool_stats'] ?? null) ? $c['pool_stats'] : 'https://pool.monzero.org/api/stats'];
 }
 
@@ -91,9 +94,9 @@ function tgMeta(string $key, ?string $value = null): ?string {
 }
 
 // Post to the public feed (community group or channel). Never includes miner addresses.
-function tgFeedSend(array $config, string $text, bool $pin = false): bool {
+function tgFeedSend(array $config, string $text, bool $pin = false, bool $preview = false): bool {
     if (!$config['feed_chat']) return false;
-    $r = tgApi($config, 'sendMessage', ['chat_id' => $config['feed_chat'], 'text' => mb_substr($text, 0, 3800), 'disable_web_page_preview' => true]);
+    $r = tgApi($config, 'sendMessage', ['chat_id' => $config['feed_chat'], 'text' => mb_substr($text, 0, 3800), 'disable_web_page_preview' => !$preview]);
     if (($r['ok'] ?? false) !== true) {
         tgMeta('feed_error', gmdate('Y-m-d H:i') . ' UTC: ' . mb_substr((string)($r['description'] ?? 'no answer from Telegram'), 0, 200));
         return false;
@@ -103,10 +106,27 @@ function tgFeedSend(array $config, string $text, bool $pin = false): bool {
     return true;
 }
 
+function tgFeedAnnouncementPosted(string $id): bool { $done = json_decode((string)tgMeta('feed_announcements'), true); return is_array($done) && isset($done[$id]); }
+
+// Posts an announcement once; returns false (and posts nothing) if it was already posted.
+// Recorded before sending, as for news; only a clear refusal from Telegram un-records it.
 function tgFeedAnnouncement(array $config, object $post, string $site = 'https://monzero.org'): bool {
+    if (!$config['feed_chat']) return false;
+    $done = json_decode((string)tgMeta('feed_announcements'), true) ?: [];
+    if (isset($done[$post->id])) return false;
+    $done[$post->id] = time();
+    tgMeta('feed_announcements', json_encode($done));
     $url = $post->url ?? null;
     $link = is_string($url) ? (str_starts_with($url, '/') ? $site . $url : $url) : $site . '/community/';
-    return tgFeedSend($config, "📢 {$post->title}\n\n{$post->body}\n\n$link", $config['feed_pin']);
+    $r = tgApi($config, 'sendMessage', ['chat_id' => $config['feed_chat'], 'text' => mb_substr("📢 {$post->title}\n\n{$post->body}\n\n$link", 0, 3800), 'disable_web_page_preview' => true]);
+    if (($r['ok'] ?? false) === true) {
+        tgMeta('feed_ok', (string)time());
+        if ($config['feed_pin'] && isset($r['result']['message_id'])) tgApi($config, 'pinChatMessage', ['chat_id' => $config['feed_chat'], 'message_id' => $r['result']['message_id'], 'disable_notification' => false]);
+        return true;
+    }
+    tgMeta('feed_error', gmdate('Y-m-d H:i') . ' UTC: ' . mb_substr((string)($r['description'] ?? 'no answer from Telegram; not retried, to avoid a duplicate'), 0, 200));
+    if (is_array($r) && isset($r['description'])) { unset($done[$post->id]); tgMeta('feed_announcements', json_encode($done)); }
+    return false;
 }
 
 // Pool update every feed_pool_hours: blocks found since the last update (from the pool's running
@@ -131,6 +151,79 @@ function tgFeedPool(array $config, int $now): bool {
         . "\nPool hashrate: $rateText from " . (int)($pool['miners'] ?? 0) . ' miners'
         . "\n\nMine with the pool: https://pool.monzero.org/\nAlerts for your rigs: t.me/" . ($config['bot_username'] ?: 'Monzero_bot');
     return tgFeedSend($config, $text);
+}
+
+// Title words used to recognise the same story (mirrors utils/news/news_collector.py tokens()).
+const TG_STOP = ['a','an','and','are','as','at','be','been','but','by','for','from','has','have','how','in','into','is','it','its','new','of','on','or','over','says','that','the',
+    'their','this','to','up','was','were','what','when','why','will','with','after','amid','against','about','out','more','than','first','now','could','would','may','might',
+    'just','today','week','year','report','reports','news','update','live'];
+const TG_ALIASES = ['btc' => 'bitcoin', 'eth' => 'ethereum', 'ether' => 'ethereum', 'xrp' => 'ripple', 'sol' => 'solana', 'etfs' => 'etf', 'doge' => 'dogecoin', 'xmr' => 'monero',
+    'stablecoins' => 'stablecoin', 'exchanges' => 'exchange', 'hackers' => 'hack', 'hacked' => 'hack', 'exploit' => 'hack', 'exploited' => 'hack', "sec's" => 'sec'];
+
+function tgTitleTokens(string $title): array {
+    preg_match_all("/[a-z0-9$][a-z0-9'$.-]*[a-z0-9]|[a-z0-9]/", mb_strtolower($title), $m);
+    $out = [];
+    foreach ($m[0] as $w) {
+        $w = trim($w, ".'");
+        $w = TG_ALIASES[$w] ?? $w;
+        if (strlen($w) >= 3 && !in_array($w, TG_STOP, true)) $out[$w] = true;
+    }
+    return array_keys($out);
+}
+
+function tgSimilarTitles(array $a, array $b): bool {
+    $shared = count(array_intersect($a, $b));
+    $union = count(array_unique(array_merge($a, $b))) ?: 1;
+    return $shared / $union >= 0.4 || ($shared >= 4 && $shared / $union >= 0.25);
+}
+
+// Called after each news upload (under the news ingest lock, so runs never overlap): post stories
+// that reached feed_news_min_outlets, at most 3 per upload and feed_news_daily_max per UTC day.
+// No duplicates: a story is skipped when any of its article links, or a similar headline, was
+// posted in the last 3 days. A story is recorded before sending, so a lost reply from Telegram can
+// never cause a second post; only a clear refusal from Telegram un-records it. The first call only
+// records the current stories so the group is not flooded with old news.
+function tgFeedNews(array $config, array $news, int $now): int {
+    if (!$config['feed_chat'] || $config['feed_news_min_outlets'] === 0) return 0;
+    $state = json_decode((string)tgMeta('feed_news'), true);
+    $fresh = !is_array($state);
+    $state = is_array($state) ? $state : [];
+    $state['posted'] = array_filter((array)($state['posted'] ?? []), fn($at) => is_int($at) && $at > $now - 3 * 86400);
+    $state['titles'] = array_values(array_filter((array)($state['titles'] ?? []), fn($t) => is_array($t) && (int)($t['at'] ?? 0) > $now - 3 * 86400));
+    if (($state['day'] ?? '') !== gmdate('Y-m-d', $now)) { $state['day'] = gmdate('Y-m-d', $now); $state['count'] = 0; }
+    // By reference: an arrow function would capture (and keep saving) the state as it was here.
+    $save = function () use (&$state) { tgMeta('feed_news', json_encode($state, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); };
+    $remember = function (array $urls, array $tokens) use (&$state, $now) {
+        foreach ($urls as $u) $state['posted'][$u] = $state['posted'][$u] ?? $now;
+        $state['titles'][] = ['at' => $now, 'tokens' => $tokens];
+    };
+    $sent = 0;
+    foreach ($news['stories'] ?? [] as $story) {
+        $urls = array_values(array_unique(array_merge([$story['url']], array_column($story['also'] ?? [], 'url'))));
+        $tokens = tgTitleTokens((string)$story['title']);
+        $known = (bool)array_intersect_key(array_flip($urls), $state['posted']);
+        foreach ($state['titles'] as $t) if (!$known && tgSimilarTitles($tokens, (array)$t['tokens'])) $known = true;
+        if ($known) { foreach ($urls as $u) $state['posted'][$u] = $state['posted'][$u] ?? $now; continue; }   // new articles about a posted story
+        if ((int)$story['outlets'] < $config['feed_news_min_outlets']) continue;
+        if ($fresh) { $remember($urls, $tokens); continue; }
+        if ($sent >= 3 || $state['count'] >= $config['feed_news_daily_max']) break;
+        // Record first, then send: a missing reply must not lead to a second post later.
+        $remember($urls, $tokens);
+        $state['count']++;
+        $save();
+        $text = "📰 {$story['title']}\n{$story['source']} · covered by {$story['outlets']} outlets\n{$story['url']}\n\nMore top stories: https://monzero.org/news/";
+        $r = tgApi($config, 'sendMessage', ['chat_id' => $config['feed_chat'], 'text' => mb_substr($text, 0, 3800), 'disable_web_page_preview' => false]);
+        if (($r['ok'] ?? false) === true) { $sent++; tgMeta('feed_ok', (string)$now); continue; }
+        if (is_array($r) && isset($r['description'])) {   // Telegram clearly refused: nothing was posted, so it may be tried again
+            foreach ($urls as $u) if (($state['posted'][$u] ?? null) === $now) unset($state['posted'][$u]);
+            array_pop($state['titles']);
+            $state['count']--;
+            tgMeta('feed_error', gmdate('Y-m-d H:i') . ' UTC: ' . mb_substr((string)$r['description'], 0, 200));
+        }
+        break;   // stop this run on any problem; the next upload continues
+    }
+    $save();
+    return $sent;
 }
 
 function tgShort(string $address): string { return substr($address, 0, 8) . '…' . substr($address, -6); }

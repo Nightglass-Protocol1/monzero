@@ -94,4 +94,7 @@ foreach (glob("$dir/????-??-??.json") ?: [] as $file) {
 }
 rsort($days);
 writeJson("$dir/index.json", ['schema' => 'monzero-news-index-v1', 'updated_at' => $now, 'days' => $days]);
+// Major stories also go to the community Telegram group when the bot's group feed is set up.
+try { require_once dirname(__DIR__, 2) . '/lib/telegram.php'; if ($tg = tgConfig()) tgFeedNews($tg, $payload, $now); }
+catch (Throwable $e) { error_log('Monzero news telegram: ' . $e->getMessage()); }
 reply(200, ['ok' => true, 'stories' => count($payload['stories'])]);

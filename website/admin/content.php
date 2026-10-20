@@ -145,6 +145,7 @@ function contentAction(string $do, array $user): bool {
     foreach ($records as $i => $r) if (($r->id ?? null) === $id) $index = $i;
     if ($do === 'post-telegram') {
         if ($kind !== 'announcements' || $index === null || !($tg = contentFeed())) adminDeny('This post cannot be sent to Telegram.', 409);
+        if (tgFeedAnnouncementPosted((string)$id)) contentBack($kind, 'telegram-already');
         $sent = tgFeedAnnouncement($tg, $records[$index]);
         adminAudit($actor, $sent ? 'telegram.posted' : 'telegram.failed', ['id' => $id]);
         contentBack($kind, $sent ? 'telegram-sent' : 'telegram-failed');
@@ -181,7 +182,7 @@ function contentCsrf(array $user): string { return '<input type="hidden" name="c
 
 function contentMessage(): string {
     $messages = ['content-saved' => 'Saved and published.', 'content-saved-telegram' => 'Published on the website and posted to the Telegram group.',
-        'telegram-sent' => 'Posted to the Telegram group.', 'telegram-failed' => 'The Telegram group did not accept the post. Check that the bot is still an admin there (details below).', 'content-deleted' => 'Removed and published.', 'faucet-on' => 'Faucet claims resumed.', 'faucet-off' => 'Faucet claims paused.'];
+        'telegram-sent' => 'Posted to the Telegram group.', 'telegram-already' => 'That post is already in the Telegram group, so it was not sent again.', 'telegram-failed' => 'The Telegram group did not accept the post. Check that the bot is still an admin there (details below).', 'content-deleted' => 'Removed and published.', 'faucet-on' => 'Faucet claims resumed.', 'faucet-off' => 'Faucet claims paused.'];
     $m = $messages[$_GET['msg'] ?? ''] ?? '';
     return $m ? '<p class="notice" role="status">' . adminH($m) . '</p>' : '';
 }
@@ -200,7 +201,8 @@ function contentPostsView(array $user, string $kind, string $error = '', array $
     foreach ($data->records ?? [] as $p) {
         $list .= '<article><h3>' . adminH($p->title ?? '') . '</h3><p><small>' . adminH($p->date ?? '') . '</small></p><p>' . nl2br(adminH($p->body ?? '')) . '</p>'
             . (($p->url ?? null) ? '<p><a href="' . adminH($p->url) . '">' . adminH($p->url) . '</a></p>' : '')
-            . ($kind === 'announcements' && $feed ? '<form method="post" action="/admin/?do=post-telegram">' . $hidden . '<input type="hidden" name="id" value="' . adminH($p->id ?? '') . '"><button type="submit">Post to the Telegram group</button></form>' : '')
+            . ($kind === 'announcements' && $feed && tgFeedAnnouncementPosted((string)($p->id ?? '')) ? '<p><small>Posted to the Telegram group.</small></p>' : '')
+            . ($kind === 'announcements' && $feed && !tgFeedAnnouncementPosted((string)($p->id ?? '')) ? '<form method="post" action="/admin/?do=post-telegram">' . $hidden . '<input type="hidden" name="id" value="' . adminH($p->id ?? '') . '"><button type="submit">Post to the Telegram group</button></form>' : '')
             . '<details><summary>Remove</summary><form method="post" action="/admin/?do=post-delete">' . $hidden . '<input type="hidden" name="id" value="' . adminH($p->id ?? '') . '"><button type="submit">Remove this post from the site</button></form></details></article>';
     }
     adminPage($module['label'], contentMessage() . ($error ? '<p class="notice error" role="alert">' . adminH($error) . '</p>' : '')

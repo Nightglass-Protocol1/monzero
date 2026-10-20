@@ -6,11 +6,13 @@ from pathlib import Path
 import requests
 root=Path(__file__).resolve().parents[2];site=root/'website'
 ADDR=['FWPbFrwvRqpWTMDJAAeT3wAGsCUvERHyEAZJySDBDTKJJxr4q9gNStxSZghEAmtgvd49oySaDP9WGV1KVDeDXFBfM748KwK']
-sent=[];blocked=set();calls=[];feed_fail=[False]
+sent=[];blocked=set();calls=[];feed_fail=[False];feed_drop=[False]
 class Telegram(http.server.BaseHTTPRequestHandler):
  def do_POST(self):
   body=json.loads(self.rfile.read(int(self.headers['Content-Length'])) or b'{}')
   calls.append((self.path.rsplit('/',1)[1],body))
+  if self.path.endswith('/sendMessage') and body['chat_id']=='@MonzeroOfficial' and feed_drop[0]:
+   sent.append((body['chat_id'],body['text']));self.connection.close();return  # delivered, but the reply is lost
   if self.path.endswith('/sendMessage'):
    if body['chat_id'] in blocked:r={'ok':False,'error_code':403,'description':'Forbidden: bot was blocked by the user'}
    elif body['chat_id']=='@MonzeroOfficial' and feed_fail[0]:r={'ok':False,'error_code':400,'description':'Bad Request: not enough rights to send text messages to the chat'}
@@ -121,10 +123,40 @@ with tempfile.TemporaryDirectory() as tmp:
   assert 'content-saved' in r.headers['Location'] and not any('Website only' in t for t in feed())
   pid=json.loads((tmp/'content/community/announcements.json').read_text())['records'][0]['id']
   r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid},allow_redirects=False);assert 'telegram-sent' in r.headers['Location'] and 'Website only' in feed()[-1]
+  n=len(feed());r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid},allow_redirects=False)
+  assert 'telegram-already' in r.headers['Location'] and len(feed())==n  # never twice
+  assert owner.post(base+'/admin/?do=post-add',data={**fields(),'kind':'announcements','title':'Second post','body':'Later.','url':''},allow_redirects=False).status_code==303
+  pid2=json.loads((tmp/'content/community/announcements.json').read_text())['records'][0]['id']
   feed_fail[0]=True
-  r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid},allow_redirects=False);assert 'telegram-failed' in r.headers['Location']
+  r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid2},allow_redirects=False);assert 'telegram-failed' in r.headers['Location']
   assert 'not enough rights' in owner.get(base+'/admin/?view=content&kind=announcements').text
   feed_fail[0]=False
+  r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid2},allow_redirects=False);assert 'telegram-sent' in r.headers['Location']  # a clear refusal may be retried
+  # Major news to the group, never twice.
+  def story(title,url,outlets,also=()):return {'title':title,'url':url,'source':'Alpha','published_at':int(time.time())-60,'outlets':outlets,'also':[{'source':'Beta','url':u} for u in also]}
+  def news(*stories):
+   out=subprocess.run(['php','-r',f'require "{site}/lib/telegram.php"; echo tgFeedNews(tgConfig(), json_decode(stream_get_contents(STDIN), true), time());'],input=json.dumps({'stories':list(stories)}),env=env,capture_output=True,text=True,timeout=60)
+   assert out.returncode==0,out.stderr;return int(out.stdout)
+  old=story('Old major story already on the page','https://a.example/old',6)
+  k=news(old);assert k==0,('first run sent',k,feed()[-2:])  # first run only records
+  assert news(old)==0
+  etf=story('BlackRock files for a third Bitcoin ETF with downside protection','https://a.example/etf',5,['https://b.example/etf'])
+  assert news(etf,story('Small story covered by few outlets','https://a.example/small',3))==1
+  post=feed()[-1];assert post.startswith('📰 BlackRock files') and 'covered by 5 outlets' in post and 'https://a.example/etf' in post
+  assert calls[-1][1]['disable_web_page_preview'] is False
+  assert news(etf)==0 and news(story('Another headline about it','https://c.example/x',7,['https://b.example/etf']))==0  # same links
+  assert news(story('BlackRock files for third Bitcoin ETF offering downside protection','https://d.example/new',8))==0  # same story, all-new links
+  titles=['Visa launches stablecoin payouts for merchants','Kazakhstan court restricts six exchanges','Ethereum developers schedule Glamsterdam upgrade',
+          'Hackers drain lending protocol on Arbitrum','Japan regulator approves yen stablecoin issuer']
+  many=[story(t,f'https://a.example/m{i}',6) for i,t in enumerate(titles)]
+  assert news(*many)==3 and news(*many)==2  # at most 3 per upload; the rest next time, none twice
+  db.execute("UPDATE meta SET value=json_set(value,'$.count',12) WHERE key='feed_news'");db.commit()
+  assert news(story('Fresh story over the daily limit','https://a.example/limit',9))==0
+  db.execute("UPDATE meta SET value=json_set(value,'$.count',0) WHERE key='feed_news'");db.commit()
+  feed_drop[0]=True;n=len(feed());assert news(story('Story whose reply is lost in transit','https://a.example/lost',6))==0;feed_drop[0]=False
+  assert len(feed())==n+1 and news(story('Story whose reply is lost in transit','https://a.example/lost',6))==0 and len(feed())==n+1  # delivered once, not retried
+  feed_fail[0]=True;assert news(story('Story Telegram refuses at first','https://a.example/refused',6))==0;feed_fail[0]=False
+  assert news(story('Story Telegram refuses at first','https://a.example/refused',6))==1  # a clear refusal is retried
   # A chat that blocked the bot is forgotten; /stop all deletes everything.
   say(3,'/watch '+ADDR[0]);blocked.add(3);check()  # first check for chat 3 only records payments
   pool['payments']=[{'timestamp':3,'txid':'c'*64,'amount':1}]+pool['payments'];check()
@@ -141,4 +173,4 @@ with tempfile.TemporaryDirectory() as tmp:
    pg.close();(private/'telegram-config.php').unlink()
    pg=browser.new_page();pg.goto(base+'/mining/dashboard/');pg.wait_for_timeout(800);assert pg.locator('#telegram-alerts').is_hidden();browser.close()
  finally:server.terminate();server.wait(timeout=5);tg.shutdown();pl.shutdown()
-print('Telegram: webhook secret, commands, limits, private chats only, drop/recovery/offline/online/payout alerts, pool outage silence, rate limit, blocked chats, /stop all, check-in trigger, group feed (pool update, announcements, pin, failures), dashboard card passed')
+print('Telegram: webhook secret, commands, limits, private chats only, drop/recovery/offline/online/payout alerts, pool outage silence, rate limit, blocked chats, /stop all, check-in trigger, group feed (pool update, announcements once, major news once: links, similar headlines, lost replies, refusals, caps), dashboard card passed')
