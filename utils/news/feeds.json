@@ -1,5 +1,5 @@
 {
-  "note": "Crypto news outlets read for /news/. Order is the tie-break when several outlets cover one story. All verified reachable on 2026-10-20.",
+  "note": "Crypto news outlets read for /news/. Order is the tie-break when several outlets cover one story. All verified reachable on 2026-10-20. AMBCrypto removed 2026-10-20: it answers 403 to the EU node (bot protection).",
   "feeds": [
     {"name": "CoinDesk", "home": "https://www.coindesk.com/", "feed": "https://www.coindesk.com/arc/outboundfeeds/rss/", "region": "US"},
     {"name": "Cointelegraph", "home": "https://cointelegraph.com/", "feed": "https://cointelegraph.com/rss", "region": "Global"},
@@ -22,7 +22,6 @@
     {"name": "CryptoPotato", "home": "https://cryptopotato.com/", "feed": "https://cryptopotato.com/feed/", "region": "Europe"},
     {"name": "The Daily Hodl", "home": "https://dailyhodl.com/", "feed": "https://dailyhodl.com/feed/", "region": "US"},
     {"name": "Coinspeaker", "home": "https://www.coinspeaker.com/", "feed": "https://www.coinspeaker.com/feed/", "region": "Europe"},
-    {"name": "AMBCrypto", "home": "https://ambcrypto.com/", "feed": "https://ambcrypto.com/feed/", "region": "Asia"},
     {"name": "CoinGape", "home": "https://coingape.com/", "feed": "https://coingape.com/feed/", "region": "Asia"},
     {"name": "NewsBTC", "home": "https://www.newsbtc.com/", "feed": "https://www.newsbtc.com/feed/", "region": "Global"},
     {"name": "Bitcoinist", "home": "https://bitcoinist.com/", "feed": "https://bitcoinist.com/feed/", "region": "Global"},
