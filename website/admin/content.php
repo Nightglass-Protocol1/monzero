@@ -7,6 +7,7 @@ if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_co
 require_once dirname(__DIR__) . '/lib/catalogs.php';
 require_once dirname(__DIR__) . '/faucet/lib.php';
 require_once dirname(__DIR__) . '/lib/voting.php';
+require_once dirname(__DIR__) . '/lib/telegram.php';
 
 const CONTENT_HISTORY_KEEP = 50;
 const CONTENT_MODULES = [
@@ -115,7 +116,7 @@ function contentAction(string $do, array $user): bool {
         header('Location: /admin/?view=proposals&msg=content-saved', true, 303);
         exit;
     }
-    if (!in_array($do, ['content-save', 'content-delete', 'post-add', 'post-delete'], true)) return false;
+    if (!in_array($do, ['content-save', 'content-delete', 'post-add', 'post-delete', 'post-telegram'], true)) return false;
     $kind = contentKind();
     if (!contentAllowed($user, $kind)) adminDeny('You cannot edit this content.');
     [$data, $version] = contentLoad($kind);
@@ -132,11 +133,22 @@ function contentAction(string $do, array $user): bool {
         $data->records = $records;
         $error = contentSave($kind, $data, $posted, $actor, 'content.post_added', ['id' => $id, 'title' => mb_substr($title, 0, 120)]);
         if ($error) { http_response_code(400); contentPostsView($user, $kind, $error, ['title' => $title, 'body' => $body, 'url' => $url]); exit; }
+        if ($kind === 'announcements' && ($_POST['telegram'] ?? '') === '1' && ($tg = contentFeed())) {
+            $sent = tgFeedAnnouncement($tg, $records[0]);
+            adminAudit($actor, $sent ? 'telegram.posted' : 'telegram.failed', ['id' => $id]);
+            contentBack($kind, $sent ? 'content-saved-telegram' : 'telegram-failed');
+        }
         contentBack($kind, 'content-saved');
     }
     $id = (string)($_POST['id'] ?? '');
     $index = null;
     foreach ($records as $i => $r) if (($r->id ?? null) === $id) $index = $i;
+    if ($do === 'post-telegram') {
+        if ($kind !== 'announcements' || $index === null || !($tg = contentFeed())) adminDeny('This post cannot be sent to Telegram.', 409);
+        $sent = tgFeedAnnouncement($tg, $records[$index]);
+        adminAudit($actor, $sent ? 'telegram.posted' : 'telegram.failed', ['id' => $id]);
+        contentBack($kind, $sent ? 'telegram-sent' : 'telegram-failed');
+    }
     if ($do === 'content-delete' || $do === 'post-delete') {
         if ($index === null) adminDeny('That entry no longer exists.', 409);
         array_splice($records, $index, 1);
@@ -162,10 +174,14 @@ function contentAction(string $do, array $user): bool {
     contentBack($kind, 'content-saved');
 }
 
+// Telegram feed configuration, or null when the bot or its group feed is not set up.
+function contentFeed(): ?array { $c = tgConfig(); return $c && $c['feed_chat'] ? $c : null; }
+
 function contentCsrf(array $user): string { return '<input type="hidden" name="csrf" value="' . adminH($user['csrf']) . '">'; }
 
 function contentMessage(): string {
-    $messages = ['content-saved' => 'Saved and published.', 'content-deleted' => 'Removed and published.', 'faucet-on' => 'Faucet claims resumed.', 'faucet-off' => 'Faucet claims paused.'];
+    $messages = ['content-saved' => 'Saved and published.', 'content-saved-telegram' => 'Published on the website and posted to the Telegram group.',
+        'telegram-sent' => 'Posted to the Telegram group.', 'telegram-failed' => 'The Telegram group did not accept the post. Check that the bot is still an admin there (details below).', 'content-deleted' => 'Removed and published.', 'faucet-on' => 'Faucet claims resumed.', 'faucet-off' => 'Faucet claims paused.'];
     $m = $messages[$_GET['msg'] ?? ''] ?? '';
     return $m ? '<p class="notice" role="status">' . adminH($m) . '</p>' : '';
 }
@@ -174,10 +190,17 @@ function contentPostsView(array $user, string $kind, string $error = '', array $
     $module = CONTENT_MODULES[$kind];
     [$data, $version] = contentLoad($kind);
     $hidden = contentCsrf($user) . '<input type="hidden" name="kind" value="' . adminH($kind) . '"><input type="hidden" name="version" value="' . adminH($version) . '">';
+    $feed = $kind === 'announcements' ? contentFeed() : null;
+    $feedNote = '';
+    if ($feed) {
+        $feedError = tgMeta('feed_error');
+        $feedNote = '<p>Telegram group: <code>' . adminH($feed['feed_chat']) . '</code>' . ($feed['feed_pin'] ? ' (announcements are pinned)' : '') . '.' . ($feedError ? ' Last problem: ' . adminH($feedError) : '') . '</p>';
+    }
     $list = '';
     foreach ($data->records ?? [] as $p) {
         $list .= '<article><h3>' . adminH($p->title ?? '') . '</h3><p><small>' . adminH($p->date ?? '') . '</small></p><p>' . nl2br(adminH($p->body ?? '')) . '</p>'
             . (($p->url ?? null) ? '<p><a href="' . adminH($p->url) . '">' . adminH($p->url) . '</a></p>' : '')
+            . ($kind === 'announcements' && $feed ? '<form method="post" action="/admin/?do=post-telegram">' . $hidden . '<input type="hidden" name="id" value="' . adminH($p->id ?? '') . '"><button type="submit">Post to the Telegram group</button></form>' : '')
             . '<details><summary>Remove</summary><form method="post" action="/admin/?do=post-delete">' . $hidden . '<input type="hidden" name="id" value="' . adminH($p->id ?? '') . '"><button type="submit">Remove this post from the site</button></form></details></article>';
     }
     adminPage($module['label'], contentMessage() . ($error ? '<p class="notice error" role="alert">' . adminH($error) . '</p>' : '')
@@ -186,7 +209,8 @@ function contentPostsView(array $user, string $kind, string $error = '', array $
         . '<label>Title<input name="title" maxlength="120" required value="' . adminH($draft['title'] ?? '') . '"></label>'
         . '<label>Text<textarea name="body" rows="6" maxlength="1500" required>' . adminH($draft['body'] ?? '') . '</textarea></label>'
         . '<label>Link (optional)<input name="url" placeholder="https://… or /roadmap/" value="' . adminH($draft['url'] ?? '') . '"></label>'
-        . '<button type="submit">Publish</button></form></section>'
+        . ($feed ? '<label class="check"><input type="checkbox" name="telegram" value="1" checked> Also post to the Telegram group</label>' : '')
+        . '<button type="submit">Publish</button></form></section>' . $feedNote
         . '<section><h2>Published</h2>' . ($list ?: '<p>Nothing published yet.</p>') . '</section>', $user);
 }
 

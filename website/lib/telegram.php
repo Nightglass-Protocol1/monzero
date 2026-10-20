@@ -22,7 +22,12 @@ function tgConfig(): ?array {
     if (!is_array($c) || !is_string($c['bot_token'] ?? null) || !preg_match('/\A\d{5,15}:[A-Za-z0-9_-]{30,60}\z/', $c['bot_token'])
         || !is_string($c['webhook_secret'] ?? null) || !preg_match('/\A[A-Za-z0-9_-]{32,256}\z/', $c['webhook_secret'])) return null;
     return ['bot_token' => $c['bot_token'], 'webhook_secret' => $c['webhook_secret'], 'bot_username' => is_string($c['bot_username'] ?? null) ? $c['bot_username'] : '',
-        'api' => is_string($c['api'] ?? null) ? $c['api'] : 'https://api.telegram.org', 'pool_api' => is_string($c['pool_api'] ?? null) ? $c['pool_api'] : 'https://pool.monzero.org/api/miner'];
+        'api' => is_string($c['api'] ?? null) ? $c['api'] : 'https://api.telegram.org', 'pool_api' => is_string($c['pool_api'] ?? null) ? $c['pool_api'] : 'https://pool.monzero.org/api/miner',
+        // Optional public feed: the community group or channel (@name or numeric id) the bot posts to.
+        'feed_chat' => is_string($c['feed_chat'] ?? null) && preg_match('/\A(@[A-Za-z][A-Za-z0-9_]{4,31}|-?\d{5,20})\z/', $c['feed_chat']) ? $c['feed_chat'] : null,
+        'feed_pin' => ($c['feed_pin'] ?? true) === true,
+        'feed_pool_hours' => is_int($c['feed_pool_hours'] ?? null) && $c['feed_pool_hours'] >= 0 && $c['feed_pool_hours'] <= 168 ? $c['feed_pool_hours'] : 24,
+        'pool_stats' => is_string($c['pool_stats'] ?? null) ? $c['pool_stats'] : 'https://pool.monzero.org/api/stats'];
 }
 
 function tgDb(): PDO {
@@ -71,6 +76,61 @@ function tgChat(int $chat): array {
     $stmt = $db->prepare('SELECT * FROM chats WHERE chat_id = ?');
     $stmt->execute([$chat]);
     return $stmt->fetch();
+}
+
+function tgMeta(string $key, ?string $value = null): ?string {
+    $db = tgDb();
+    if ($value !== null) {
+        $db->prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value')->execute([$key, $value]);
+        return $value;
+    }
+    $stmt = $db->prepare('SELECT value FROM meta WHERE key = ?');
+    $stmt->execute([$key]);
+    $v = $stmt->fetchColumn();
+    return $v === false ? null : (string)$v;
+}
+
+// Post to the public feed (community group or channel). Never includes miner addresses.
+function tgFeedSend(array $config, string $text, bool $pin = false): bool {
+    if (!$config['feed_chat']) return false;
+    $r = tgApi($config, 'sendMessage', ['chat_id' => $config['feed_chat'], 'text' => mb_substr($text, 0, 3800), 'disable_web_page_preview' => true]);
+    if (($r['ok'] ?? false) !== true) {
+        tgMeta('feed_error', gmdate('Y-m-d H:i') . ' UTC: ' . mb_substr((string)($r['description'] ?? 'no answer from Telegram'), 0, 200));
+        return false;
+    }
+    tgMeta('feed_ok', (string)time());
+    if ($pin && isset($r['result']['message_id'])) tgApi($config, 'pinChatMessage', ['chat_id' => $config['feed_chat'], 'message_id' => $r['result']['message_id'], 'disable_notification' => false]);
+    return true;
+}
+
+function tgFeedAnnouncement(array $config, object $post, string $site = 'https://monzero.org'): bool {
+    $url = $post->url ?? null;
+    $link = is_string($url) ? (str_starts_with($url, '/') ? $site . $url : $url) : $site . '/community/';
+    return tgFeedSend($config, "📢 {$post->title}\n\n{$post->body}\n\n$link", $config['feed_pin']);
+}
+
+// Pool update every feed_pool_hours: blocks found since the last update (from the pool's running
+// total), latest height, hashrate and miner count. The first run only records a baseline.
+function tgFeedPool(array $config, int $now): bool {
+    if (!$config['feed_chat'] || $config['feed_pool_hours'] === 0) return false;
+    $last = json_decode((string)tgMeta('feed_pool'), true);
+    if (is_array($last) && $now - (int)$last['at'] < $config['feed_pool_hours'] * 3600) return false;
+    $context = stream_context_create(['http' => ['timeout' => 6, 'ignore_errors' => true, 'follow_location' => 0]]);
+    $stats = json_decode((string)@file_get_contents($config['pool_stats'], false, $context, 0, 4194304), true);
+    $pool = $stats['pool'] ?? null;
+    if (!is_array($pool) || !is_int($pool['totalBlocks'] ?? null) || !is_array($pool['blocks'] ?? null)) return false;
+    $height = (int)($pool['blocks'][0]['height'] ?? 0);
+    tgMeta('feed_pool', json_encode(['at' => $now, 'total' => $pool['totalBlocks'], 'height' => $height]));
+    if (!is_array($last)) return false;
+    $found = $pool['totalBlocks'] - (int)$last['total'];
+    if ($found <= 0) return false;
+    $hours = max(1, (int)round(($now - (int)$last['at']) / 3600));
+    $rate = (float)($pool['hashrate'] ?? 0);
+    $rateText = $rate >= 1e6 ? round($rate / 1e6, 2) . ' MH/s' : ($rate >= 1e3 ? round($rate / 1e3, 1) . ' kH/s' : round($rate) . ' H/s');
+    $text = "⛏ Monzero pool update\n\nBlocks found in the last $hours hours: " . number_format($found) . ($height > (int)$last['height'] ? ' (heights ' . number_format((int)$last['height'] + 1) . '–' . number_format($height) . ')' : '')
+        . "\nPool hashrate: $rateText from " . (int)($pool['miners'] ?? 0) . ' miners'
+        . "\n\nMine with the pool: https://pool.monzero.org/\nAlerts for your rigs: t.me/" . ($config['bot_username'] ?: 'Monzero_bot');
+    return tgFeedSend($config, $text);
 }
 
 function tgShort(string $address): string { return substr($address, 0, 8) . '…' . substr($address, -6); }
@@ -153,6 +213,7 @@ function tgCheckAll(int $now, bool $force = false): int {
     $last = (int)($db->query("SELECT value FROM meta WHERE key = 'checked_at'")->fetchColumn() ?: 0);
     if (!$force && $now - $last < TG_CHECK_SECONDS) return 0;
     $db->prepare("INSERT INTO meta (key, value) VALUES ('checked_at', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value")->execute([(string)$now]);
+    try { tgFeedPool($config, $now); } catch (Throwable $e) { error_log('Monzero telegram feed: ' . $e->getMessage()); }
     $pool = [];
     $sent = 0;
     $started = microtime(true);

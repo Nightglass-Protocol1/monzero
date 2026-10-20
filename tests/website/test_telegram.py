@@ -6,20 +6,25 @@ from pathlib import Path
 import requests
 root=Path(__file__).resolve().parents[2];site=root/'website'
 ADDR=['FWPbFrwvRqpWTMDJAAeT3wAGsCUvERHyEAZJySDBDTKJJxr4q9gNStxSZghEAmtgvd49oySaDP9WGV1KVDeDXFBfM748KwK']
-sent=[];blocked=set()
+sent=[];blocked=set();calls=[];feed_fail=[False]
 class Telegram(http.server.BaseHTTPRequestHandler):
  def do_POST(self):
   body=json.loads(self.rfile.read(int(self.headers['Content-Length'])) or b'{}')
+  calls.append((self.path.rsplit('/',1)[1],body))
   if self.path.endswith('/sendMessage'):
    if body['chat_id'] in blocked:r={'ok':False,'error_code':403,'description':'Forbidden: bot was blocked by the user'}
-   else:sent.append((body['chat_id'],body['text']));r={'ok':True}
+   elif body['chat_id']=='@MonzeroOfficial' and feed_fail[0]:r={'ok':False,'error_code':400,'description':'Bad Request: not enough rights to send text messages to the chat'}
+   else:sent.append((body['chat_id'],body['text']));r={'ok':True,'result':{'message_id':len(sent)}}
   else:r={'ok':True}
   b=json.dumps(r).encode();self.send_response(200);self.end_headers();self.wfile.write(b)
  def log_message(self,*a):pass
-pool={'up':True,'hashrate':1000,'payments':[{'timestamp':1,'txid':'a'*64,'amount':50000000000}]}
+pool={'up':True,'hashrate':1000,'payments':[{'timestamp':1,'txid':'a'*64,'amount':50000000000}],'total':2264,'height':13084}
 class Pool(http.server.BaseHTTPRequestHandler):
  def do_GET(self):
   if not pool['up']:self.send_response(503);self.end_headers();return
+  if self.path.startswith('/api/stats'):
+   b=json.dumps({'pool':{'hashrate':374578.0,'miners':10,'totalBlocks':pool['total'],'blocks':[{'height':pool['height'],'finder':'FRZiwpLV…XRwR','reward':1}]}}).encode()
+   self.send_response(200);self.end_headers();self.wfile.write(b);return
   address=urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)['address'][0]
   b=json.dumps({'address':address,'hashrate':pool['hashrate'],'pending':0,'paid':0,'workers':[],'payments':pool['payments']}).encode()
   self.send_response(200);self.end_headers();self.wfile.write(b)
@@ -85,6 +90,41 @@ with tempfile.TemporaryDirectory() as tmp:
   sig=hmac.new(status_secret.encode(),f'{ts}\n{nonce}\n'.encode()+body,hashlib.sha256).hexdigest()
   r=requests.post(base+'/api/status/',data=body,headers={'X-Status-Timestamp':ts,'X-Status-Nonce':nonce,'X-Status-Signature':sig},timeout=60);assert r.status_code==200,r.text
   assert int(db.execute("SELECT value FROM meta WHERE key='checked_at'").fetchone()[0])>=int(ts)
+  # Group feed: pool update every N hours (first run records), announcements from admin with pinning.
+  cfg=(private/'telegram-config.php').read_text().replace("];\n",f", 'feed_chat' => '@MonzeroOfficial', 'feed_pool_hours' => 24, 'pool_stats' => 'http://127.0.0.1:{pl.server_port}/api/stats'];\n")
+  (private/'telegram-config.php').write_text(cfg)
+  feed=lambda:[t for c,t in sent if c=='@MonzeroOfficial']
+  db.execute("DELETE FROM meta WHERE key='feed_pool'");db.commit();check();assert not feed()  # baseline only
+  db.execute("UPDATE meta SET value=? WHERE key='feed_pool'",(json.dumps({'at':int(time.time())-25*3600,'total':2200,'height':13000}),));db.commit()
+  check();post=feed()[-1];assert 'Blocks found in the last 25 hours: 64 (heights 13,001–13,084)' in post and '374.6 kH/s from 10 miners' in post,post
+  assert 'FRZiwpLV' not in post and 't.me/MonzeroAlertsBot' in post
+  check();assert len(feed())==1  # next update only after 24 hours
+  mail=tmp/'mail.jsonl';env2={**env,'MONZERO_ADMIN_DB':str(private/'admin.sqlite'),'MONZERO_ADMIN_MAIL_LOG':str(mail),'MONZERO_ADMIN_BASE_URL':base,'MONZERO_CONTENT_ROOT':str(tmp/'content')}
+  (tmp/'content/community').mkdir(parents=True)
+  assert subprocess.run(['php',str(site/'admin/bootstrap.php'),'security@monzero.org'],env=env2,capture_output=True).returncode==0
+  server.terminate();server.wait(timeout=5)
+  server=subprocess.Popen(['php','-d','opcache.enable=0','-S',f'127.0.0.1:{port}','-t',str(site)],env=env2,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+  for _ in range(100):
+   try:
+    with socket.create_connection(('127.0.0.1',port),timeout=.2):break
+   except OSError:time.sleep(.1)
+  import re
+  token=re.search(r'\?setup=([A-Za-z0-9_-]{43})',json.loads(mail.read_text().splitlines()[-1])['body']).group(1)
+  owner=requests.Session();assert owner.post(base+'/admin/?do=setup',data={'token':token,'password':'correct horse battery staple','confirm':'correct horse battery staple'},allow_redirects=False).status_code==303
+  page=owner.get(base+'/admin/?view=content&kind=announcements').text;assert 'Also post to the Telegram group' in page and '@MonzeroOfficial' in page
+  fields=lambda:{k:re.search(rf'name="{k}" value="([^"]*)"',owner.get(base+'/admin/?view=content&kind=announcements').text).group(1) for k in ['csrf','version']}
+  r=owner.post(base+'/admin/?do=post-add',data={**fields(),'kind':'announcements','title':'Hello group','body':'First line.\nSecond line.','url':'/faucet/','telegram':'1'},allow_redirects=False)
+  assert r.status_code==303 and 'content-saved-telegram' in r.headers['Location'],r.headers
+  msg=feed()[-1];assert msg.startswith('📢 Hello group') and 'Second line.' in msg and 'https://monzero.org/faucet/' in msg,msg
+  assert calls[-1][0]=='pinChatMessage' and calls[-1][1]['chat_id']=='@MonzeroOfficial'
+  r=owner.post(base+'/admin/?do=post-add',data={**fields(),'kind':'announcements','title':'Website only','body':'Not for Telegram.','url':''},allow_redirects=False)
+  assert 'content-saved' in r.headers['Location'] and not any('Website only' in t for t in feed())
+  pid=json.loads((tmp/'content/community/announcements.json').read_text())['records'][0]['id']
+  r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid},allow_redirects=False);assert 'telegram-sent' in r.headers['Location'] and 'Website only' in feed()[-1]
+  feed_fail[0]=True
+  r=owner.post(base+'/admin/?do=post-telegram',data={**fields(),'kind':'announcements','id':pid},allow_redirects=False);assert 'telegram-failed' in r.headers['Location']
+  assert 'not enough rights' in owner.get(base+'/admin/?view=content&kind=announcements').text
+  feed_fail[0]=False
   # A chat that blocked the bot is forgotten; /stop all deletes everything.
   say(3,'/watch '+ADDR[0]);blocked.add(3);check()  # first check for chat 3 only records payments
   pool['payments']=[{'timestamp':3,'txid':'c'*64,'amount':1}]+pool['payments'];check()
@@ -101,4 +141,4 @@ with tempfile.TemporaryDirectory() as tmp:
    pg.close();(private/'telegram-config.php').unlink()
    pg=browser.new_page();pg.goto(base+'/mining/dashboard/');pg.wait_for_timeout(800);assert pg.locator('#telegram-alerts').is_hidden();browser.close()
  finally:server.terminate();server.wait(timeout=5);tg.shutdown();pl.shutdown()
-print('Telegram: webhook secret, commands, limits, private chats only, drop/recovery/offline/online/payout alerts, pool outage silence, rate limit, blocked chats, /stop all, check-in trigger, dashboard card passed')
+print('Telegram: webhook secret, commands, limits, private chats only, drop/recovery/offline/online/payout alerts, pool outage silence, rate limit, blocked chats, /stop all, check-in trigger, group feed (pool update, announcements, pin, failures), dashboard card passed')

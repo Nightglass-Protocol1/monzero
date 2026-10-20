@@ -1458,3 +1458,16 @@ secret-token header; group chats are ignored. Off until the owner runs
 `utils/website/telegram-setup.sh` (token entered at a hidden prompt, stored in
 `~/monzero-private/telegram-config.php`). The pool dashboard shows the bot link
 only when configured. Tests: `test_telegram.py` (fake Telegram and pool APIs).
+
+### Telegram group feed — 2026-10-20 (Claude)
+
+With `feed_chat` set (`utils/website/telegram-feed.sh`, default @MonzeroOfficial;
+it checks with Telegram that the bot may post there), @Monzero_bot posts website
+announcements to the group (a ticked "Also post to the Telegram group" box on the
+admin form, plus a "Post to the Telegram group" button on existing posts; pinned
+unless `--no-pin`) and a pool update every `feed_pool_hours` (default 24): blocks
+found since the last update from the pool's running total, latest heights, pool
+hashrate and miner count. No finder or miner addresses are posted. The first run
+only records a starting point. Failures (for example the bot lost its admin
+rights) are shown on the admin announcements page. Personal alerts stay in
+private chats only.
