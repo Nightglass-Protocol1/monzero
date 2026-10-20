@@ -1,9 +1,9 @@
 /* Shared site header for every page, loaded after the page's own styles:
-   the same links everywhere; below 1100px they fold into the Menu button. */
+   the same links everywhere; below 1340px they fold into the Menu button. */
 .site-header { position: relative !important; width: min(1280px, 100% - 96px) !important; max-width: none !important; margin-inline: auto !important; padding-inline: 0 !important; }
 .site-header .menu-toggle { display: none; padding: 8px 14px !important; border: 1px solid var(--line, #293b49) !important; border-radius: 8px !important; background: transparent !important; color: var(--ink, #e8eef3) !important; font: 500 14px/1.2 var(--sans, system-ui, sans-serif) !important; box-shadow: none !important; }
 .site-header nav a[aria-current="page"] { color: var(--ink, #e8eef3); }
-@media (max-width: 1100px) {
+@media (max-width: 1339px) {
   .site-header { position: relative; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 16px; }
   .site-header .menu-toggle { display: block; margin-left: auto; cursor: pointer; }
   .site-header nav { display: none !important; position: absolute; top: 100%; left: 0; right: 0; z-index: 40; width: auto; padding: 16px 20px; flex-direction: column; align-items: stretch; gap: 4px; background: var(--surface, #101a24); border: 1px solid var(--line, #293b49); border-radius: 0 0 12px 12px; }
@@ -30,7 +30,7 @@
 
 /* One desktop menu everywhere: same spacing, centred between logo and actions,
    and the current page shown by colour only (no underline). */
-@media (min-width: 1101px) {
+@media (min-width: 1340px) {
   .site-header nav { gap: clamp(10px, calc((100vw - 1000px) / 11), 24px) !important; margin-inline: auto !important; justify-content: center !important; align-items: center !important; flex-wrap: nowrap !important; width: auto !important; padding: 0 !important; }
   .site-header nav a { padding: 0 !important; border: 0 !important; font-size: 13px !important; line-height: 1.6 !important; color: var(--muted, #a8bac8) !important; white-space: nowrap; }
   .site-header nav a:hover, .site-header nav a[aria-current="page"] { color: var(--ink, #edf3f7) !important; }
@@ -44,3 +44,36 @@
 .site-header .header-cta { font: 400 12px/1.7 "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; letter-spacing: normal !important; padding: 9px 17px !important; border: 1px solid var(--line, #293b49) !important; border-radius: 30px !important; color: #edf3f7 !important; background: transparent !important; text-decoration: none !important; white-space: nowrap; }
 .site-header .header-cta:hover { color: var(--accent, #69d5c2) !important; }
 .site-header .menu-toggle { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }
+
+/* Submenus: hover, keyboard focus or the ▾ button opens a group on desktop; in the mobile Menu the
+   ▾ button expands it in place. Without JavaScript the groups stay expanded in the mobile Menu. */
+.site-header .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.site-header .nav-group { position: relative; display: flex; align-items: center; gap: 2px; }
+.site-header .nav-group.current > a { color: var(--ink, #edf3f7) !important; }
+.site-header .nav-sub-toggle { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin: 0; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--muted, #a8bac8); cursor: pointer; font: inherit; }
+.site-header .nav-sub-toggle::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .15s ease; }
+.site-header .nav-sub-toggle[aria-expanded="true"]::before { transform: translateY(1px) rotate(-135deg); }
+.site-header .nav-sub-toggle:hover, .site-header .nav-sub-toggle:focus-visible { color: var(--ink, #edf3f7); }
+.site-header .nav-sub-toggle:focus-visible { outline: 2px solid var(--accent, #69d5c2); outline-offset: 2px; }
+.site-header .nav-sub { display: none; }
+.site-header .nav-sub a[aria-current="page"] { color: var(--ink, #edf3f7) !important; }
+@media (min-width: 1340px) {
+  .site-header .nav-sub { position: absolute; top: 100%; left: -14px; z-index: 50; min-width: 190px; padding: 14px 0 0; }
+  .site-header .nav-sub::before { content: ""; position: absolute; inset: 14px 0 0; z-index: -1; background: var(--surface, #111c27); border: 1px solid var(--line, #293b49); border-radius: 10px; box-shadow: 0 12px 28px rgba(0, 0, 0, .35); }
+  .site-header .nav-group:hover > .nav-sub, .site-header .nav-group:focus-within > .nav-sub, .site-header .nav-group.open > .nav-sub { display: block; }
+  .site-header .nav-group.dismissed > .nav-sub { display: none; }
+  .site-header nav .nav-sub a { display: block !important; padding: 8px 16px !important; font-size: 13px !important; line-height: 1.5 !important; }
+  .site-header nav .nav-sub a:first-child { margin-top: 6px !important; }
+  .site-header nav .nav-sub a:last-child { margin-bottom: 6px !important; }
+  .site-header nav .nav-sub a:hover, .site-header nav .nav-sub a:focus-visible { color: var(--ink, #edf3f7) !important; background: var(--surface-raised, rgba(255, 255, 255, .04)); }
+}
+@media (prefers-reduced-motion: reduce) { .site-header .nav-sub-toggle::before { transition: none; } }
+@media (max-width: 1339px) {
+  .site-header .nav-group { flex-wrap: wrap; justify-content: space-between; }
+  .site-header .nav-group > a { flex: 1; }
+  .site-header .nav-sub-toggle { width: 40px; height: 40px; }
+  .site-header .nav-sub { flex-basis: 100%; padding: 0 0 6px 14px; border-left: 1px solid var(--line, #293b49); margin-left: 4px; }
+  .site-header .nav-group.open > .nav-sub, .site-header nav:not(.nav-js) .nav-sub { display: block; }
+  .site-header nav:not(.nav-js) .nav-sub-toggle { display: none; }
+  .site-header nav .nav-sub a { padding: 8px 4px !important; font-size: 14px !important; }
+}

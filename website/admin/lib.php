@@ -276,8 +276,8 @@ function adminPage(string $title, string $body, ?array $user): void {
         $nav .= '<form method="post" action="/admin/?do=logout" class="inline"><input type="hidden" name="csrf" value="' . adminH($user['csrf']) . '"><button type="submit">Sign out</button></form>';
     }
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>'
-        . adminH($title) . ' · Monzero admin</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/theme.css?v=20261021-unified"><link rel="stylesheet" href="/admin/admin.css?v=20261021-unified"><link rel="stylesheet" href="/site-nav.css?v=20261021-brand"></head><body>'
+        . adminH($title) . ' · Monzero admin</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/theme.css?v=20261021-unified"><link rel="stylesheet" href="/admin/admin.css?v=20261021-unified"><link rel="stylesheet" href="/site-nav.css?v=20261020-sub"></head><body>'
         . '<header class="site-header"><a class="brand" href="/" aria-label="Monzero home"><img class="brand-mark brand-coin" src="/assets/monzero-coin-transparent-20261018-96.webp" alt="" width="32" height="32"><span>MONZERO ADMIN</span></a>'
         . ($nav ? '<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button><nav id="site-nav" aria-label="Administration">' . $nav . '</nav>' : '<a class="header-cta" href="/">Back to monzero.org</a>')
-        . '</header><main id="main"><h1>' . adminH($title) . '</h1>' . $body . '</main><script src="/site-nav.js" defer></script></body></html>';
+        . '</header><main id="main"><h1>' . adminH($title) . '</h1>' . $body . '</main><script src="/site-nav.js?v=20261020-sub" defer></script></body></html>';
 }

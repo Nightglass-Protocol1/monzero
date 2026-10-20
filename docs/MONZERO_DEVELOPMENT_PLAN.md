@@ -1360,3 +1360,20 @@ versions are not exposed by the peer list and are not shown. Tests:
 `tests/website/test_node_census.py` (aggregation, filtering, signature, replay,
 ordering, API, no stored IPs, browser under the production CSP at 390/1440 px).
 Deployment: upload the website files, then `bash utils/nodemap/deploy-eu.sh`.
+
+### Navigation submenus — 2026-10-20 (Claude)
+
+Owner request: make every new page reachable from the header, with submenus on
+hover. The owner's twelve top-level links stay exactly as they were; six of them
+gain a submenu (Explorer: explorer, network history, node map; Stats: stats,
+markets, exchanges; Public wallets: wallets, payment request; Roadmap: roadmap,
+community, bounties, ecosystem; Whitepaper: whitepaper, developers, API, Accept
+XMZ; Mining: how to mine, calculator, your mining, benchmarks, leaderboard,
+faucet). Desktop: hover, keyboard focus or the ▾ button opens a group; Escape
+closes it. Mobile Menu: ▾ expands a group in place; without JavaScript the groups
+are expanded. The Menu-button breakpoint moved from 1100 px to 1340 px because the
+▾ buttons widen the row. `utils/website/nav_submenus.py` adds the submenus to the
+existing anchors (idempotent, `--check` in the runner) and writes
+`lib/site-nav-submenus.json`, which the faucet's PHP header reads. Navigation
+checks: 26 pages at 1440/1300/390 px with and without JavaScript, every route
+reachable from every page, hover/click/Escape/keyboard/mobile expand.
