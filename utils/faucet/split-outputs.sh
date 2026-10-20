@@ -30,7 +30,9 @@ else:
     sys.exit("!! funds still locked after 40 minutes; nothing sent")
 unlocked = int(bal["unlocked_balance"])
 each = (unlocked - 2 * 10**10) // OUTPUTS  # leave 0.2 XMZ for the fee; the change becomes the 16th output
-if each < 2 * 10**11: sys.exit(f"!! only {unlocked / 1e11} XMZ unlocked; too little to split")
+cfg = json.load(open("/etc/xmzfaucet/worker.json"))
+need = int(cfg["amount_atomic"]) + int(cfg["reserve_atomic"])  # each output must cover one payout plus the reserve
+if each < need: sys.exit(f"!! only {unlocked / 1e11} XMZ unlocked; outputs of {each / 1e11:.4f} XMZ would be below {need / 1e11:.4f} XMZ")
 tx = rpc("transfer", {"destinations": [{"amount": each, "address": own}] * (OUTPUTS - 1), "account_index": 0, "priority": 0})
 print(f"   split {unlocked / 1e11:.4f} XMZ into {OUTPUTS} outputs of about {each / 1e11:.4f} XMZ: tx {tx['tx_hash']} fee {int(tx['fee']) / 1e11:.8f} XMZ")
 print("   claims stay queued until the outputs unlock (about 10 blocks)")
