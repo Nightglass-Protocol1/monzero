@@ -1402,3 +1402,19 @@ vantage's newest report privately and publishes merged counts (same tag day,
 within 45 minutes), counting a node seen by both once; the public format is
 unchanged apart from `vantages`. Tests cover overlap, ordering, malformed tags,
 wrong day and that no address reaches storage.
+
+### Admin content editing and faucet panel — 2026-10-20 (Claude)
+
+`/admin` now edits, per permission: announcements (shown on /community/), roadmap
+updates (top of /roadmap/), exchange listings, ecosystem directory, bounty board
+and CPU benchmarks (moderation: community → verified). Catalog records are edited
+one at a time as JSON with field help; posts use a simple form. Every save is
+checked by `lib/catalogs.php`, a PHP port of the page validators; a fuzz test
+(15,531 mutated catalogs) proves PHP never accepts what a page would reject. Saves
+are refused when the file changed since it was opened, keep the previous 50
+versions in `~/monzero-private/content-history/`, are written atomically and are
+audited. The faucet panel (permission `faucet`) shows the worker heartbeat,
+24-hour counts and the last 50 claims; pause/resume needs `features`. Admin-edited
+files are live-owned in `utils/website/deploy.py` and never overwritten by a
+deploy. Not built: fundraising campaign editing (the fund page is hand-written
+HTML, not data). Tests: `test_catalog_validators.py`, `test_admin_content.py`.

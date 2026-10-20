@@ -11,7 +11,7 @@
   <meta property="og:url" content="https://monzero.org/roadmap/">
   <link rel="canonical" href="https://monzero.org/roadmap/">
   <link rel="icon" href="../assets/monzero-coin-transparent-20261018-96.webp" type="image/webp">
-  <link rel="stylesheet" href="roadmap.css?v=20261014-update">
+  <link rel="stylesheet" href="roadmap.css?v=20261020-posts">
   <title>DEX Roadmap · Monzero</title>
   <link rel="stylesheet" href="../site-nav.css?v=20261020-sub">
 </head>
@@ -50,7 +50,8 @@
 
     <aside class="notice wrap" aria-label="Current trading availability"><span class="notice-icon" aria-hidden="true">!</span><p><strong>Experimental development — real-money DEX trading is not enabled.</strong> Completed funded fixtures used disposable Bitcoin, Litecoin and Dogecoin regtest funds and XMZ fakechain funds. BCH covenant, recovery, funding preparation and chain-observation checks now also pass against an isolated Bitcoin Cash Node. A complete authenticated BCH/XMZ controller success path now also passes on isolated chains, including the final XMZ payout and reserve return. A Litecoin light wallet inside the app now completes both the LTC/XMZ success path and the refund path on isolated chains, including recovery after the app or its helper is killed mid-trade. On 15–16 October, LTC/XMZ swaps and refunds also passed between two apps while both test chains produced blocks on their own clock, and the app gained an operator pause switch and trade limits. On 16 October the first LTC/XMZ swap on the public Litecoin testnet completed. Mainnet trading remains disabled in the code. Power-loss recovery, public-network operation and BCH app settlement remain unfinished. They demonstrate specific settlement and recovery paths, not a complete live exchange. Do not send funds to test the DEX.</p><span class="pill gated">Live gate closed</span></aside>
 
-    <section class="section wrap" id="website-progress" aria-labelledby="website-progress-title">
+    <section class="section wrap" id="roadmap-updates" aria-labelledby="roadmap-updates-title" hidden><h2 id="roadmap-updates-title">Latest updates</h2><ol id="update-list" class="posts"></ol></section>
+<section class="section wrap" id="website-progress" aria-labelledby="website-progress-title">
       <div class="section-heading"><div><p class="eyebrow">Website development / 19 October 2026</p><h2 id="website-progress-title">Mining tools in local preview.</h2></div><p>Website work is the current priority. These features have local test evidence; production release acceptance remains open.</p></div>
       <div class="scope-grid">
         <article><span class="pill building">Implemented · local checks passed</span><h3>Mining calculator</h3><p><a href="../mining/calculator/">Estimate mining rewards</a> using matching mainnet difficulty and block observations. Missing or stale observations are explicit. Price-dependent results remain unavailable without a validated market source.</p></article>
@@ -202,6 +203,6 @@
     window.addEventListener('hashchange',openCoinEvidence);
     openCoinEvidence();
   </script>
-  <script src="../site-nav.js?v=20261020-sub" defer></script>
+  <script type="module" src="/community/posts.mjs?v=20261020"></script><script src="../site-nav.js?v=20261020-sub" defer></script>
 </body>
 </html>

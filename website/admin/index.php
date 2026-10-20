@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/lib.php';
+require __DIR__ . '/content.php';
 
 // Hash of a random discarded value; verifying against it costs the same as a real account.
 const ADMIN_DUMMY_HASH = '$argon2id$v=19$m=65536,t=4,p=1$Qjg0RGdWMU1WaHJLTWowdw$k/8Ak5f58lfla8q4RrXJgpL8Zm8HwOFDzZPSLviW2TY';
@@ -221,6 +222,7 @@ if ($method === 'POST') {
             adminAudit($actor, "account.{$do}d", ['email' => $target['email']]);
             redirect('admins', $do . 'd');
         default:
+            if (contentAction($do, $user)) exit;
             adminDeny('Unknown action.', 400);
     }
 }
@@ -301,8 +303,10 @@ if ($view === 'audit' && adminCan($user, 'audit.view')) {
     exit;
 }
 
+if (contentView($view, $user)) exit;
+
 $permissions = adminPermissions($user);
 adminPage('Overview', $flash . '<p>Signed in as <strong>' . adminH($user['email']) . '</strong>' . ($isOwner ? ' (owner)' : '') . '.</p>'
     . '<section><h2>Your permissions</h2><ul>' . ($permissions ? implode('', array_map(fn($p) => '<li>' . adminH(ADMIN_PERMISSIONS[$p]) . '</li>', $permissions)) : '<li>None yet. Ask the owner.</li>') . '</ul>'
-    . '<p>Content editing (announcements, roadmap, catalogs and moderation) is being added module by module. Until then, site content is changed through reviewed updates to the repository.</p></section>'
+    . '</section>' . contentLinks($user)
     . ($user['totp_secret'] ? '' : '<p class="notice">Turn on authenticator codes in <a href="/admin/?view=account">your account</a> to protect this login.</p>'), $user);

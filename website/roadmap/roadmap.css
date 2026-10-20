@@ -1331,3 +1331,11 @@ h2 {
   nav { row-gap: 4px; }
   nav a { padding-block: 4px; }
 }
+
+/* Dated posts edited from /admin. */
+.posts{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:18px}
+.posts li{padding-bottom:18px;border-bottom:1px solid var(--line)}
+.posts li:last-child{border-bottom:0;padding-bottom:0}
+.posts time{font-size:13px;color:var(--muted)}
+.posts h3{margin:4px 0 8px;font-size:18px}
+.posts p{margin:0 0 8px}

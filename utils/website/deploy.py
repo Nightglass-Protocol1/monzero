@@ -24,7 +24,7 @@ LIVE_OWNED = [
     "downloads/*", "releases/*", "WHITEPAPER.md", "network/data/*.json", "network/data/.history-*",
     # Edited from /admin; the live copy is authoritative once the admin area manages it.
     "exchanges/catalog.json", "ecosystem/catalog.json", "community/bounties/catalog.json",
-    "mining/benchmarks/catalog.json", "community/announcements.json", "roadmap/milestones.json", "fund/campaigns.json",
+    "mining/benchmarks/catalog.json", "community/announcements.json", "roadmap/updates.json",
 ]
 SKIP = ["*.pyc", "*/__pycache__/*", ".DS_Store", "*~"]
 

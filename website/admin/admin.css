@@ -23,3 +23,9 @@ main > section { margin-top:40px; } h1 + section, h1 + .notice + section { margi
 /* Body copy matches the original pages: muted text, links inherit and stay underlined. */
 main p, main li, main dd, main td, main figcaption { color: var(--muted); }
 main p a, main li a, main dd a { color: inherit; }
+
+/* Content editor */
+textarea.code { width: 100%; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 2; }
+details > summary { cursor: pointer; color: var(--muted); }
+details[open] > summary { margin-bottom: 8px; }
+a.button { display: inline-block; padding: 10px 16px; border: 1px solid var(--line); border-radius: 8px; text-decoration: none; }

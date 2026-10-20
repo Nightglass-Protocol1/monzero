@@ -29,6 +29,25 @@ const FAUCET_DEFAULTS = [
     'base_url' => 'https://monzero.org',
 ];
 
+// Change one key of the private faucet config file, keeping a dated backup. Returns an error or null.
+function faucetSetConfig(string $key, mixed $value): ?string {
+    $path = getenv('MONZERO_FAUCET_CONFIG');
+    $path = is_string($path) && $path !== '' ? $path : faucetPrivateDir() . '/faucet-config.php';
+    if (!is_file($path) || is_link($path)) return 'The faucet is not configured on this server.';
+    $config = (static fn() => require $path)();
+    if (!is_array($config)) return 'The faucet configuration could not be read.';
+    $backup = $path . '.bak-' . gmdate('Ymd\THis\Z');
+    if (!copy($path, $backup) || !chmod($backup, 0600)) return 'Could not back up the faucet configuration.';
+    $config[$key] = $value;
+    $tmp = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
+    $old = umask(077);
+    $ok = file_put_contents($tmp, '<?php return ' . var_export($config, true) . ";\n") !== false && chmod($tmp, 0600) && rename($tmp, $path);
+    umask($old);
+    if (!$ok) { @unlink($tmp); return 'Could not write the faucet configuration.'; }
+    if (function_exists('opcache_invalidate')) @opcache_invalidate($path, true);
+    return null;
+}
+
 function faucetHeartbeatPath(): string {
     $configured = getenv('MONZERO_FAUCET_HEARTBEAT');
     return is_string($configured) && $configured !== '' ? $configured : faucetPrivateDir() . '/faucet-heartbeat.json';
