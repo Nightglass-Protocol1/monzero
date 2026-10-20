@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="styles.css?v=20261011-hero">
   <link rel="stylesheet" href="theme.css?v=20261021-unified">
   <link rel="stylesheet" href="site-nav.css?v=20261020-sub">
-  <link rel="stylesheet" href="homepage-tools.css?v=20261020-news">
+  <link rel="stylesheet" href="homepage-tools.css?v=20261020-ticker">
   <link rel="canonical" href="https://monzero.org/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Monzero">
@@ -29,6 +29,7 @@
 <body data-page="home">
   <a class="skip-link" href="#main">Skip to content</a>
 
+  <div class="news-ticker" id="news-ticker" role="region" aria-label="Top crypto headlines" hidden><a class="ticker-label" href="news/">Crypto news</a><div class="ticker-viewport"><ul class="ticker-track" id="ticker-track"></ul></div><button class="ticker-pause" id="ticker-pause" type="button" aria-pressed="false" aria-label="Pause the headlines"></button></div>
   <header class="site-header">
     <a class="brand" href="#top" aria-label="Monzero home">
       <img class="brand-mark brand-coin" src="assets/monzero-coin-transparent-20261018-96.webp" alt="" width="32" height="32">
@@ -320,5 +321,6 @@
   <script src="site-nav.js?v=20261020-sub" defer></script>
   <script src="fund/summary.js?v=20261017" defer></script>
   <script src="homepage-live.js?v=20261020-news" defer></script>
+  <script src="news-ticker.js?v=20261020" defer></script>
 </body>
 </html>

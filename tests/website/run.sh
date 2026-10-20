@@ -58,6 +58,7 @@ python3 tests/website/test_history_upload.py
 python3 tests/website/test_deploy.py
 python3 tests/website/check_homepage_tiles.py
 python3 tests/website/test_news.py
+python3 tests/website/check_news_ticker.py
 python3 tests/website/test_catalog_validators.py
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_admin_content.py; else echo "SKIPPED test_admin_content.py: this PHP lacks pdo_sqlite"; fi
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_voting.py; else echo "SKIPPED test_voting.py: this PHP lacks pdo_sqlite"; fi
