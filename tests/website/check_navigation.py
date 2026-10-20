@@ -3,7 +3,7 @@ import importlib.util, socket, subprocess, time, shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[2]
-routes=['/faucet/','/mining/leaderboard/','/developers/api/','/ecosystem/','/exchanges/','/markets/','/payments/request/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/','/','/explorer/','/stats/','/wallets/','/app/','/founder/','/fund/','/roadmap/','/security/','/mining/calculator/','/mining/dashboard/','/mining/benchmarks/','/network/nodes/','/status/','/community/voting/','/news/','/upgrade/','/mining/benchmarks/submission.html']
+routes=['/faucet/','/mining/leaderboard/','/developers/api/','/ecosystem/','/exchanges/','/markets/','/payments/request/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/','/','/explorer/','/stats/','/wallets/','/app/','/founder/','/fund/','/roadmap/','/security/','/mining/calculator/','/mining/dashboard/','/mining/benchmarks/','/network/nodes/','/status/','/community/voting/','/news/','/upgrade/','/press/','/mining/benchmarks/submission.html']
 submenu_paths={'/','/network/nodes/','/faucet/','/mining/calculator/'}
 def check_submenus(page,js,width,path):
  mining=page.locator('#site-nav .nav-group:has(> a:text-is("Mining"))');sub=mining.locator('.nav-sub');toggle=mining.locator('.nav-sub-toggle')

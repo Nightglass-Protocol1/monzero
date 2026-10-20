@@ -1552,3 +1552,14 @@ checkpoint 200 blocks below the tip verified by block hash (falls back to the
 audited seed after a reorganisation), and reports circulating supply without the
 newest 60 blocks' locked rewards. PHP and an independent Python calculation agreed
 to the atomic unit at height 13,156. The homepage now shows circulating supply.
+
+### Press kit and search basics — 2026-10-20 (Claude)
+
+`/press/` (Whitepaper menu): about text, logos (200/512/1024 px transparent PNG,
+1024 px on dark, banner), coin facts taken from the announcement post, live supply
+and reward, the supply endpoints for listing sites, official links and contact.
+`utils/website/seo.py` gives every public page a canonical link and Open Graph /
+Twitter tags (keeping a page's own og:title/description) with a proper 1200×630 JPG
+preview (`assets/monzero-share-1200x630.jpg`), and writes `sitemap.xml` and
+`robots.txt` (admin and API excluded, supply endpoints allowed); `--check` runs in
+the test runner.

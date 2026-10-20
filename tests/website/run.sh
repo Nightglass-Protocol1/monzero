@@ -25,6 +25,7 @@ python3 tests/website/check_benchmarks.py
 
 node --check website/site-nav.js
 python3 -I utils/website/nav_submenus.py --check
+python3 -I utils/website/seo.py --check
 python3 tests/website/check_navigation.py
 
 php -l website/stats/api.php
