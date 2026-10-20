@@ -6,6 +6,7 @@ declare(strict_types=1);
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 require_once dirname(__DIR__) . '/lib/catalogs.php';
 require_once dirname(__DIR__) . '/faucet/lib.php';
+require_once dirname(__DIR__) . '/lib/voting.php';
 
 const CONTENT_HISTORY_KEEP = 50;
 const CONTENT_MODULES = [
@@ -97,6 +98,21 @@ function contentAction(string $do, array $user): bool {
         if ($problem = faucetSetConfig('enabled', $on)) adminDeny($problem, 503);
         adminAudit($actor, $on ? 'faucet.resumed' : 'faucet.paused');
         header('Location: /admin/?view=faucet&msg=' . ($on ? 'faucet-on' : 'faucet-off'), true, 303);
+        exit;
+    }
+    if (in_array($do, ['proposal-create', 'proposal-close', 'proposal-withdraw'], true)) {
+        if (!adminCan($user, 'proposals')) adminDeny('You cannot moderate proposals.');
+        if ($do === 'proposal-create') {
+            $options = preg_split('/\R/', (string)($_POST['options'] ?? '')) ?: [];
+            [$slug, $error] = voteCreate((string)($_POST['title'] ?? ''), (string)($_POST['description'] ?? ''), $options, (int)($_POST['days'] ?? 0), $user['email'], time());
+            if ($error) { http_response_code(400); contentProposalsView($user, $error, $_POST); exit; }
+            adminAudit($actor, 'proposal.created', ['slug' => $slug]);
+        } else {
+            $slug = (string)($_POST['slug'] ?? '');
+            if (!voteSetStatus($slug, $do === 'proposal-close' ? 'closed' : 'withdrawn', time())) adminDeny('That proposal cannot be changed.', 409);
+            adminAudit($actor, $do === 'proposal-close' ? 'proposal.closed' : 'proposal.withdrawn', ['slug' => $slug]);
+        }
+        header('Location: /admin/?view=proposals&msg=content-saved', true, 303);
         exit;
     }
     if (!in_array($do, ['content-save', 'content-delete', 'post-add', 'post-delete'], true)) return false;
@@ -234,8 +250,36 @@ function contentFaucetView(array $user): void {
         . ($rows ?: '<tr><td colspan="5">No claims yet.</td></tr>') . '</tbody></table></div></section>', $user);
 }
 
+function contentProposalsView(array $user, string $error = '', array $draft = []): void {
+    $now = time();
+    $list = '';
+    foreach (voteProposals(true) as $p) {
+        $results = voteResults($p);
+        $state = voteState($p, $now);
+        $hidden = contentCsrf($user) . '<input type="hidden" name="slug" value="' . adminH($p['slug']) . '">';
+        $counts = implode(', ', array_map(fn($o, $n) => adminH($o) . ': ' . $n, $results['options'], $results['counts']));
+        $list .= '<article><h3>' . adminH($p['title']) . '</h3><p><small>' . adminH($state) . ' · ' . $results['total'] . ' votes · closes ' . gmdate('Y-m-d H:i', (int)$p['closes_at']) . ' UTC · by ' . adminH($p['created_by']) . '</small></p><p>' . $counts . '</p>'
+            . ($p['status'] !== 'withdrawn' ? '<p><a href="/community/voting/?p=' . adminH($p['slug']) . '">Public page</a></p>' : '')
+            . (voteOpen($p, $now) ? '<details><summary>Close voting now</summary><form method="post" action="/admin/?do=proposal-close">' . $hidden . '<button type="submit">Close and show final results</button></form></details>' : '')
+            . ($p['status'] !== 'withdrawn' ? '<details><summary>Withdraw</summary><form method="post" action="/admin/?do=proposal-withdraw">' . $hidden . '<button type="submit">Withdraw and hide from the public list</button></form></details>' : '') . '</article>';
+    }
+    adminPage('Community proposals', contentMessage() . ($error ? '<p class="notice error" role="alert">' . adminH($error) . '</p>' : '')
+        . '<p>Polls are non-binding feedback. Faucet members whose account existed before a poll opened vote once each; results show after voting or at the close.</p>'
+        . '<section><h2>New proposal</h2><form method="post" action="/admin/?do=proposal-create" class="stack">' . contentCsrf($user)
+        . '<label>Title<input name="title" minlength="5" maxlength="140" required value="' . adminH($draft['title'] ?? '') . '"></label>'
+        . '<label>Description<textarea name="description" rows="6" minlength="10" maxlength="4000" required>' . adminH($draft['description'] ?? '') . '</textarea></label>'
+        . '<label>Options, one per line (2-' . VOTE_MAX_OPTIONS . ')<textarea name="options" rows="4" required>' . adminH($draft['options'] ?? "Yes\nNo") . '</textarea></label>'
+        . '<label>Voting lasts (days)<input name="days" type="number" min="1" max="' . VOTE_MAX_DAYS . '" value="' . adminH($draft['days'] ?? '7') . '" required></label>'
+        . '<button type="submit">Open the poll</button></form></section><section><h2>Proposals</h2>' . ($list ?: '<p>None yet.</p>') . '</section>', $user);
+}
+
 // GET views; returns false when the view is not a content view.
 function contentView(string $view, array $user): bool {
+    if ($view === 'proposals') {
+        if (!adminCan($user, 'proposals')) adminDeny('You cannot moderate proposals.');
+        contentProposalsView($user);
+        return true;
+    }
     if ($view === 'faucet') {
         if (!adminCan($user, 'faucet') && !adminCan($user, 'features')) adminDeny('You cannot view the faucet.');
         contentFaucetView($user);
@@ -254,6 +298,7 @@ function contentView(string $view, array $user): bool {
 function contentLinks(array $user): string {
     $links = [];
     foreach (CONTENT_MODULES as $kind => $m) if (adminCan($user, $m['perm'])) $links[] = '<li><a href="/admin/?view=content&amp;kind=' . $kind . '">' . adminH($m['label']) . '</a></li>';
+    if (adminCan($user, 'proposals')) $links[] = '<li><a href="/admin/?view=proposals">Community proposals</a></li>';
     if (adminCan($user, 'faucet') || adminCan($user, 'features')) $links[] = '<li><a href="/admin/?view=faucet">Faucet</a></li>';
     return $links ? '<section><h2>Content</h2><ul>' . implode('', $links) . '</ul></section>' : '';
 }

@@ -1418,3 +1418,14 @@ audited. The faucet panel (permission `faucet`) shows the worker heartbeat,
 files are live-owned in `utils/website/deploy.py` and never overwritten by a
 deploy. Not built: fundraising campaign editing (the fund page is hand-written
 HTML, not data). Tests: `test_catalog_validators.py`, `test_admin_content.py`.
+
+### Community voting — 2026-10-20 (Claude)
+
+`/community/voting/` lists non-binding polls (labelled as such on every page).
+Admins with "Moderate community proposals" open a poll (2-6 options, 1-30 days),
+close it early or withdraw it. Voters are faucet members in a full session
+(password + authenticator code, confirmed email) whose account was created
+before the poll opened; one final vote each (a trigger blocks changes) and at
+most three per network per poll. Results appear after voting or at the close.
+Storage: `~/monzero-private/voting.sqlite`. PHP-rendered pages share
+`lib/site-header.php` (the faucet now uses it too). Tests: `test_voting.py`.
