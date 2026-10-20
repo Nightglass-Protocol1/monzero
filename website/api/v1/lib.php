@@ -11,7 +11,7 @@ const V1_MAX_RESPONSE_BYTES = 1048576;
 const V1_TARGET_SECONDS = 120;
 const V1_CLIENT_LIMIT = 60;   // requests per client per minute
 const V1_TOTAL_LIMIT = 1200;  // requests per deployment per minute
-const V1_ALLOWED_METHODS = ['get_info', 'get_last_block_header', 'get_block_header_by_height', 'get_block_headers_range', 'hard_fork_info'];
+const V1_ALLOWED_METHODS = ['get_info', 'get_last_block_header', 'get_block_header_by_height', 'get_block_headers_range', 'hard_fork_info', 'get_block'];
 
 function v1Headers(int $maxAge): void {
     header('Content-Type: application/json; charset=utf-8');
@@ -92,8 +92,9 @@ function v1Throttle(): void {
     }
 }
 
-function v1Transport(string $body): array {
-    $url = V1_NODE_RPC . '/json_rpc';
+function v1Transport(string $body, string $path = '/json_rpc'): array {
+    if (!in_array($path, ['/json_rpc', '/get_transactions'], true)) throw new LogicException('Path not allowed');
+    $url = V1_NODE_RPC . $path;
     if (function_exists('curl_init')) {
         $response = '';
         $curl = curl_init($url);
@@ -218,4 +219,77 @@ function v1Catalog(string $relative, string $schema): array {
 function v1Unavailable(): never {
     error_log('Monzero API v1: node observation unavailable');
     v1Error('node_unavailable', 'Mainnet data is temporarily unavailable. Please retry.', 502, 5);
+}
+
+// --- Supply, computed exactly from the chain ---
+// Each block mints its coinbase minus its transaction fees (what the core counts as generated
+// coins). Starting from a checkpoint audited on 2026-10-20 (all 13,148 blocks from genesis checked:
+// none minted more than the emission rule allows), new blocks are added as they come; a block that
+// mints more than allowed stops the calculation. The checkpoint moves to 200 blocks below the tip
+// and is checked against the block hash, so a reorganisation cannot leave a wrong total.
+const V1_SUPPLY_SEED = ['height' => 12949, 'generated' => '243976348592396971', 'hash' => '0044914f6efe48a9a2ae3c3f7fa8de51532edcda3811be62c6810ed4874851d7'];
+const V1_MONEY_SUPPLY = '10000000000000000000';
+const V1_TAIL_REWARD = 326000000000;
+const V1_SPEED_SHIFT = 19;
+const V1_UNLOCK_BLOCKS = 60;
+
+function v1BlockFees(int $height): int {
+    $block = v1Rpc('get_block', ['height' => $height]);
+    $hashes = $block['tx_hashes'] ?? [];
+    if (!is_array($hashes) || !$hashes) return 0;
+    foreach ($hashes as $h) if (!v1Hash($h)) throw new RuntimeException('Bad transaction hash');
+    [$response, $status] = v1Transport(json_encode(['txs_hashes' => array_values($hashes), 'decode_as_json' => true]), '/get_transactions');
+    $data = is_string($response) ? json_decode($response, true) : null;
+    if ($status !== 200 || ($data['status'] ?? null) !== 'OK' || count($data['txs'] ?? []) !== count($hashes)) throw new RuntimeException('Transactions unavailable');
+    $fees = 0;
+    foreach ($data['txs'] as $tx) {
+        $json = json_decode((string)($tx['as_json'] ?? ''), true);
+        $fee = $json['rct_signatures']['txnFee'] ?? null;
+        if (!is_int($fee) || $fee < 0) throw new RuntimeException('Unknown fee');
+        $fees += $fee;
+    }
+    return $fees;
+}
+
+function v1Supply(): array {
+    return v1Cached('supply', 300, static function (): array {
+        $path = v1StateDirectory() . '/supply-checkpoint.json';
+        $saved = json_decode((string)@file_get_contents($path), true);
+        $checkpoint = is_array($saved) && is_int($saved['height'] ?? null) && $saved['height'] >= V1_SUPPLY_SEED['height'] ? $saved : V1_SUPPLY_SEED;
+        $info = v1Rpc('get_info');
+        $tip = (int)$info['height'] - 1;
+        $generated = gmp_init($checkpoint['generated']);
+        $byHeight = [];
+        for ($start = $checkpoint['height']; $start <= $tip; $start += 1000) {
+            $range = v1Rpc('get_block_headers_range', ['start_height' => $start, 'end_height' => min($tip, $start + 999)]);
+            foreach ($range['headers'] ?? [] as $h) $byHeight[(int)$h['height']] = $h;
+        }
+        if (($byHeight[$checkpoint['height']]['hash'] ?? null) !== $checkpoint['hash']) {
+            if ($checkpoint !== V1_SUPPLY_SEED) { @unlink($path); throw new RuntimeException('Checkpoint left the main chain; recomputing from the audited seed'); }
+            throw new RuntimeException('Audited checkpoint is not on this chain');
+        }
+        $cap = gmp_init(V1_MONEY_SUPPLY);
+        $next = null;
+        $atUnlock = null;
+        for ($height = $checkpoint['height'] + 1; $height <= $tip; $height++) {
+            $h = $byHeight[$height] ?? null;
+            if (!is_array($h) || !is_int($h['reward'] ?? null)) throw new RuntimeException('Missing block header');
+            $allowed = gmp_div_q(gmp_sub($cap, $generated), gmp_pow(2, V1_SPEED_SHIFT));
+            if (gmp_cmp($allowed, V1_TAIL_REWARD) < 0) $allowed = gmp_init(V1_TAIL_REWARD);
+            $minted = gmp_sub(gmp_init($h['reward']), (int)($h['num_txes'] ?? 0) > 0 ? v1BlockFees($height) : 0);
+            if (gmp_cmp($minted, $allowed) > 0) throw new RuntimeException("Block $height minted more than allowed");
+            $generated = gmp_add($generated, $minted);
+            if ($height === $tip - V1_UNLOCK_BLOCKS) $atUnlock = gmp_strval($generated);
+            if ($height === $tip - 200) $next = ['height' => $height, 'generated' => gmp_strval($generated), 'hash' => $h['hash']];
+        }
+        if ($next) @file_put_contents($path, json_encode($next), LOCK_EX);
+        return ['height' => $tip + 1, 'total_atomic' => gmp_strval($generated), 'circulating_atomic' => $atUnlock ?? gmp_strval($generated)];
+    });
+}
+
+// Atomic units to a decimal XMZ string (11 decimals, trailing zeros trimmed).
+function v1Xmz(string $atomic): string {
+    $padded = str_pad($atomic, 12, '0', STR_PAD_LEFT);
+    $fraction = rtrim(substr($padded, -11), '0');
+    return substr($padded, 0, -11) . ($fraction !== '' ? '.' . $fraction : '');
 }

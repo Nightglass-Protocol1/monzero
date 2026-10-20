@@ -84,11 +84,11 @@
           <div><dt>Target block interval</dt><dd id="metric-target">—</dd></div>
           <div><dt>Latest observed reward</dt><dd id="metric-reward">—</dd></div>
           <div><dt>Latest block time</dt><dd id="metric-block-time">—</dd></div>
-          <div><dt>Estimated circulating supply</dt><dd>Unavailable</dd></div>
+          <div><dt>Circulating supply</dt><dd id="metric-supply">—</dd></div>
           <div><dt>Public RPC</dt><dd id="metric-rpc">—</dd></div>
         </dl>
         <p id="metric-observed" class="live-observed">Waiting for a public-node observation. Rewards include transaction fees.</p>
-        <p class="live-observed">A verified circulating-supply figure is not available.</p>
+        <p class="live-observed" id="supply-note">Supply is the sum of every block reward minus fees, checked against the emission rule.</p>
         <a class="live-footer" href="explorer/">Open the block explorer <span aria-hidden="true">↗</span></a>
       </aside>
     </section>
@@ -319,6 +319,6 @@
   <script src="app.js?v=20261019-network"></script>
   <script src="site-nav.js?v=20261020-upgrade" defer></script>
   <script src="fund/summary.js?v=20261017" defer></script>
-  <script src="homepage-live.js?v=20261020-news" defer></script>
+  <script src="homepage-live.js?v=20261020-supply" defer></script>
 </body>
 </html>

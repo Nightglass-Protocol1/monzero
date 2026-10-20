@@ -1536,3 +1536,19 @@ files and the nginx sample (Apache test extended; nginx config given the same
 rule). (2) Admin authenticator codes are now mandatory: without them an admin can
 only set them up, change the password or sign out, and they cannot be turned off.
 Not changed: HSTS max-age is one day (raise once HTTPS is settled everywhere).
+
+### Exact supply — 2026-10-20 (Claude)
+
+Audit: every block header from genesis to 13,148 was read from the public node and
+each block's minted amount (coinbase minus its transactions' fees, as the core
+counts generated coins) compared with the emission rule (`(MONEY_SUPPLY −
+generated) >> 19`, tail 3.26 XMZ): 13,145 minted exactly the allowed amount, blocks 2
+and 3 slightly less, none more. Supply at 13,148: 2,476,600.67872021504 XMZ, equal
+to the legacy `/api/supply/` estimate, whose anchor is therefore correct.
+`/api/v1/supply/` (plus `/circulating/` and `/total/` as plain numbers for listing
+sites) starts from an audited checkpoint (height 12,949), adds new blocks under
+the same rule, refuses any block that mints more than allowed, keeps a moving
+checkpoint 200 blocks below the tip verified by block hash (falls back to the
+audited seed after a reorganisation), and reports circulating supply without the
+newest 60 blocks' locked rewards. PHP and an independent Python calculation agreed
+to the atomic unit at height 13,156. The homepage now shows circulating supply.

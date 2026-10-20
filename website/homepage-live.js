@@ -5,6 +5,11 @@
   const get = (url) => fetch(url, { headers: { Accept: "application/json" } }).then((r) => r.ok ? r.json() : Promise.reject(new Error(String(r.status))));
 
   const status = get("/api/status/");
+  get("/api/v1/supply/").then((s) => {
+    const d = s && s.data;
+    if (!d || typeof d.circulating_supply !== "string") throw new Error("bad supply");
+    set("metric-supply", `${Math.floor(Number(d.circulating_supply)).toLocaleString("en")} XMZ`);
+  }).catch(() => set("metric-supply", "Unavailable"));
   get("/api/v1/network/nodes/").then((body) => {
     const d = body && body.data;
     if (!d || !d.totals) throw new Error("bad census");
