@@ -106,7 +106,7 @@ scp -q "$HERE/faucet-config-set.php" "$WEB:monzero-private/faucet-config-set.php
 ssh -o BatchMode=yes "$EU" sudo cat /etc/xmzfaucet/worker-secret | ssh -o BatchMode=yes "$WEB" 'php ~/monzero-private/faucet-config-set.php worker_secret'
 
 echo "== checking the worker secret against the website (only while claims are paused)"
-curl -s -m 15 https://monzero.org/api/faucet/ | grep -q '"status":"paused"' || { echo "!! claims are open on the website; skipping the check so no claim is leased"; exit 1; }
+if curl -s -m 15 https://monzero.org/api/faucet/ | grep -q '"status":"paused"'; then
 ssh -o BatchMode=yes "$EU" sudo -u xmzfaucet python3 - <<'PY'
 import json, sys
 sys.path.insert(0, "/opt/xmzfaucet")
@@ -117,6 +117,9 @@ ok = code == 200 and reply.get("paused") is True and reply.get("claims") == []
 print("   website accepted the worker signature (claims paused)" if ok else f"!! website answered HTTP {code}: {reply}")
 sys.exit(0 if ok else 1)
 PY
+else
+  echo "   claims are open: skipped, so no claim is leased by this check (the running worker proves the secret)"
+fi
 echo "== worker status (dry run: never leases claims)"
 sleep 5
 ssh -o BatchMode=yes "$EU" 'sudo systemctl is-active xmzfaucet-wallet xmzfaucet; sudo journalctl -u xmzfaucet -n 3 --no-pager -o cat'

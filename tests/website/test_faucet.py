@@ -34,13 +34,13 @@ class Turnstile(http.server.BaseHTTPRequestHandler):
   self.send_response(200);self.end_headers();self.wfile.write(body)
  def log_message(self,*a):pass
 
-wallet={'mode':'ok','sent':[],'balance':10**12}
+wallet={'mode':'ok','sent':[],'balance':10**12,'locked':0}
 class Wallet(http.server.BaseHTTPRequestHandler):
  def do_POST(self):
   req=json.loads(self.rfile.read(int(self.headers['Content-Length'])));m,p=req['method'],req.get('params',{})
   if m=='transfer' and wallet['mode']=='drop':self.connection.close();return
   if m=='validate_address':r={'valid':p['address'] in ADDR,'nettype':'mainnet'}
-  elif m=='get_balance':r={'balance':wallet['balance'],'unlocked_balance':wallet['balance']}
+  elif m=='get_balance':r={'balance':wallet['balance'],'unlocked_balance':wallet['balance']-wallet['locked']}
   elif m=='transfer':
    txid=secrets.token_hex(32);wallet['sent'].append((p['destinations'][0]['address'],p['destinations'][0]['amount'],txid));wallet['balance']-=p['destinations'][0]['amount'];r={'tx_hash':txid}
   else:r=None
@@ -166,12 +166,23 @@ with tempfile.TemporaryDirectory() as tmp:
   assert wallet['sent'][0][2][:16] in a.get(base+'/faucet/').text or any(x[2][:16] in a.get(base+'/faucet/').text for x in wallet['sent'])
   # Nothing pending: a second run pays nothing more.
   run('--enable-payouts');assert len(wallet['sent'])==3
+  # Locked change: claims stay queued (no lease, no halt) until the balance unlocks; one claim per cycle by default.
+  assert post(d,'claim',{'csrf':csrf(d),'cf-turnstile-response':'good'}).status_code==303
+  wallet['locked']=wallet['balance']-int(AMOUNT)//2
+  out=run('--enable-payouts');assert out.returncode==0 and 'stay queued' in out.stdout,out.stdout+out.stderr
+  assert len(wallet['sent'])==3 and con.execute("SELECT status FROM claims WHERE address=?",(ADDR[3],)).fetchone()[0]=='pending'
+  wallet['locked']=0;cfg1=json.loads(wcfg.read_text());cfg1.pop('batch');wcfg.write_text(json.dumps(cfg1))
+  out=run('--enable-payouts');assert out.returncode==0 and len(wallet['sent'])==4,out.stdout+out.stderr
+  assert con.execute("SELECT status FROM claims WHERE address=?",(ADDR[3],)).fetchone()[0]=='paid'
+  # Balance really too low: halt before leasing anything.
+  saved=wallet['balance'];wallet['balance']=int(AMOUNT)//2;out=run('--enable-payouts');assert out.returncode==2 and 'refill' in out.stdout,out.stdout
+  wallet['balance']=saved
   # Uncertain send: the worker halts, keeps the journal entry and refuses to continue.
   e,_=member('erin@example.org',ADDR[4],3)
   assert post(e,'claim',{'csrf':csrf(e),'cf-turnstile-response':'good'}).status_code==303
   wallet['mode']='drop';out=run('--enable-payouts');assert out.returncode==2 and 'HALT' in out.stdout,out.stdout
   wallet['mode']='ok';out=run('--enable-payouts');assert out.returncode==2 and 'no recorded result' in out.stdout
-  assert len(wallet['sent'])==3 and con.execute("SELECT status FROM claims WHERE address=?",(ADDR[4],)).fetchone()[0]=='processing'
+  assert len(wallet['sent'])==4 and con.execute("SELECT status FROM claims WHERE address=?",(ADDR[4],)).fetchone()[0]=='processing'
   # Login throttling, password reset with TOTP.
   for _ in range(5):assert post(requests.Session(),'login',{'email':'bob@example.org','password':'wrong password!!','cf-turnstile-response':'good'}).status_code==401
   assert post(requests.Session(),'login',{'email':'bob@example.org','password':PW,'cf-turnstile-response':'good'}).status_code==429

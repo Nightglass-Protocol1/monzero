@@ -11,7 +11,9 @@ Run from the owner's PC, in order:
 2. `bash utils/faucet/show-seed.sh` in your own terminal: write the 25 words down offline.
    A copy of the wallet files is also kept in `/root/xmzfaucet-backup/` on the node.
 3. Send a few days of payouts to the faucet address and wait until they unlock.
-4. `bash utils/faucet/enable-payouts.sh` refuses unless the unlocked balance is at least one
+4. `bash utils/faucet/split-outputs.sh` splits the balance into 16 outputs, so the locked change
+   of one payout does not hold up the next claims. Run it again after every refill.
+5. `bash utils/faucet/enable-payouts.sh` refuses unless the unlocked balance is at least one
    day's cap plus the reserve, then turns on worker payouts and website claims.
    Emergency stop: `ssh monzero-webspace php ~/monzero-private/faucet-config-set.php enabled false`.
 

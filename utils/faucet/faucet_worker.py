@@ -186,6 +186,10 @@ class Worker:
             self.journal.write(id=cid, lease=lease, address=address, amount_atomic=amount, state="not_sent", reason="Daily budget")
             return self.report(cid, lease, "failed", reason="Faucet daily budget reached; try again tomorrow")
         if int(balance.get("unlocked_balance", 0)) < int(amount) + int(self.config["reserve_atomic"]):
+            if int(balance.get("balance", 0)) >= int(amount) + int(self.config["reserve_atomic"]):
+                # Change from an earlier payout is still locked; nothing is wrong, the member can retry shortly.
+                self.journal.write(id=cid, lease=lease, address=address, amount_atomic=amount, state="not_sent", reason="Wallet change locked")
+                return self.report(cid, lease, "failed", reason="The faucet is busy; try again in a few minutes")
             self.journal.write(id=cid, lease=lease, address=address, amount_atomic=amount, state="not_sent", reason="Wallet low")
             self.report(cid, lease, "failed", reason="Faucet wallet is being refilled; try again later")
             raise Halt("faucet wallet unlocked balance is below amount + reserve; refill it")
@@ -209,7 +213,16 @@ class Worker:
         if not self.payouts:
             log("payouts disabled (dry run): not leasing claims")
             return
-        code, reply = site_call(self.config, {"action": "lease", "limit": int(self.config.get("batch", 10))})
+        # Lease only what can be paid now: change from each payout stays locked for about ten blocks,
+        # so claims wait in the queue (not failed, no halt) until enough of the balance is unlocked.
+        need = int(self.config["amount_atomic"]) + int(self.config["reserve_atomic"])
+        balance = self.rpc("get_balance", {"account_index": 0})
+        if int(balance.get("unlocked_balance", 0)) < need:
+            if int(balance.get("balance", 0)) < need:
+                raise Halt("faucet wallet balance is below amount + reserve; refill it")
+            log("waiting for locked wallet change to unlock; claims stay queued")
+            return
+        code, reply = site_call(self.config, {"action": "lease", "limit": int(self.config.get("batch", 1))})
         if code != 200:
             log(f"lease failed (HTTP {code}: {reply.get('error', '')})")
             return
