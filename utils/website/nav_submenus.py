@@ -16,7 +16,7 @@ SUBMENUS = {
     "Stats": [("/stats/", "Network stats"), ("/status/", "Service status"), ("/news/", "Crypto news"), ("/markets/", "Markets"), ("/exchanges/", "Exchanges")],
     "Public wallets": [("/wallets/", "Public wallets"), ("/payments/request/", "Payment request")],
     "Roadmap": [("/roadmap/", "Roadmap"), ("/community/", "Community"), ("/community/voting/", "Community voting"), ("/community/bounties/", "Bounty board"), ("/ecosystem/", "Ecosystem")],
-    "Whitepaper": [("/WHITEPAPER.md?rev=1.5-20261017", "Whitepaper"), ("/developers/", "Developers"), ("/developers/api/", "API v1"),
+    "Whitepaper": [("/WHITEPAPER.md?rev=1.5-20261017", "Whitepaper"), ("/upgrade/", "Upgrade to v1.0.0"), ("/developers/", "Developers"), ("/developers/api/", "API v1"),
                    ("/developers/payments/", "Accept XMZ")],
     "Mining": [("/#mine", "How to mine"), ("/mining/calculator/", "Mining calculator"), ("/mining/dashboard/", "Your mining"),
                ("/mining/benchmarks/", "CPU benchmarks"), ("/mining/leaderboard/", "Mining leaderboard"), ("/faucet/", "Faucet")],

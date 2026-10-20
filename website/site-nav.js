@@ -105,3 +105,47 @@
     pause.setAttribute("aria-label", paused ? "Play the headlines" : "Pause the headlines");
   });
 })();
+
+// v1.0.0 upgrade banner (block 21,000): countdown before the fork, a short notice for a day after it,
+// then nothing. Not in /admin or on /upgrade/ itself; "Hide" keeps it away for 24 hours.
+(function () {
+  "use strict";
+  const FORK = 21000, AFTER = 720, KEY = "mzUpgradeHiddenUntil";
+  const header = document.querySelector(".site-header");
+  const nav = document.getElementById("site-nav");
+  if (!header || !nav || nav.getAttribute("aria-label") !== "Primary navigation" || location.pathname.startsWith("/upgrade/")) return;
+  try { if (Number(localStorage.getItem(KEY) || 0) > Date.now()) return; } catch { /* storage blocked: show it */ }
+  fetch("/api/v1/network/upgrade/", { headers: { Accept: "application/json" } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((body) => {
+      const d = body && body.data;
+      if (!d || !Number.isInteger(d.height) || d.fork_height !== FORK || d.height >= FORK + AFTER) return;
+      const bar = document.createElement("div");
+      bar.className = "upgrade-banner" + (d.active ? " active" : "");
+      bar.setAttribute("role", "region");
+      bar.setAttribute("aria-label", "Network upgrade");
+      const text = document.createElement("p");
+      if (d.active) {
+        text.textContent = "The v1.0.0 network upgrade is active. If your wallet stopped syncing, update it to v1.0.0; your coins are safe. ";
+      } else {
+        const days = Math.max(0, (d.estimated_at * 1000 - Date.now()) / 86400000);
+        const when = days < 1 ? `about ${Math.max(1, Math.round(days * 24))} hours` : `about ${Math.round(days)} day${Math.round(days) === 1 ? "" : "s"}`;
+        const strong = document.createElement("strong");
+        strong.textContent = `Network upgrade in ${d.blocks_left.toLocaleString("en")} blocks (${when}). `;
+        text.append(strong, "Update your wallet and node to v1.0.0 before block 21,000. Pool miners need to do nothing. ");
+      }
+      const link = document.createElement("a");
+      link.href = "/upgrade/";
+      link.textContent = "What to do";
+      text.append(link);
+      const hide = document.createElement("button");
+      hide.type = "button";
+      hide.className = "upgrade-hide";
+      hide.textContent = "Hide";
+      hide.setAttribute("aria-label", "Hide the upgrade notice for a day");
+      hide.addEventListener("click", () => { bar.remove(); try { localStorage.setItem(KEY, String(Date.now() + 86400000)); } catch { /* fine */ } });
+      bar.append(text, hide);
+      (document.getElementById("news-ticker") || header).before(bar);
+    })
+    .catch(() => {});
+})();

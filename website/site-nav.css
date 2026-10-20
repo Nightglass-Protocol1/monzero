@@ -106,3 +106,12 @@
   .ticker-track li[aria-hidden="true"] { display: none; }
   .ticker-pause { display: none; }
 }
+
+/* v1.0.0 upgrade banner (site-nav.js), above the news banner until a day after block 21,000. */
+.upgrade-banner { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #3a2c0e; border-bottom: 1px solid #edbc64; color: #fbe9c4; font-size: 14px; line-height: 1.45; }
+.upgrade-banner.active { background: #0e3a34; border-color: #29caba; color: #d6f7f2; }
+.upgrade-banner p { flex: 1 1 auto; margin: 0; color: inherit; }
+.upgrade-banner strong { color: #fff; }
+.upgrade-banner a { color: #fff; font-weight: 600; text-decoration: underline; }
+.upgrade-hide { flex: 0 0 auto; padding: 6px 12px; border: 1px solid currentColor; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
+.upgrade-hide:hover, .upgrade-hide:focus-visible { background: rgba(255, 255, 255, .1); }

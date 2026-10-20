@@ -1500,3 +1500,22 @@ in the last 3 days (same rule as the collector's grouping); recording each story
 before sending, so a lost reply is never retried (only a clear refusal is); and
 the news ingest lock, so runs never overlap. Announcements are also posted at most
 once (the admin button reports "already in the Telegram group").
+
+### v1.0.0 upgrade countdown — 2026-10-20 (Claude)
+
+`/api/v1/network/upgrade/` reports height, blocks left to 21,000, an estimate at
+the 120-second target, whether it is active and whether the public node signals
+version 17 (`hard_fork_info` added to the allowed node methods). A banner on every
+public page (site-nav.js, above the news banner) counts down, switches to an
+"upgrade is active, update stuck wallets" notice at the fork and disappears 720
+blocks later; "Hide" keeps it away for 24 hours. `/upgrade/` explains who must
+act, how to check versions (GUI Settings → Info "Embedded Monzero version"; CLI
+`--version`; `hard_fork_info`), what happens if you miss it and how to verify
+downloads. Both public nodes were checked: EU runs 1.0.0-c4165784d and both vote
+17. Tests: `test_upgrade.py`.
+
+### Encrypted USB backups — 2026-10-20 (Claude)
+
+See `utils/website/BACKUPS.md`: nightly gpg-encrypted snapshots of the webspace
+private data and the EU node's service data to the owner's two USB drives, with a
+tested restore.

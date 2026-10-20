@@ -11,7 +11,7 @@ const V1_MAX_RESPONSE_BYTES = 1048576;
 const V1_TARGET_SECONDS = 120;
 const V1_CLIENT_LIMIT = 60;   // requests per client per minute
 const V1_TOTAL_LIMIT = 1200;  // requests per deployment per minute
-const V1_ALLOWED_METHODS = ['get_info', 'get_last_block_header', 'get_block_header_by_height', 'get_block_headers_range'];
+const V1_ALLOWED_METHODS = ['get_info', 'get_last_block_header', 'get_block_header_by_height', 'get_block_headers_range', 'hard_fork_info'];
 
 function v1Headers(int $maxAge): void {
     header('Content-Type: application/json; charset=utf-8');
