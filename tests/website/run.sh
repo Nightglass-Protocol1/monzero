@@ -60,6 +60,7 @@ python3 tests/website/check_homepage_tiles.py
 python3 tests/website/test_catalog_validators.py
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_admin_content.py; else echo "SKIPPED test_admin_content.py: this PHP lacks pdo_sqlite"; fi
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_voting.py; else echo "SKIPPED test_voting.py: this PHP lacks pdo_sqlite"; fi
+if php -m | grep -qx pdo_sqlite && php -m | grep -qx gmp; then python3 tests/website/test_telegram.py; else echo "SKIPPED test_telegram.py: this PHP lacks pdo_sqlite or gmp"; fi
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_status.py; else echo "SKIPPED test_status.py: this PHP lacks pdo_sqlite"; fi
 for f in $(find website/api/v1 -name "*.php"); do php -l "$f"; done
 python3 tests/website/test_api_v1.py

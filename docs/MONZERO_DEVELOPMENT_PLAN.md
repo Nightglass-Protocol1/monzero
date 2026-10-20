@@ -1442,3 +1442,19 @@ ranks by uptime (active slots / slots in the window), with average hashrate,
 blocks and active days; `/mining/leaderboard/` shows longest uptime, highest
 average hashrate and most blocks for either window. The join/leave text states
 the 30-day retention. Tests: `test_miner_history.py`.
+
+### Telegram miner alerts — 2026-10-20 (Claude)
+
+Miners message the bot privately: `/watch ADDRESS [name]` (mainnet standard or
+subaddress, checksum-validated, up to 5 per chat), `/list`, `/stop ADDRESS|all`,
+`/drop PERCENT`, `/offline MINUTES`. On each node check-in (at most every 5
+minutes, 45-second budget) the site reads `pool.monzero.org/api/miner` per address
+and sends: hashrate drop below the chosen percentage of a moving average (once,
+then a recovery message), no hashrate for the chosen minutes (then "mining
+again"), and new payouts (the first check only records existing ones). A pool
+outage produces no messages. Chats that block the bot are deleted; `/stop all`
+deletes the chat and its addresses. The webhook `/api/telegram/` checks Telegram's
+secret-token header; group chats are ignored. Off until the owner runs
+`utils/website/telegram-setup.sh` (token entered at a hidden prompt, stored in
+`~/monzero-private/telegram-config.php`). The pool dashboard shows the bot link
+only when configured. Tests: `test_telegram.py` (fake Telegram and pool APIs).

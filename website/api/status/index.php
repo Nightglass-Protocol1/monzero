@@ -44,4 +44,6 @@ $pings[$node] = $now;
 statusWriteJson("$private/status-pings.json", $pings);
 flock($lock, LOCK_UN);
 $result = statusEvaluate(true);
+// Node check-ins also drive the Telegram miner alerts (rate limited inside; off when not configured).
+try { require_once dirname(__DIR__, 2) . '/lib/telegram.php'; tgCheckAll(time()); } catch (Throwable $e) { error_log('Monzero telegram check: ' . $e->getMessage()); }
 reply(200, ['ok' => true, 'overall' => $result['overall']]);
