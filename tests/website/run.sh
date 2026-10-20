@@ -66,6 +66,7 @@ python3 tests/website/test_api_v1.py
 node --check website/mining/leaderboard/leaderboard.mjs
 node --test tests/website/leaderboard.test.mjs
 python3 tests/website/check_leaderboard.py
+python3 tests/website/test_miner_history.py
 php -l website/admin/lib.php; php -l website/admin/index.php; php -l website/admin/bootstrap.php
 # Admin storage needs pdo_sqlite (present on the production host); say so loudly when missing.
 if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_admin.py; else echo "SKIPPED test_admin.py: this PHP lacks pdo_sqlite (run with PHP 8.3 + pdo_sqlite)"; fi

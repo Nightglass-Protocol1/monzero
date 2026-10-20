@@ -54,6 +54,9 @@ def report(args: argparse.Namespace) -> None:
         "installation_id": installation_id(args.id_file),
         "hashrate": int(status.get("speed", 0)) if status.get("active") else 0,
         "blocks_found": blocks_found(args.log),
+        # Opt-in: keep daily totals for 30 days for the weekly and monthly leaderboards.
+        # Leaving this off (the default) also deletes any history kept earlier.
+        "history": args.share_history,
     }
     result = json_request(args.endpoint, payload, args.token)
     if result.get("status") != "OK":
@@ -73,6 +76,8 @@ def main() -> None:
     parser.add_argument("--id-file", type=Path, default=default_data / "telemetry-id")
     parser.add_argument("--log", type=Path, default=default_data / "monzero.log")
     parser.add_argument("--interval", type=int, default=0, help="repeat every N seconds")
+    parser.add_argument("--share-history", action="store_true",
+                        help="also appear on the 7- and 30-day leaderboards (daily totals kept for 30 days)")
     args = parser.parse_args()
     if not args.token:
         parser.error("set MONZERO_STATS_TOKEN or pass --token")

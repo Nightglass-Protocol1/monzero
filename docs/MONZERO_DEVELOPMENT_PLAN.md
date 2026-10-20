@@ -1429,3 +1429,16 @@ before the poll opened; one final vote each (a trigger blocks changes) and at
 most three per network per poll. Results appear after voting or at the close.
 Storage: `~/monzero-private/voting.sqlite`. PHP-rendered pages share
 `lib/site-header.php` (the faucet now uses it too). Tests: `test_voting.py`.
+
+### Leaderboard history (opt-in) — 2026-10-20 (Claude)
+
+The miner-stats ingest keeps daily totals only for reporters that send
+`"history": true` (`monzero-miner-reporter.py --share-history`): reports, summed
+hashrate, positive block-count increments (a log reset adds nothing) and a
+144-bit mask of active 10-minute slots, keyed by the existing HMAC id, in
+`<stats file>.history.json` (0600), pruned after 30 days. A report without the
+flag deletes that miner's history at once. `GET /api/miner-stats/?board=7d|30d`
+ranks by uptime (active slots / slots in the window), with average hashrate,
+blocks and active days; `/mining/leaderboard/` shows longest uptime, highest
+average hashrate and most blocks for either window. The join/leave text states
+the 30-day retention. Tests: `test_miner_history.py`.

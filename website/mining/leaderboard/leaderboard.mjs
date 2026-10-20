@@ -44,3 +44,32 @@ async function load(){
  }finally{busy=false;$('refresh').disabled=false;}
 }
 if(typeof document!=='undefined'){$('refresh').addEventListener('click',load);load();}
+
+// 7- and 30-day boards from /api/miner-stats/?board=… (opt-in daily totals).
+export function validateBoard(data,now=Date.now()/1000){
+ if(!data||data.status!=='OK'||!Number.isInteger(data.generated_at)||![7,30].includes(data.window_days)||!Array.isArray(data.miners)||data.miners.length>10000)throw Error('Invalid board');
+ if(data.generated_at>now+300)throw Error('Board from the future');
+ for(const m of data.miners){
+  if(!m||typeof m.name!=='string'||!/^Miner [0-9A-F]{8}$/.test(m.name)||typeof m.average_hashrate!=='number'||!Number.isFinite(m.average_hashrate)||m.average_hashrate<0
+   ||typeof m.uptime_percent!=='number'||!(m.uptime_percent>=0&&m.uptime_percent<=100)||!Number.isInteger(m.blocks_found)||m.blocks_found<0
+   ||!Number.isInteger(m.active_days)||m.active_days<1||m.active_days>data.window_days)throw Error('Invalid miner');
+ }
+ return data;
+}
+let historyBusy=false;
+async function loadHistory(){
+ if(historyBusy)return;historyBusy=true;const select=$('window');select.disabled=true;$('history-status').textContent='Loading history…';
+ try{
+  const response=await fetch(`/api/miner-stats/?board=${encodeURIComponent(select.value)}`,{signal:AbortSignal.timeout(10000),cache:'no-store'});
+  if(!response.ok)throw Error('Unavailable');
+  const data=validateBoard(await response.json());
+  rows('by-uptime',rank(data.miners,'uptime_percent'),(m,i)=>[String(i+1),m.name,`${m.uptime_percent.toFixed(1)}%`,String(m.active_days)],'No miner has shared history for this period yet.',4);
+  rows('by-average',rank(data.miners,'average_hashrate'),(m,i)=>[String(i+1),m.name,formatRate(m.average_hashrate)],'No miner has shared history for this period yet.',3);
+  rows('by-period-blocks',rank(data.miners,'blocks_found'),(m,i)=>[String(i+1),m.name,String(m.blocks_found)],'No sharing miner reported a block in this period.',3);
+  $('history-status').textContent=`${data.miners.length} miner${data.miners.length===1?'':'s'} shared history over the last ${data.window_days} days.`;
+ }catch{
+  for(const id of ['by-uptime','by-average','by-period-blocks'])$(id).replaceChildren();
+  $('history-status').textContent='History is unavailable right now. Try again later.';
+ }finally{historyBusy=false;select.disabled=false;}
+}
+if(typeof document!=='undefined'&&$('window')){$('window').addEventListener('change',loadHistory);loadHistory();}

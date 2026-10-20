@@ -7,6 +7,9 @@ header('X-Content-Type-Options: nosniff');
 
 const ACTIVE_SECONDS = 180;
 const MAX_RECORD_AGE = 604800;
+const HISTORY_DAYS = 30;        // daily totals kept for miners who opted in with "history": true
+const HISTORY_SLOT = 600;       // uptime is counted in 10-minute slots
+const HISTORY_BOARDS = ['7d' => 7, '30d' => 30];
 
 $fileConfig = [];
 $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
@@ -50,6 +53,67 @@ function readRecords($handle): array
     return is_array($decoded) ? $decoded : [];
 }
 
+function historyPath(): string { return dataPath() . '.history.json'; }
+
+// Opted-in daily totals: reports, summed hashrate, blocks gained (positive log increments) and a
+// 144-bit mask of active 10-minute slots. Locked by the caller's lock on the stats file.
+function historyLoad(): array {
+    $data = json_decode((string)@file_get_contents(historyPath()), true);
+    return is_array($data) && is_array($data['days'] ?? null) ? $data : ['days' => []];
+}
+
+function historySave(array $data, int $now): void {
+    $cutoff = gmdate('Y-m-d', $now - HISTORY_DAYS * 86400);
+    $data['days'] = array_filter($data['days'], fn($day) => is_string($day) && $day > $cutoff, ARRAY_FILTER_USE_KEY);
+    $tmp = historyPath() . '.' . bin2hex(random_bytes(4));
+    if (file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES)) !== false) { @chmod($tmp, 0600); rename($tmp, historyPath()); }
+}
+
+function recordHistory(string $id, float $hashrate, int $blocks, int $previousBlocks, int $now): void {
+    $data = historyLoad();
+    $day = gmdate('Y-m-d', $now);
+    $entry = $data['days'][$day][$id] ?? ['r' => 0, 'h' => 0.0, 'b' => 0, 's' => str_repeat('0', 36)];
+    $slot = intdiv($now % 86400, HISTORY_SLOT);
+    $mask = str_pad((string)$entry['s'], 36, '0');
+    $nibble = intdiv($slot, 4);
+    $mask[$nibble] = dechex(hexdec($mask[$nibble]) | (1 << ($slot % 4)));
+    $entry = ['r' => $entry['r'] + 1, 'h' => round($entry['h'] + $hashrate, 2), 'b' => $entry['b'] + max(0, $blocks - $previousBlocks), 's' => $mask];
+    $data['days'][$day][$id] = $entry;
+    historySave($data, $now);
+}
+
+// A report without the history flag withdraws consent: drop that miner's history at once.
+function forgetHistory(string $id): void {
+    if (!is_file(historyPath())) return;
+    $data = historyLoad();
+    $changed = false;
+    foreach ($data['days'] as $day => $miners) if (isset($miners[$id])) { unset($data['days'][$day][$id]); $changed = true; }
+    if ($changed) historySave($data, time());
+}
+
+function historyBoard(int $days, int $now): array {
+    $data = historyLoad();
+    $from = gmdate('Y-m-d', $now - ($days - 1) * 86400);
+    $totals = [];
+    foreach ($data['days'] as $day => $miners) {
+        if (!is_string($day) || $day < $from || !is_array($miners)) continue;
+        foreach ($miners as $id => $e) {
+            $t = $totals[$id] ?? ['reports' => 0, 'hash' => 0.0, 'blocks' => 0, 'slots' => 0, 'days' => 0];
+            $slots = 0;
+            foreach (str_split(substr((string)($e['s'] ?? ''), 0, 36)) as $hex) $slots += substr_count(decbin(hexdec($hex)), '1');
+            $totals[$id] = ['reports' => $t['reports'] + (int)$e['r'], 'hash' => $t['hash'] + (float)$e['h'], 'blocks' => $t['blocks'] + (int)$e['b'], 'slots' => $t['slots'] + $slots, 'days' => $t['days'] + 1];
+        }
+    }
+    $miners = [];
+    foreach ($totals as $id => $t) {
+        if ($t['reports'] === 0) continue;
+        $miners[] = ['name' => 'Miner ' . strtoupper(substr((string)$id, 0, 8)), 'average_hashrate' => round($t['hash'] / $t['reports'], 2),
+            'uptime_percent' => round(100 * $t['slots'] / ($days * 86400 / HISTORY_SLOT), 1), 'blocks_found' => $t['blocks'], 'active_days' => $t['days']];
+    }
+    usort($miners, fn($a, $b) => $b['uptime_percent'] <=> $a['uptime_percent'] ?: strcmp($a['name'], $b['name']));
+    return $miners;
+}
+
 $secret = configValue('MONZERO_STATS_SECRET');
 if (strlen($secret) < 32) fail(503, 'NOT_CONFIGURED');
 
@@ -84,6 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($blocks === false || $blocks < 0 || $blocks > 1000000000) fail(400, 'INVALID_BLOCK_COUNT');
 
     $privateId = hash_hmac('sha256', strtolower($installationId), $secret);
+    $share = $input['history'] ?? false;
+    if (!is_bool($share)) fail(400, 'INVALID_HISTORY_FLAG');
+    if ($share && $active) recordHistory($privateId, (float)$hashrate, (int)$blocks, (int)($records[$privateId]['blocks_found'] ?? $blocks), $now);
+    elseif (!$share) forgetHistory($privateId);
     $records[$privateId] = [
         'active' => $active,
         'hashrate' => $active ? round((float)$hashrate, 2) : 0,
@@ -110,6 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET, POST');
     fail(405, 'METHOD_NOT_ALLOWED');
+}
+
+$board = $_GET['board'] ?? null;
+if ($board !== null) {
+    if (!is_string($board) || !isset(HISTORY_BOARDS[$board])) fail(400, 'INVALID_BOARD');
+    echo json_encode(['status' => 'OK', 'generated_at' => $now, 'window_days' => HISTORY_BOARDS[$board], 'miners' => historyBoard(HISTORY_BOARDS[$board], $now)], JSON_UNESCAPED_SLASHES);
+    exit;
 }
 
 $miners = [];
