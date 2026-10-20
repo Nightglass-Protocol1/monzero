@@ -13,7 +13,7 @@ from pathlib import Path
 WEBSITE = Path(__file__).resolve().parents[2] / "website"
 SUBMENUS = {
     "Explorer": [("/explorer/", "Block explorer"), ("/network/", "Network history"), ("/network/nodes/", "Node map")],
-    "Stats": [("/stats/", "Network stats"), ("/markets/", "Markets"), ("/exchanges/", "Exchanges")],
+    "Stats": [("/stats/", "Network stats"), ("/status/", "Service status"), ("/markets/", "Markets"), ("/exchanges/", "Exchanges")],
     "Public wallets": [("/wallets/", "Public wallets"), ("/payments/request/", "Payment request")],
     "Roadmap": [("/roadmap/", "Roadmap"), ("/community/", "Community"), ("/community/bounties/", "Bounty board"), ("/ecosystem/", "Ecosystem")],
     "Whitepaper": [("/WHITEPAPER.md?rev=1.5-20261017", "Whitepaper"), ("/developers/", "Developers"), ("/developers/api/", "API v1"),

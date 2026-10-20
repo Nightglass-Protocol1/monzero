@@ -208,15 +208,38 @@ class Worker:
         log(f"claim {cid}: paid {amount} atomic, tx {txid}")
         return self.report(cid, lease, "paid", txid=txid)
 
+    def heartbeat(self, balance=None, halted=None):
+        """Tell the website the worker is alive (and the wallet balance); failures are only logged."""
+        try:
+            if balance is None:
+                try:
+                    balance = self.rpc("get_balance", {"account_index": 0})
+                except (RpcError, RpcUncertain, OSError, ValueError):
+                    if not halted:
+                        raise
+                    balance = {}  # still report the halt when the wallet is unreachable
+            need = int(self.config["amount_atomic"]) + int(self.config["reserve_atomic"])
+            payload = {"action": "heartbeat", "balance_atomic": str(int(balance.get("balance", 0))),
+                       "unlocked_atomic": str(int(balance.get("unlocked_balance", 0))), "need_atomic": str(need), "payouts": self.payouts}
+            if halted:
+                payload["halted"] = str(halted)[:200]
+            code, reply = site_call(self.config, payload)
+            if code != 200:
+                log(f"heartbeat refused (HTTP {code}: {reply.get('error', '')})")
+        except (RpcError, RpcUncertain, OSError, ValueError) as e:
+            log(f"heartbeat failed: {e}")
+
     def cycle(self):
         self.recover()
         if not self.payouts:
+            self.heartbeat()
             log("payouts disabled (dry run): not leasing claims")
             return
         # Lease only what can be paid now: change from each payout stays locked for about ten blocks,
         # so claims wait in the queue (not failed, no halt) until enough of the balance is unlocked.
         need = int(self.config["amount_atomic"]) + int(self.config["reserve_atomic"])
         balance = self.rpc("get_balance", {"account_index": 0})
+        self.heartbeat(balance)
         if int(balance.get("unlocked_balance", 0)) < need:
             if int(balance.get("balance", 0)) < need:
                 raise Halt("faucet wallet balance is below amount + reserve; refill it")
@@ -250,6 +273,7 @@ def main():
             worker.cycle()
         except Halt as e:
             log(f"HALT: {e}")
+            worker.heartbeat(halted=e)
             sys.exit(EXIT_HALT)
         except (RpcError, RpcUncertain, OSError, ValueError) as e:
             # Nothing was sent in this cycle (sends halt on uncertainty above); try again later.

@@ -56,6 +56,7 @@ python3 tests/website/check_ecosystem.py
 python3 tests/website/test_node_census.py
 python3 tests/website/test_history_upload.py
 python3 tests/website/test_deploy.py
+if php -m | grep -qx pdo_sqlite; then python3 tests/website/test_status.py; else echo "SKIPPED test_status.py: this PHP lacks pdo_sqlite"; fi
 for f in $(find website/api/v1 -name "*.php"); do php -l "$f"; done
 python3 tests/website/test_api_v1.py
 node --check website/mining/leaderboard/leaderboard.mjs

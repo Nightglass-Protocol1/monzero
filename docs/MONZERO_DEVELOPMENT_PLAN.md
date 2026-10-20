@@ -1377,3 +1377,16 @@ existing anchors (idempotent, `--check` in the runner) and writes
 `lib/site-nav-submenus.json`, which the faucet's PHP header reads. Navigation
 checks: 26 pages at 1440/1300/390 px with and without JavaScript, every route
 reachable from every page, hover/click/Escape/keyboard/mobile expand.
+
+### Service status and owner alerts — 2026-10-20 (Claude)
+
+`/status/` and `GET /api/status/` show seven checks: public node (tip under 30 min,
+synchronized), mining pool (answers, same height), faucet (worker heartbeat within
+10 min, not halted, at least two days of funds at the daily cap), node map census,
+network history, and check-ins from the EU and US nodes. The faucet worker now
+sends a signed `heartbeat` every cycle with its balance (and when it halts).
+`utils/website/status_ping.py` runs every 10 minutes on both nodes
+(`deploy-status-ping.sh`); each signed check-in re-evaluates the checks and emails
+the owner (`~/monzero-private/status-config.php`, default security@monzero.org)
+only when a check changes state or stays bad for a day. Public output has no
+secrets, addresses or member data. Tests: `tests/website/test_status.py`.

@@ -45,6 +45,19 @@ switch ($input['action'] ?? null) {
         $db->exec('COMMIT');
         if ($claims) faucetEvent(null, 'worker.leased', ['ids' => array_column($claims, 'id')]);
         reply(['paused' => false, 'claims' => $claims]);
+    case 'heartbeat':
+        // Sent every worker cycle (also in dry run and when halting) so /status/ notices a silent worker.
+        $amounts = [];
+        foreach (['balance_atomic', 'unlocked_atomic', 'need_atomic'] as $k) {
+            if (!is_string($input[$k] ?? null) || !preg_match('/\A[0-9]{1,20}\z/', $input[$k])) reply(['error' => "$k must be a decimal string"], 400);
+            $amounts[$k] = $input[$k];
+        }
+        $halted = isset($input['halted']) ? mb_substr(preg_replace('/[^\P{C}]/u', ' ', (string)$input['halted']), 0, 200) : null;
+        $beat = $amounts + ['at' => time(), 'payouts' => ($input['payouts'] ?? false) === true, 'halted' => $halted];
+        $path = faucetHeartbeatPath();
+        $tmp = $path . '.' . bin2hex(random_bytes(6));
+        if (file_put_contents($tmp, json_encode($beat)) === false || !chmod($tmp, 0600) || !rename($tmp, $path)) { @unlink($tmp); reply(['error' => 'Storage unavailable'], 503); }
+        reply(['ok' => true]);
     case 'report':
         $id = filter_var($input['id'] ?? null, FILTER_VALIDATE_INT);
         $lease = (string)($input['lease'] ?? '');

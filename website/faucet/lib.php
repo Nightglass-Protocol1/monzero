@@ -29,6 +29,11 @@ const FAUCET_DEFAULTS = [
     'base_url' => 'https://monzero.org',
 ];
 
+function faucetHeartbeatPath(): string {
+    $configured = getenv('MONZERO_FAUCET_HEARTBEAT');
+    return is_string($configured) && $configured !== '' ? $configured : faucetPrivateDir() . '/faucet-heartbeat.json';
+}
+
 function faucetPrivateDir(): string { return dirname(__DIR__, 2) . '/monzero-private'; }
 
 function faucetConfig(): array {
