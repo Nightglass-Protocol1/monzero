@@ -15,6 +15,7 @@ const ADMIN_PERMISSIONS = [
     'proposals' => 'Moderate community proposals',
     'exchanges' => 'Manage exchange listing records',
     'fundraising' => 'Update fundraising campaigns',
+    'founder' => 'Publish founder disclosures',
     'ecosystem' => 'Review ecosystem directory submissions',
     'features' => 'Configure feature availability (pause or resume the faucet)',
     'faucet' => 'View faucet claims and payout worker health',

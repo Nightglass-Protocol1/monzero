@@ -70,8 +70,10 @@
         </div>
         <div>
           <h2>View key and reserve proof</h2>
-          <p>A view key lets anyone load the founder wallet as a view-only wallet and see every coin it has received; it cannot spend anything. A reserve proof shows the coins are still there. <span class="pending">Both will be published here in the first update.</span></p>
-          <p>Once published, check them with <code>monzero-wallet-cli --generate-from-view-key</code> and <code>check_reserve_proof</code>.</p>
+          <p>A view key lets anyone load the founder wallet as a view-only wallet and see every coin it has received; it cannot spend anything. A reserve proof shows the coins are still there.</p>
+          <div id="disclosure"><p><span class="pending">Both will be published here in the first update.</span></p>
+          <p>Once published, check them with <code>monzero-wallet-cli --generate-from-view-key</code> and <code>check_reserve_proof</code>.</p></div>
+          <div id="disclosure-history-wrap" hidden><h3>Earlier disclosures</h3><ul id="disclosure-history"></ul></div>
         </div>
       </div>
     </section>
@@ -114,6 +116,7 @@
     <p>Experimental software. Verify everything.</p>
     <p><a href="mailto:security@monzero.org">security@monzero.org</a></p>
   </footer>
+  <script type="module" src="disclosures.mjs?v=20261020"></script>
   <script src="../site-nav.js?v=20261020-upgrade" defer></script>
 </body>
 </html>

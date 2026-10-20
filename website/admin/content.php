@@ -25,6 +25,8 @@ const CONTENT_MODULES = [
         'public' => '/fund/', 'help' => 'Goals fill in this order. target_usd is whole US dollars as a string. Set status to reached when a goal is funded, closed to hide it. Moving money between goals must be reported.'],
     'fund-spending' => ['label' => 'Spending records', 'perm' => 'fundraising', 'file' => 'fund/spending.json', 'schema' => 'monzero-fund-spending-v1', 'title' => 'description',
         'public' => '/fund/', 'help' => 'One entry per payment. goal is a goal id (or general). amount is in the coin paid; amount_usd at the rate on the day. Spends over $100 need evidence_url (invoice or receipt).'],
+    'founder-disclosures' => ['label' => 'Founder disclosures', 'perm' => 'founder', 'file' => 'founder/disclosures.json', 'schema' => 'monzero-founder-disclosures-v1', 'title' => 'date',
+        'public' => '/founder/', 'help' => 'Publish only an address you intend to disclose. A view key is optional; reserve proof fields must be supplied together and proof files must already exist under /founder/proofs/.'],
     'benchmarks' => ['label' => 'CPU benchmarks', 'perm' => 'benchmarks', 'file' => 'mining/benchmarks/catalog.json', 'schema' => 'monzero-randomx-benchmarks-v1', 'title' => 'model',
         'public' => '/mining/benchmarks/', 'help' => 'Moderate submissions here: keep community results as status community; mark verified only with a separate verification_url and verified_by. power_basis is unknown exactly when power_watts is null.'],
 ];
@@ -41,6 +43,8 @@ const CONTENT_TEMPLATES = [
     'fund-goals' => ['id' => 'new-goal', 'title' => 'Goal title', 'description' => 'What the money is for and how it is spent.', 'target_usd' => '1000', 'status' => 'open'],
     'fund-spending' => ['id' => 'payment-1', 'date' => 'TODAY', 'goal' => 'biconomy-listing', 'description' => 'What was paid for', 'paid_to' => 'Who was paid', 'amount' => '100', 'currency' => 'USDT',
         'amount_usd' => '100.00', 'evidence_url' => null],
+    'founder-disclosures' => ['id' => '2026-10-20-founder', 'date' => 'TODAY', 'height' => 1, 'address' => 'FRJ2nMKxwd94nsgTLnjpJ77d3gZ2X5NxdUkTcFXuoNaWSQBNp5syt7dcwVsGPYP6vE1hyuLQcVgTtHKkNBUhpJoENAhsryR', 'view_key' => null, 'reserve_proof_url' => null,
+        'reserve_proof_sha256' => null, 'proof_message' => null, 'proven_xmz' => null, 'note' => null],
     'benchmarks' => ['id' => 'vendor-model-os', 'manufacturer' => 'AMD', 'model' => 'CPU model', 'os' => 'Linux', 'miner' => 'XMRig', 'miner_version' => '6.x', 'methodology' => 'How it was measured.',
         'cores' => 8, 'threads' => 16, 'hashrate_hps' => 1000, 'power_watts' => null, 'power_basis' => 'unknown', 'date' => 'TODAY', 'status' => 'community',
         'source_url' => 'https://example.org/result', 'verification_url' => null, 'verified_by' => null],

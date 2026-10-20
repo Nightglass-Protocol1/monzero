@@ -254,8 +254,26 @@ function catalogProblem(string $kind, string $json, string $today): ?string {
             'roadmap-updates' => catalogPosts($data, 'monzero-roadmap-updates-v1', $today),
             'fund-goals' => catalogFundGoals($data, $today),
             'fund-spending' => catalogFundSpending($data, $today),
+            'founder-disclosures' => catalogFounderDisclosures($data, $today),
         };
     } catch (CatalogError $e) { return $e->getMessage(); }
     catch (Throwable $e) { return 'The catalog has the wrong shape.'; }
     return null;
+}
+
+function catalogFounderDisclosures(mixed $data, string $today): void {
+    catalogTop($data, 'monzero-founder-disclosures-v1', 120, $today);
+    $fields = ['id','date','height','address','view_key','reserve_proof_url','reserve_proof_sha256','proof_message','proven_xmz','note'];
+    $ids = [];
+    foreach ($data->records as $i => $r) {
+        $n = catalogRecordName($r, $i);
+        if (!catalogKeys($r, $fields) || !catalogId($r->id) || isset($ids[$r->id])) catalogFail("$n has invalid fields or duplicate id."); $ids[$r->id] = true;
+        if (!catalogDate($r->date) || $r->date > $data->updated_at || !is_int($r->height) || $r->height < 1 || $r->height > 1000000000) catalogFail("$n has an invalid date or height.");
+        if (!catalogText($r->address, 95) || !preg_match('/\AF[1-9A-HJ-NP-Za-km-z]{94}\z/', $r->address)) catalogFail("$n address is invalid.");
+        if ($r->view_key !== null && (!is_string($r->view_key) || !preg_match('/\A[0-9a-f]{64}\z/', $r->view_key))) catalogFail("$n view_key is invalid.");
+        $proof = $r->reserve_proof_url !== null;
+        if ($proof !== ($r->reserve_proof_sha256 !== null) || $proof !== ($r->proof_message !== null) || $proof !== ($r->proven_xmz !== null)) catalogFail("$n reserve proof fields must be all present or all null.");
+        if ($proof && (!is_string($r->reserve_proof_url) || !preg_match('#\A/founder/proofs/[a-z0-9-]{1,64}\.txt\z#', $r->reserve_proof_url) || !preg_match('/\A[0-9a-f]{64}\z/', (string)$r->reserve_proof_sha256) || !catalogText($r->proof_message, 200) || !is_string($r->proven_xmz) || !preg_match('/\A(0|[1-9]\d{0,11})(\.\d{1,11})?\z/', $r->proven_xmz))) catalogFail("$n reserve proof is invalid.");
+        if ($r->note !== null && !catalogProse($r->note, 1500)) catalogFail("$n note is invalid.");
+    }
 }

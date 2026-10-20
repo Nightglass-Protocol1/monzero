@@ -1576,3 +1576,14 @@ page keeps its built-in goals. The homepage summary takes the first goal and tot
 target from the file. Validators are in the fuzz cross-check (18,097 cases).
 The seed file reproduces the current two goals and must be put on the live site
 once (it is live-owned, so deploys never overwrite it).
+
+### Founder disclosure publishing — 2026-10-20
+
+Completed the pending founder disclosure surface. `/founder/` now reads a strict,
+validated `founder/disclosures.json` feed and keeps the publication area pending
+until an intentional address, view key or reserve proof is supplied. The admin
+content editor can publish records only for the dedicated `founder` permission;
+server-side validation mirrors the browser checks, requires all reserve-proof
+fields together, and rejects malformed addresses, keys, paths, amounts and text.
+The checked-in seed is deliberately empty so no wallet secret or unverified
+balance is published by a deploy.
