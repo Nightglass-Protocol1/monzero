@@ -1,7 +1,7 @@
 # Monzero ecosystem website development plan
 
-Updated: 2026-10-19. Status: Release 1 implementation and local acceptance;
-production deployment remains pending.
+Updated: 2026-10-20. Status: Release 1 implementation accepted and deployed to
+production; continue monitoring public endpoints and live-owned content.
 Active priority: website expansion; DEX work is deferred. Local mining and builds
 remain stopped by owner request. No automatic payouts, new wallet custody, chain
 changes or browser wallet are authorized by this plan. The owner explicitly excludes all
@@ -1360,6 +1360,16 @@ versions are not exposed by the peer list and are not shown. Tests:
 `tests/website/test_node_census.py` (aggregation, filtering, signature, replay,
 ordering, API, no stored IPs, browser under the production CSP at 390/1440 px).
 Deployment: upload the website files, then `bash utils/nodemap/deploy-eu.sh`.
+
+Production deployment record (2026-10-20): commit `f4122fecc` was deployed with
+`utils/website/deploy.py`. The deploy uploaded 63 reviewed website files,
+created the rollback backup at
+`/home/www/Monzero-backups/deploy-20261020T161810Z`, and verified every uploaded
+SHA-256 on the server. HTTPS checks returned 200 for `/`, `/stats/`,
+`/founder/`, `/press/`, `/upgrade/`, and `/sitemap.xml`; the deployed responses
+included the expected CSP and HSTS headers. `/api/v1/network/` remains
+protected by its existing 403 policy. Live-owned runtime and admin data was
+not overwritten.
 
 ### Navigation submenus — 2026-10-20 (Claude)
 
