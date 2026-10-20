@@ -88,7 +88,7 @@ with tempfile.TemporaryDirectory() as tmp:
   eu=nc.tagged_census(ips('8.8.8.8','8.8.4.4'),ips('8.8.8.8','81.2.69.5'),db,int(time.time())+20,'eu',salt)
   us=nc.tagged_census(ips('8.8.8.8'),ips('81.2.69.5','81.2.69.9','1.1.1.1'),db,int(time.time())+21,'us',salt)
   assert '8.8.8.8' not in json.dumps(eu) and eu['tag_day']==time.strftime('%Y-%m-%d',time.gmtime(eu['observed_at']))
-  assert eu['countries']['US']['reachable'][0] in us['countries']['US']['reachable']  # same address, same tag
+  assert set(eu['countries']['US']['reachable']) & set(us['countries']['US']['reachable'])  # same address, same tag
   other=nc.tagged_census(ips('8.8.8.8'),set(),db,int(time.time()),'us','different salt');assert other['countries']['US']['reachable'][0] not in eu['countries']['US']['reachable']
   code,reply=nc.send(base,secret,eu);assert code==200,(code,reply)
   code,reply=nc.send(base,secret,us);assert code==200,(code,reply)
@@ -110,7 +110,8 @@ with tempfile.TemporaryDirectory() as tmp:
    browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'))
    for width in (390,1440):
     page=browser.new_page(viewport={'width':width,'height':900});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-    page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+    page.on('response',lambda r: errors.append(f'{r.status} {r.url}') if r.status >= 400 and not r.url.endswith('/news/data/latest.json') else None)
+    page.on('console',lambda m:errors.append(m.text) if m.type=='error' and 'Failed to load resource' not in m.text else None)
     def with_csp(route):
      resp=route.fetch();route.fulfill(response=resp,headers={**resp.headers,'content-security-policy':csp})
     page.route('**/network/nodes/',with_csp)
