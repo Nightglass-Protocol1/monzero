@@ -208,6 +208,39 @@ function catalogPosts(mixed $data, string $schema, string $today): void {
     }
 }
 
+// Fundraising goals (fund/goals.json), in the order donations fill them.
+function catalogFundGoals(mixed $data, string $today): void {
+    catalogTop($data, 'monzero-fund-goals-v1', 10, $today);
+    if (count($data->records) < 1) catalogFail('Keep at least one goal; close a goal instead of removing the last one.');
+    $ids = [];
+    foreach ($data->records as $i => $g) {
+        $n = catalogRecordName($g, $i);
+        if (!catalogKeys($g, ['id', 'title', 'description', 'target_usd', 'status'])) catalogFail("$n must have exactly id, title, description, target_usd and status.");
+        if (!catalogId($g->id) || isset($ids[$g->id])) catalogFail("$n: id must be unique lowercase words joined by hyphens."); $ids[$g->id] = true;
+        if (!catalogText($g->title, 120) || !catalogProse($g->description, 2000)) catalogFail("$n: title (1-120) and description (1-2000 characters) are required.");
+        if (!is_string($g->target_usd) || !preg_match('/\A[1-9]\d{0,8}\z/', $g->target_usd)) catalogFail("$n: target_usd must be a whole number of US dollars as a string, for example \"15000\".");
+        if (!in_array($g->status, ['open', 'reached', 'closed'], true)) catalogFail("$n: status must be open, reached or closed.");
+    }
+}
+
+// Spending records (fund/spending.json): every spend over $100 needs an evidence link.
+function catalogFundSpending(mixed $data, string $today): void {
+    catalogTop($data, 'monzero-fund-spending-v1', 500, $today);
+    $ids = [];
+    foreach ($data->records as $i => $s) {
+        $n = catalogRecordName($s, $i);
+        if (!catalogKeys($s, ['id', 'date', 'goal', 'description', 'paid_to', 'amount', 'currency', 'amount_usd', 'evidence_url'])) catalogFail("$n must have exactly id, date, goal, description, paid_to, amount, currency, amount_usd and evidence_url.");
+        if (!catalogId($s->id) || isset($ids[$s->id])) catalogFail("$n: id must be unique."); $ids[$s->id] = true;
+        if (!catalogDate($s->date) || $s->date > $data->updated_at) catalogFail("$n: date must be no later than today.");
+        if (!catalogId($s->goal)) catalogFail("$n: goal must be a goal id from the goals list, or general.");
+        if (!catalogText($s->description, 400) || !catalogText($s->paid_to, 120)) catalogFail("$n: description (1-400) and paid_to (1-120 characters) are required.");
+        if (!is_string($s->amount) || !preg_match('/\A(0|[1-9]\d{0,17})(\.\d{1,11})?\z/', $s->amount) || preg_match('/\A0(\.0+)?\z/', $s->amount)) catalogFail("$n: amount must be a positive number as a string.");
+        if (!is_string($s->currency) || !preg_match('/\A[A-Z]{3,5}\z/', $s->currency)) catalogFail("$n: currency must be a code such as USD, BTC or XMZ.");
+        if (!is_string($s->amount_usd) || !preg_match('/\A(0|[1-9]\d{0,8})(\.\d{2})?\z/', $s->amount_usd)) catalogFail("$n: amount_usd must be US dollars as a string, for example \"1500.00\".");
+        if ($s->evidence_url === null ? (float)$s->amount_usd > 100 : !catalogLink($s->evidence_url)) catalogFail("$n: spends over $100 need an evidence_url (https link or a path on this site).");
+    }
+}
+
 // Returns null when valid, otherwise a message for the editor.
 function catalogProblem(string $kind, string $json, string $today): ?string {
     try { $data = json_decode($json, false, 32, JSON_THROW_ON_ERROR); } catch (JsonException $e) { return 'Not valid JSON: ' . $e->getMessage() . '.'; }
@@ -219,6 +252,8 @@ function catalogProblem(string $kind, string $json, string $today): ?string {
             'benchmarks' => catalogBenchmarks($data, $today),
             'announcements' => catalogPosts($data, 'monzero-announcements-v1', $today),
             'roadmap-updates' => catalogPosts($data, 'monzero-roadmap-updates-v1', $today),
+            'fund-goals' => catalogFundGoals($data, $today),
+            'fund-spending' => catalogFundSpending($data, $today),
         };
     } catch (CatalogError $e) { return $e->getMessage(); }
     catch (Throwable $e) { return 'The catalog has the wrong shape.'; }

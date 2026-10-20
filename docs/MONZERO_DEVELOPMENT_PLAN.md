@@ -1563,3 +1563,16 @@ Twitter tags (keeping a page's own og:title/description) with a proper 1200×630
 preview (`assets/monzero-share-1200x630.jpg`), and writes `sitemap.xml` and
 `robots.txt` (admin and API excluded, supply endpoints allowed); `--check` runs in
 the test runner.
+
+### Fundraising goals and spending records in admin — 2026-10-20 (Claude)
+
+`fund/goals.json` (title, description, whole-dollar target, open/reached/closed,
+in fill order) and `fund/spending.json` (date, goal, description, recipient,
+amount and currency, US dollars, evidence link required over $100) are edited in
+/admin ("Update fundraising campaigns"). `fund/campaigns.mjs` validates and renders
+them on /fund/ (closed goals hidden, a spending table with receipts) and asks
+fund.js to refill the bars from the live donation total; without valid files the
+page keeps its built-in goals. The homepage summary takes the first goal and total
+target from the file. Validators are in the fuzz cross-check (18,097 cases).
+The seed file reproduces the current two goals and must be put on the live site
+once (it is live-owned, so deploys never overwrite it).

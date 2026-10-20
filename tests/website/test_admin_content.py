@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory() as tmp:
  tmp=Path(tmp);content=tmp/'content';private=tmp/'private';private.mkdir()
  for rel in ['exchanges/catalog.json','ecosystem/catalog.json','community/bounties/catalog.json','mining/benchmarks/catalog.json']:
   (content/rel).parent.mkdir(parents=True,exist_ok=True);shutil.copy(site/rel,content/rel)
- (content/'roadmap').mkdir()
+ (content/'roadmap').mkdir();(content/'fund').mkdir();shutil.copy(site/'fund/goals.json',content/'fund/goals.json')
  (tmp/'faucet-config.php').write_text("<?php return ['enabled' => true, 'amount_atomic' => '10000000000', 'daily_cap_atomic' => '500000000000', 'turnstile_site_key' => 'k', 'turnstile_secret' => 's', 'worker_secret' => '"+'a'*64+"', 'base_url' => 'http://127.0.0.1'];\n")
  with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
  base=f'http://127.0.0.1:{port}';mail=tmp/'mail.jsonl'
@@ -71,6 +71,18 @@ with tempfile.TemporaryDirectory() as tmp:
   f=form(owner,'?view=content&kind=roadmap-updates',['csrf','version'])
   assert post(owner,'post-add',{**f,'kind':'roadmap-updates','title':'Node map live','body':'Country counts from two nodes.','url':''}).status_code==303
   assert json.loads((content/'roadmap/updates.json').read_text())['records'][0]['url'] is None
+  # Fundraising goals and spending records.
+  view=page(owner,'?view=content&kind=fund-goals&record=biconomy-listing').text;assert 'Listing XMZ on Biconomy' in view
+  g=json.loads((content/'fund/goals.json').read_text())['records'][0];g['target_usd']='12000'
+  f=form(owner,'?view=content&kind=fund-goals&record=biconomy-listing',['csrf','version'])
+  assert post(owner,'content-save',{**f,'kind':'fund-goals','id':'biconomy-listing','record':json.dumps(g)}).status_code==303
+  assert json.loads((content/'fund/goals.json').read_text())['records'][0]['target_usd']=='12000'
+  spend={'id':'listing-fee','date':TODAY,'goal':'biconomy-listing','description':'Listing fee','paid_to':'Biconomy','amount':'5000','currency':'USDT','amount_usd':'5000.00','evidence_url':None}
+  f=form(owner,'?view=content&kind=fund-spending&record=',['csrf','version'])
+  r=post(owner,'content-save',{**f,'kind':'fund-spending','id':'','record':json.dumps(spend)});assert r.status_code==400 and 'need an evidence_url' in r.text
+  spend['evidence_url']='https://example.org/receipt'
+  assert post(owner,'content-save',{**f,'kind':'fund-spending','id':'','record':json.dumps(spend)}).status_code==303
+  assert json.loads((content/'fund/spending.json').read_text())['records'][0]['id']=='listing-fee'
   # Faucet panel and pause/resume.
   panel=page(owner,'?view=faucet').text;assert 'Claims are <strong>open</strong>' in panel and 'No heartbeat' in panel
   f=form(owner,'?view=faucet',['csrf'])

@@ -21,7 +21,8 @@ bench={'id':'amd-ryzen-test','manufacturer':'AMD','model':'Ryzen 7 7700','os':'L
 post={'id':'2026-10-20-hello','date':'2026-10-20','title':'Hello','body':'First line.\nSecond line.','url':'/roadmap/'}
 bases=[('exchanges',exchanges),('exchanges',{**exchanges,'records':exchanges['records']+[live]}),('ecosystem',ecosystem),('bounties',bounties),
  ('bounties',{**bounties,'records':bounties['records']+[paid]}),('benchmarks',{**benchmarks,'records':benchmarks['records']+[bench]}),
- ('announcements',{'schema':'monzero-announcements-v1','updated_at':TODAY,'records':[post]}),('roadmap-updates',{'schema':'monzero-roadmap-updates-v1','updated_at':TODAY,'records':[post]})]
+ ('announcements',{'schema':'monzero-announcements-v1','updated_at':TODAY,'records':[post]}), ('fund-goals',{**load('fund/goals.json'),'updated_at':TODAY}),('fund-spending',{'schema':'monzero-fund-spending-v1','updated_at':TODAY,'records':[{'id':'listing-fee','date':'2026-10-19','goal':'biconomy-listing','description':'Biconomy listing fee','paid_to':'Biconomy','amount':'15000','currency':'USDT','amount_usd':'15000.00','evidence_url':'https://example.org/receipt'},{'id':'small-spend','date':'2026-10-18','goal':'general','description':'Domain renewal','paid_to':'IONOS','amount':'20','currency':'USD','amount_usd':'20.00','evidence_url':None}]}),
+('roadmap-updates',{'schema':'monzero-roadmap-updates-v1','updated_at':TODAY,'records':[post]})]
 
 pool=[None,'',' x','x ','x','x'*2100,'x y','x​y','a\tb','a\nb',0,1,-1,1.5,4.0,True,[],{},[1],'2026-10-20','2026-10-21','2026-02-30','2026-1-01','2025-01-01',
  'https://example.org/','http://example.org/','https://user@example.org/','https://','/fund/','//evil.example','/a\\b','https://ex ample.org','javascript:alert(1)',

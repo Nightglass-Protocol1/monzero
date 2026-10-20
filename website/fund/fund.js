@@ -36,7 +36,11 @@
     return a;
   }
 
+  let lastData = null;
+  // campaigns.mjs calls this after replacing the goals, so the bars are filled again.
+  window.monzeroFundRender = () => { if (lastData) render(lastData); };
   function render(data) {
+    lastData = data;
     const status = document.getElementById("live-status");
     // The server's list must match the addresses printed on this page.
     const printed = new Set([...document.querySelectorAll("[data-address]")].map((node) => node.dataset.address));

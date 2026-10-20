@@ -1,0 +1,20 @@
+{
+  "schema": "monzero-fund-goals-v1",
+  "updated_at": "2026-10-20",
+  "records": [
+    {
+      "id": "biconomy-listing",
+      "title": "Listing XMZ on Biconomy",
+      "description": "Several exchanges have approached us about listing XMZ, and the first we are working towards is Biconomy. Monzero is already listed in the Chainquiry project directory. Like most exchanges, Biconomy charges a listing fee. A new market also needs some coins on both sides at the start, so that the first buyers and sellers can actually trade. This goal pays for both.\nThe fee is paid straight to Biconomy, never through an agent or middleman, and its receipt goes in the spending report. The trading funds remain project funds, are reported like every other spend, and are never used to push the price or fake trading volume. If the listing does not go ahead, the money stays here for the next listing.",
+      "target_usd": "15000",
+      "status": "open"
+    },
+    {
+      "id": "bug-bounties",
+      "title": "Bug bounties",
+      "description": "Rewards for security problems reported privately to security@monzero.org, paid according to published rules.",
+      "target_usd": "5000",
+      "status": "open"
+    }
+  ]
+}

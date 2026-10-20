@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../styles.css?v=20261011-hero">
   <link rel="stylesheet" href="../theme.css?v=20261021-unified">
   <link rel="stylesheet" href="fund.css?v=20261017-qr3">
-  <script src="fund.js?v=20261017-live" defer></script>
+  <script src="fund.js?v=20261020-goals" defer></script><script type="module" src="campaigns.mjs?v=20261020"></script>
   <link rel="stylesheet" href="../site-nav.css?v=20261020-upgrade">
 </head>
 <body data-page="fund">
@@ -59,7 +59,7 @@
     <section class="section">
       <div class="section-heading compact">
         <p class="eyebrow">What the money is for</p>
-        <h2>Two goals, funded and reported separately.</h2>
+        <h2 id="goals-heading">Two goals, funded and reported separately.</h2>
         <p>Donations fill the goals in order: when a goal is full, the rest goes to the next one. Money is spent only on the goal it was raised for. The bars below update with the live total, valued in US dollars at today's prices.</p>
       </div>
       <ol class="goals">
@@ -182,6 +182,20 @@
             </table>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="section" id="spending" hidden>
+      <div class="section-heading compact">
+        <p class="eyebrow">Spending</p>
+        <h2>Every spend, with its receipt.</h2>
+        <p>What was paid, to whom and for which goal. Spends over $100 link to the invoice or receipt.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="figures">
+          <thead><tr><th scope="col">Date</th><th scope="col">Goal</th><th scope="col">What</th><th scope="col" class="num">Amount</th><th scope="col" class="num">US dollars</th><th scope="col">Evidence</th></tr></thead>
+          <tbody id="spending-rows"></tbody>
+        </table>
       </div>
     </section>
 
