@@ -84,9 +84,20 @@ with tempfile.TemporaryDirectory() as tmp:
   # Sign out invalidates the server session.
   cookie=fresh.cookies.get('mzadmin');assert post(fresh,'logout',{'csrf':csrf(fresh)}).status_code==303
   assert 'Sign in' in requests.get(base+'/admin/',cookies={'mzadmin':cookie}).text
+  # Forgotten owner password: CLI reset clears it, ends sessions, keeps TOTP, emails a new link.
+  boot=lambda *a:subprocess.run(['php',str(root/'website/admin/bootstrap.php'),*a],env=env,capture_output=True,text=True)
+  assert boot('--reset','other@example.org').returncode==1 and boot('--clear-totp','security@monzero.org').returncode==2
+  assert boot('--reset','security@monzero.org').returncode==0
+  assert 'Sign in' in owner.get(base+'/admin/').text
+  assert post(requests.Session(),'login',{'email':'security@monzero.org','password':PASSWORD,'code':totp(secret)}).status_code==401
+  NEW='a brand new long passphrase';owner=setup('security@monzero.org',NEW)
+  assert post(requests.Session(),'login',{'email':'security@monzero.org','password':NEW}).status_code==401
+  r=post(requests.Session(),'login',{'email':'security@monzero.org','password':NEW,'code':totp(secret,1)});assert r.status_code==303
+  assert boot('--reset','--clear-totp','security@monzero.org').returncode==0;owner=setup('security@monzero.org',PASSWORD)
+  assert sqlite3.connect(db).execute('SELECT totp_secret FROM users WHERE is_owner=1').fetchone()[0] is None
   # Audit log: visible to owner, append-only in storage.
   audit=owner.get(base+'/admin/?view=audit').text
-  for action in ['account.activated','invite.sent','invite.requested','invite.approved','permissions.changed','account.disabled','login.failed','login.throttled','totp.enabled']:assert action in audit,action
+  for action in ['account.activated','invite.sent','invite.requested','invite.approved','permissions.changed','account.disabled','login.failed','login.throttled','totp.enabled','owner.password_reset']:assert action in audit,action
   assert 'Audit log' not in bob.get(base+'/admin/?view=audit').text.split('</h1>')[0]
   con=sqlite3.connect(db)
   for sql in ['UPDATE audit SET action="x"','DELETE FROM audit']:
