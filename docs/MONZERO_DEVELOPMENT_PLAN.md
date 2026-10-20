@@ -1519,3 +1519,20 @@ downloads. Both public nodes were checked: EU runs 1.0.0-c4165784d and both vote
 See `utils/website/BACKUPS.md`: nightly gpg-encrypted snapshots of the webspace
 private data and the EU node's service data to the owner's two USB drives, with a
 tested restore.
+
+### Security review of the 2026-10-20 additions (Claude)
+
+Checked: every internal PHP library answers 404; signed endpoints (status,
+node census, network history, news, faucet worker) use constant-time HMAC
+comparison, a ±300 s window and single-use nonces; the Telegram webhook checks
+Telegram's secret header and ignores groups; admin actions check CSRF, origin and
+permissions before any change; posted links are https or same-site only; public
+pages render feed and admin text with textContent; file names written by ingests
+are fixed or validated (no path traversal); outbound URLs come only from private
+config (no SSRF). Fixed: (1) old site copies were public (`/.pre13-sync-rollback/`,
+`/.pre15-sync-rollback/`, `*.backup-*`, `*.before-*`) and `/nginx-monzero.conf`;
+`.htaccess` now refuses dotfiles and dot-folders except `/.well-known/`, backup-named
+files and the nginx sample (Apache test extended; nginx config given the same
+rule). (2) Admin authenticator codes are now mandatory: without them an admin can
+only set them up, change the password or sign out, and they cannot be turned off.
+Not changed: HSTS max-age is one day (raise once HTTPS is settled everywhere).

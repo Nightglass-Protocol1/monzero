@@ -1,9 +1,10 @@
 """Community voting: admin creates/closes/withdraws polls; eligibility (full sign-in, account older than
 the poll), one final vote per member, per-network cap, CSRF and origin checks, results visibility."""
-import hashlib,json,os,re,secrets,socket,sqlite3,subprocess,tempfile,time
+import hashlib,json,os,re,secrets,socket,sqlite3,subprocess,sys,tempfile,time
 from pathlib import Path
 import requests
 root=Path(__file__).resolve().parents[2];site=root/'website';PASSWORD='correct horse battery staple'
+sys.path.insert(0,str(Path(__file__).resolve().parent));from admin_mfa import enroll
 
 with tempfile.TemporaryDirectory() as tmp:
  tmp=Path(tmp);private=tmp/'private';private.mkdir();mail=tmp/'mail.jsonl'
@@ -22,7 +23,7 @@ with tempfile.TemporaryDirectory() as tmp:
   assert 'No proposals yet' in requests.get(base+'/community/voting/').text
   # Owner opens a poll.
   token=re.search(r'\?setup=([A-Za-z0-9_-]{43})',json.loads(mail.read_text().splitlines()[-1])['body']).group(1)
-  owner=requests.Session();assert owner.post(base+'/admin/?do=setup',data={'token':token,'password':PASSWORD,'confirm':PASSWORD},allow_redirects=False).status_code==303
+  owner=requests.Session();assert owner.post(base+'/admin/?do=setup',data={'token':token,'password':PASSWORD,'confirm':PASSWORD},allow_redirects=False).status_code==303;enroll(owner,base)
   csrf=lambda s,q:re.search(r'name="csrf" value="([^"]+)"',s.get(base+'/admin/'+q).text).group(1)
   r=owner.post(base+'/admin/?do=proposal-create',data={'csrf':csrf(owner,'?view=proposals'),'title':'x','description':'too short','options':'Yes','days':'7'});assert r.status_code==400 and 'title' in r.text
   r=owner.post(base+'/admin/?do=proposal-create',data={'csrf':csrf(owner,'?view=proposals'),'title':'Should the faucet amount rise to 0.2 XMZ?','description':'The faucet pays 0.1 XMZ a day.\nShould it pay 0.2?',

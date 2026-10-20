@@ -20,6 +20,9 @@ with tempfile.TemporaryDirectory(prefix='monzero-apache-') as directory:
  data=site/'network/data';data.mkdir(parents=True)
  (data/'.htaccess').write_bytes((root/'website/network/data/.htaccess').read_bytes())
  (data/'24h.json').write_text('{}')
+ # Leftovers that must never be served (with mod_rewrite, as on the host), and .well-known that must.
+ for rel in ['.pre15-sync-rollback/index.html','index.html.backup-20260826-x','app.js.before-node-state','.htaccess.bak-1','nginx-monzero.conf','a/.hidden.json','.well-known/security.txt']:
+  (site/rel).parent.mkdir(parents=True,exist_ok=True);(site/rel).write_text('leftover')
  for rewrite in [False,True]:
   with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
   names=['mpm_event','authz_core','unixd','dir','mime','headers','expires']+(['rewrite'] if rewrite else [])
@@ -36,7 +39,12 @@ with tempfile.TemporaryDirectory(prefix='monzero-apache-') as directory:
      with socket.create_connection(('127.0.0.1',port),timeout=.2):break
     except OSError:time.sleep(.1)
    else:raise RuntimeError((tmp/'error.log').read_text())
-   for path in ['/','/main.mjs','/catalog.json','/main.js','/styles.css','/release.zip.sha256','/network/data/24h.json','/missing']:
+   if rewrite:
+    for path in ['/.pre15-sync-rollback/','/.pre15-sync-rollback/index.html','/index.html.backup-20260826-x','/app.js.before-node-state','/.htaccess.bak-1','/nginx-monzero.conf','/a/.hidden.json']:
+     try:response=opener.open(f'http://127.0.0.1:{port}'+path,timeout=5)
+     except urllib.error.HTTPError as error:response=error
+     with response:assert response.status==403,(path,response.status)
+   for path in ['/','/main.mjs','/catalog.json','/main.js','/styles.css','/release.zip.sha256','/network/data/24h.json','/missing']+(['/.well-known/security.txt'] if rewrite else []):
     try:response=opener.open(f'http://127.0.0.1:{port}'+path,timeout=5)
     except urllib.error.HTTPError as error:response=error
     with response:

@@ -1,7 +1,7 @@
 """Telegram miner alerts against fake Telegram and pool APIs: webhook secret, commands and limits,
 private chats only, drop/recovery/offline/online/payout alerts, silence when the pool is down,
 rate limit, blocked chats forgotten, /stop all, check-ins driving checks, dashboard card."""
-import hashlib,hmac,http.server,json,os,secrets,shutil,socket,sqlite3,subprocess,tempfile,threading,time,urllib.parse
+import hashlib,hmac,http.server,json,os,secrets,shutil,socket,sqlite3,subprocess,sys,tempfile,threading,time,urllib.parse
 from pathlib import Path
 import requests
 root=Path(__file__).resolve().parents[2];site=root/'website'
@@ -113,6 +113,7 @@ with tempfile.TemporaryDirectory() as tmp:
   import re
   token=re.search(r'\?setup=([A-Za-z0-9_-]{43})',json.loads(mail.read_text().splitlines()[-1])['body']).group(1)
   owner=requests.Session();assert owner.post(base+'/admin/?do=setup',data={'token':token,'password':'correct horse battery staple','confirm':'correct horse battery staple'},allow_redirects=False).status_code==303
+  sys.path.insert(0,str(Path(__file__).resolve().parent));from admin_mfa import enroll;enroll(owner,base)
   page=owner.get(base+'/admin/?view=content&kind=announcements').text;assert 'Also post to the Telegram group' in page and '@MonzeroOfficial' in page
   fields=lambda:{k:re.search(rf'name="{k}" value="([^"]*)"',owner.get(base+'/admin/?view=content&kind=announcements').text).group(1) for k in ['csrf','version']}
   r=owner.post(base+'/admin/?do=post-add',data={**fields(),'kind':'announcements','title':'Hello group','body':'First line.\nSecond line.','url':'/faucet/','telegram':'1'},allow_redirects=False)

@@ -11,6 +11,7 @@ const ADMIN_MESSAGES = [
     'password' => 'Your password was changed. Other sessions were signed out.',
     'totp-on' => 'Authenticator codes are now required when you sign in.',
     'totp-off' => 'Authenticator codes are turned off.',
+    'totp-required' => 'Authenticator codes are required for every admin. Set them up below to continue.',
     'invited' => 'Invite sent.',
     'awaiting' => 'Invite created. It will be emailed once the owner approves it.',
     'approved' => 'Invite approved and emailed.',
@@ -140,6 +141,10 @@ if ($method === 'POST') {
 
     $user = requireUser($user);
     adminCheckPost($user);
+    // Authenticator codes are required: until they are on, an admin can only set them up,
+    // change the password or sign out.
+    if (!$user['totp_secret'] && !in_array($do, ['totp-enable', 'password', 'logout'], true))
+        adminDeny('Turn on authenticator codes in your account first. They are required for every admin.');
     $actor = (int)$user['id'];
     $db = adminDb();
     switch ($do) {
@@ -163,10 +168,8 @@ if ($method === 'POST') {
             adminAudit($actor, 'totp.enabled');
             redirect('account', 'totp-on');
         case 'totp-disable':
-            if (!password_verify(field('current'), (string)$user['password_hash'])) adminDeny('Password incorrect.', 400);
-            $db->prepare('UPDATE users SET totp_secret = NULL WHERE id = ?')->execute([$actor]);
-            adminAudit($actor, 'totp.disabled');
-            redirect('account', 'totp-off');
+            // Kept as an explicit refusal: authenticator codes cannot be turned off.
+            adminDeny('Authenticator codes are required for every admin and cannot be turned off. If you lost the device, the owner can reset your access.', 400);
         case 'invite':
             if (!adminCan($user, 'admins.invite')) adminDeny('You cannot invite admins.');
             $email = adminEmail(field('email'));
@@ -236,6 +239,7 @@ if (isset($_GET['setup'])) {
     exit;
 }
 if (!$user) { loginForm(); exit; }
+if (!$user['totp_secret'] && ($_GET['view'] ?? '') !== 'account') { header('Location: /admin/?view=account&msg=totp-required', true, 303); exit; }
 
 $message = ADMIN_MESSAGES[$_GET['msg'] ?? ''] ?? '';
 $flash = $message ? '<p class="notice" role="status">' . adminH($message) . '</p>' : '';
@@ -245,7 +249,7 @@ $isOwner = (int)$user['is_owner'] === 1;
 
 if ($view === 'account') {
     $totp = $user['totp_secret']
-        ? '<p>Authenticator codes are <strong>on</strong>.</p><form method="post" action="/admin/?do=totp-disable" class="stack">' . $csrf . '<label>Current password<input type="password" name="current" autocomplete="current-password" required></label><button type="submit">Turn off authenticator codes</button></form>'
+        ? '<p>Authenticator codes are <strong>on</strong>. They are required for every admin. If you lose the device, the owner can reset your access (the owner account itself is reset on the server with <code>admin/bootstrap.php --reset --clear-totp</code>).</p>'
         : (function () use ($csrf): string {
             $secret = adminBase32Encode(random_bytes(20));
             $uri = 'otpauth://totp/' . rawurlencode('Monzero admin') . '?secret=' . $secret . '&issuer=Monzero';
@@ -309,4 +313,4 @@ $permissions = adminPermissions($user);
 adminPage('Overview', $flash . '<p>Signed in as <strong>' . adminH($user['email']) . '</strong>' . ($isOwner ? ' (owner)' : '') . '.</p>'
     . '<section><h2>Your permissions</h2><ul>' . ($permissions ? implode('', array_map(fn($p) => '<li>' . adminH(ADMIN_PERMISSIONS[$p]) . '</li>', $permissions)) : '<li>None yet. Ask the owner.</li>') . '</ul>'
     . '</section>' . contentLinks($user)
-    . ($user['totp_secret'] ? '' : '<p class="notice">Turn on authenticator codes in <a href="/admin/?view=account">your account</a> to protect this login.</p>'), $user);
+    , $user);

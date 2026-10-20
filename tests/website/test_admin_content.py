@@ -1,10 +1,11 @@
 """Admin content editing: catalog record edit/add/remove with validation, stale-edit refusal, backups and
 audit; announcements and roadmap updates; faucet panel with pause/resume; permission limits; escaping;
 public pages rendering posts. Isolated content root, databases and mail log."""
-import json,os,re,shutil,socket,sqlite3,subprocess,tempfile,time
+import json,os,re,shutil,socket,sqlite3,subprocess,sys,tempfile,time
 from pathlib import Path
 import requests
 root=Path(__file__).resolve().parents[2];site=root/'website'
+sys.path.insert(0,str(Path(__file__).resolve().parent));from admin_mfa import enroll
 PASSWORD='correct horse battery staple';TODAY=time.strftime('%Y-%m-%d',time.gmtime())
 
 with tempfile.TemporaryDirectory() as tmp:
@@ -27,7 +28,7 @@ with tempfile.TemporaryDirectory() as tmp:
    except OSError:time.sleep(.1)
   def setup(email):
    s=requests.Session();token=re.search(r'\?setup=([A-Za-z0-9_-]{43})',[m for m in mails() if m['to']==email][-1]['body']).group(1)
-   r=s.post(base+'/admin/?do=setup',data={'token':token,'password':PASSWORD,'confirm':PASSWORD},allow_redirects=False);assert r.status_code==303,r.text;return s
+   r=s.post(base+'/admin/?do=setup',data={'token':token,'password':PASSWORD,'confirm':PASSWORD},allow_redirects=False);assert r.status_code==303,r.text;enroll(s,base);return s
   def page(s,query):r=s.get(base+'/admin/'+query);return r
   def form(s,query,pattern):
    html=page(s,query).text;return {k:re.search(rf'name="{k}" value="([^"]*)"',html).group(1) for k in pattern}

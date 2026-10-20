@@ -32,15 +32,28 @@ with tempfile.TemporaryDirectory() as tmp:
   def csrf(session,view=''):
    r=session.get(base+'/admin/'+(f'?view={view}' if view else ''));return re.search(r'name="csrf" value="([^"]+)"',r.text).group(1)
   def post(session,do,data,**kw):return session.post(base+f'/admin/?do={do}',data=data,allow_redirects=False,**kw)
-  def setup(email,password=PASSWORD):
+  secrets_by={}
+  def enroll(s,email):
+   # Authenticator codes are mandatory: every new admin turns them on before anything else.
+   account=s.get(base+'/admin/?view=account').text;m=re.search(r'name="secret" value="([A-Z2-7]{32})"',account)
+   if not m:return
+   secret=m.group(1);assert post(s,'totp-enable',{'csrf':csrf(s,'account'),'secret':secret,'code':totp(secret)}).status_code==303;secrets_by[email]=secret
+  def setup(email,password=PASSWORD,mfa=True):
    s=requests.Session();token=link_for(email)
    page=s.get(base+f'/admin/?setup={token}');assert page.status_code==200 and email in page.text and page.headers['Cache-Control']=='no-store' and page.headers['Referrer-Policy']=='no-referrer'
    assert post(s,'setup',{'token':token,'password':'short','confirm':'short'}).status_code==400
    r=post(s,'setup',{'token':token,'password':password,'confirm':password});assert r.status_code==303 and 'mzadmin' in r.cookies,r.text
    assert post(requests.Session(),'setup',{'token':token,'password':password,'confirm':password}).status_code in (400,403)
+   if mfa:enroll(s,email)
    return s
-  # Owner activation; setup link is single-use.
-  owner=setup('security@monzero.org')
+  # Owner activation; setup link is single-use. Without authenticator codes nothing else is allowed.
+  owner=setup('security@monzero.org',mfa=False)
+  r=owner.get(base+'/admin/',allow_redirects=False);assert r.status_code==303 and 'view=account' in r.headers['Location'] and 'totp-required' in r.headers['Location']
+  assert 'required for every admin' in owner.get(base+'/admin/?view=account&msg=totp-required').text
+  r=post(owner,'invite',{'csrf':csrf(owner,'account'),'email':'early@example.org'});assert r.status_code==403 and 'Turn on authenticator codes' in r.text
+  account=owner.get(base+'/admin/?view=account').text;secret=re.search(r'name="secret" value="([A-Z2-7]{32})"',account).group(1)
+  assert post(owner,'totp-enable',{'csrf':csrf(owner,'account'),'secret':secret,'code':'000000' if totp(secret)!='000000' else '111111'}).status_code==400
+  assert post(owner,'totp-enable',{'csrf':csrf(owner,'account'),'secret':secret,'code':totp(secret)}).status_code==303
   page=owner.get(base+'/admin/');assert 'Signed in as <strong>security@monzero.org</strong> (owner)' in page.text
   assert owner.get(base+'/admin/?setup=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA').status_code==400
   # Owner invite is emailed at once with the chosen permissions.
@@ -74,10 +87,9 @@ with tempfile.TemporaryDirectory() as tmp:
   for _ in range(5):assert post(requests.Session(),'login',{'email':'bob@example.org','password':'wrong password!!'}).status_code==401
   assert post(requests.Session(),'login',{'email':'bob@example.org','password':PASSWORD}).status_code==429
   assert post(requests.Session(),'login',{'email':'nobody@example.org','password':PASSWORD}).status_code==401
-  # TOTP: enrol, then sign-in needs the code.
-  account=owner.get(base+'/admin/?view=account').text;secret=re.search(r'name="secret" value="([A-Z2-7]{32})"',account).group(1)
-  assert post(owner,'totp-enable',{'csrf':csrf(owner,'account'),'secret':secret,'code':'000000' if totp(secret)!='000000' else '111111'}).status_code==400
-  assert post(owner,'totp-enable',{'csrf':csrf(owner,'account'),'secret':secret,'code':totp(secret)}).status_code==303
+  # TOTP: sign-in needs the code, and codes cannot be turned off.
+  assert post(owner,'totp-disable',{'csrf':csrf(owner,'account'),'current':PASSWORD}).status_code==400
+  assert 'Turn off authenticator codes' not in owner.get(base+'/admin/?view=account').text
   assert post(requests.Session(),'login',{'email':'security@monzero.org','password':PASSWORD}).status_code==401
   fresh=requests.Session();r=post(fresh,'login',{'email':'security@monzero.org','password':PASSWORD,'code':totp(secret)});assert r.status_code==303
   assert '(owner)' in fresh.get(base+'/admin/').text
@@ -93,8 +105,10 @@ with tempfile.TemporaryDirectory() as tmp:
   NEW='a brand new long passphrase';owner=setup('security@monzero.org',NEW)
   assert post(requests.Session(),'login',{'email':'security@monzero.org','password':NEW}).status_code==401
   r=post(requests.Session(),'login',{'email':'security@monzero.org','password':NEW,'code':totp(secret,1)});assert r.status_code==303
-  assert boot('--reset','--clear-totp','security@monzero.org').returncode==0;owner=setup('security@monzero.org',PASSWORD)
+  assert boot('--reset','--clear-totp','security@monzero.org').returncode==0;owner=setup('security@monzero.org',PASSWORD,mfa=False)
   assert sqlite3.connect(db).execute('SELECT totp_secret FROM users WHERE is_owner=1').fetchone()[0] is None
+  assert owner.get(base+'/admin/?view=audit',allow_redirects=False).status_code==303  # must set up a new device first
+  enroll(owner,'security@monzero.org')
   # Audit log: visible to owner, append-only in storage.
   audit=owner.get(base+'/admin/?view=audit').text
   for action in ['account.activated','invite.sent','invite.requested','invite.approved','permissions.changed','account.disabled','login.failed','login.throttled','totp.enabled','owner.password_reset']:assert action in audit,action
@@ -108,4 +122,4 @@ with tempfile.TemporaryDirectory() as tmp:
   # Internals are not reachable over HTTP.
   assert requests.get(base+'/admin/lib.php').status_code==404 and requests.get(base+'/admin/bootstrap.php').status_code==404
  finally:server.terminate();server.wait(timeout=5)
-print('Admin: owner bootstrap, single-use links, delegated invites with approval, subset grants, CSRF/origin, throttling, TOTP, disable, logout, append-only audit passed')
+print('Admin: mandatory authenticator codes, owner bootstrap, single-use links, delegated invites with approval, subset grants, CSRF/origin, throttling, TOTP, disable, logout, append-only audit passed')
