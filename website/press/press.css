@@ -7,3 +7,4 @@
 .logos figcaption a{color:inherit}
 th[scope="row"]{color:var(--ink);font-weight:600;width:32%}
 .hash{word-break:break-all}
+main li code,main p code{overflow-wrap:anywhere}
