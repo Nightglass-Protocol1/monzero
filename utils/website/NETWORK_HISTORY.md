@@ -3,7 +3,7 @@
 `network_history.py` stores dated tip observations from the validated statistics
 adapter. It is not a canonical block index, independent consensus verifier or
 complete emission archive. Existing `/stats/` keeps its recent-block charts.
-The `/network/` consumer is implemented and locally tested. Production collector deployment is still pending.
+The `/network/` consumer is implemented and locally tested. Production collection runs on monzero-eu (see "Production" below).
 
 Python's standard library and SQLite are sufficient; no native build is required.
 The PHP environment currently has no PDO database driver, so the website will
@@ -120,3 +120,19 @@ Before removing this worktree, stop the timer and update both the collector and
 preview paths. A forced termination during publishing can leave `.history-*`
 temporary exports; these are ignored by Git and blocked by the hosting dotfile
 rules. Remove only these temporary files while the collector is stopped.
+
+## Production (monzero-eu)
+
+The webspace has no cron, so production collection runs on the EU node as the
+`xmznethistory` system user: `xmznethistory-collect.timer` records one `--source live`
+observation per minute into `/var/lib/xmznethistory/archive/observations.sqlite`
+(0700/0600) and exports to `/var/lib/xmznethistory/public/`;
+`xmznethistory-upload.timer` sends the six exports every five minutes with
+`history_upload.py` (gzip JSON, HMAC-SHA256 over timestamp, nonce and body). The
+website endpoint `/api/network-history/` refuses bad or stale signatures, replayed
+nonces, unknown ranges, non-`live` archives and more than 721 points, and replaces
+`/network/data/<range>.json` atomically only with a newer `generated_at`.
+Install or update with `bash utils/website/deploy-history-eu.sh` (keeps the archive).
+The shared secret is `/etc/xmznethistory/secret` on the node and
+`~/monzero-private/network-history-config.php` on the webspace.
+Tests: `python tests/website/test_history_upload.py`.
