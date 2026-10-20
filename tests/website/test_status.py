@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory() as tmp:
  env={**os.environ,'MONZERO_PRIVATE_DIR':str(private),'MONZERO_NODE_CENSUS_DIR':str(private/'node-census'),'MONZERO_NETWORK_DATA_DIR':str(data),
       'MONZERO_FAUCET_CONFIG':str(tmp/'faucet-config.php'),'MONZERO_FAUCET_DB':str(tmp/'faucet.sqlite'),'MONZERO_FAUCET_HEARTBEAT':str(private/'faucet-heartbeat.json'),
       'MONZERO_STATUS_MAIL_LOG':str(mail)}
- server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(root/'website')],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ server=subprocess.Popen(['php','-d','opcache.enable=0','-S',f'127.0.0.1:{port}','-t',str(root/'website')],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  def mails():return [json.loads(l) for l in mail.read_text().splitlines()] if mail.exists() else []
  def signed(path,payload,key,prefix,nonce=None,ts=None):
   body=json.dumps(payload).encode();ts=str(ts or int(time.time()));nonce=nonce or secrets.token_hex(16)

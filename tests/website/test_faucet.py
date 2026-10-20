@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory() as tmp:
   cfg.write_text('<?php return ['+','.join(f"'{k}'=>{php(v)}" for k,v in c.items())+'];')
  config()
  env={**os.environ,'MONZERO_FAUCET_DB':str(db),'MONZERO_FAUCET_CONFIG':str(cfg),'MONZERO_FAUCET_MAIL_LOG':str(mail),'MONZERO_FAUCET_HEARTBEAT':str(tmp/'private/faucet-heartbeat.json')}
- server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(root/'website')],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ server=subprocess.Popen(['php','-d','opcache.enable=0','-S',f'127.0.0.1:{port}','-t',str(root/'website')],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  def mails(to):return [json.loads(l) for l in mail.read_text().splitlines() if json.loads(l)['to']==to] if mail.exists() else []
  def post(s,do,data,**kw):
   # 'good' means: a fresh single-use token issued for this form's action on our hostname.
