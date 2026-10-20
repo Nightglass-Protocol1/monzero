@@ -25,6 +25,8 @@ function tgConfig(): ?array {
         'api' => is_string($c['api'] ?? null) ? $c['api'] : 'https://api.telegram.org', 'pool_api' => is_string($c['pool_api'] ?? null) ? $c['pool_api'] : 'https://pool.monzero.org/api/miner',
         // Optional public feed: the community group or channel (@name or numeric id) the bot posts to.
         'feed_chat' => is_string($c['feed_chat'] ?? null) && preg_match('/\A(@[A-Za-z][A-Za-z0-9_]{4,31}|-?\d{5,20})\z/', $c['feed_chat']) ? $c['feed_chat'] : null,
+        // Join requests for this group receive a one-time private Verify button.
+        'verify_chat' => is_string($c['verify_chat'] ?? null) && preg_match('/\A(@[A-Za-z][A-Za-z0-9_]{4,31}|-?\d{5,20})\z/', $c['verify_chat']) ? $c['verify_chat'] : '@MonzeroOfficial',
         'feed_pin' => ($c['feed_pin'] ?? true) === true,
         'feed_pool_hours' => is_int($c['feed_pool_hours'] ?? null) && $c['feed_pool_hours'] >= 0 && $c['feed_pool_hours'] <= 168 ? $c['feed_pool_hours'] : 24,
         // Major news to the group: stories covered by at least this many outlets (0 = off), capped per day.
@@ -42,15 +44,20 @@ function tgDb(): PDO {
     $db = new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     if ($new) @chmod($path, 0600);
     $db->exec('PRAGMA busy_timeout = 5000;');
-    if ((int)$db->query('PRAGMA user_version')->fetchColumn() < 1) {
+    $version = (int)$db->query('PRAGMA user_version')->fetchColumn();
+    if ($version < 1) {
         $db->exec(<<<'SQL'
             BEGIN;
             CREATE TABLE chats (chat_id INTEGER PRIMARY KEY, drop_percent INTEGER NOT NULL, offline_minutes INTEGER NOT NULL, created_at INTEGER NOT NULL);
             CREATE TABLE watches (chat_id INTEGER NOT NULL REFERENCES chats(chat_id), address TEXT NOT NULL, name TEXT NOT NULL, state TEXT NOT NULL DEFAULT '{}', created_at INTEGER NOT NULL, PRIMARY KEY (chat_id, address));
             CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE verifications (token_hash TEXT PRIMARY KEY, chat_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER);
             PRAGMA user_version = 1;
             COMMIT;
         SQL);
+    }
+    if ($version < 2) {
+        $db->exec('CREATE TABLE IF NOT EXISTS verifications (token_hash TEXT PRIMARY KEY, chat_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER); PRAGMA user_version = 2;');
     }
     return $db;
 }
@@ -228,8 +235,52 @@ function tgFeedNews(array $config, array $news, int $now): int {
 
 function tgShort(string $address): string { return substr($address, 0, 8) . '…' . substr($address, -6); }
 
+const TG_VERIFY_TTL = 600;
+
+function tgVerifyChatMatches(array $config, array $chat): bool {
+    $target = $config['verify_chat'];
+    if (preg_match('/\A-?\d+\z/', $target)) return (string)$chat['id'] === $target;
+    return isset($chat['username']) && strcasecmp('@' . ltrim((string)$chat['username'], '@'), ltrim($target, '@')) === 0;
+}
+
+function tgVerifyButton(array $config, array $request): void {
+    $chat = $request['chat'] ?? [];
+    $user = $request['from'] ?? [];
+    $userId = $user['id'] ?? null;
+    $chatId = $chat['id'] ?? null;
+    if (!is_int($userId) || !is_int($chatId) || !tgVerifyChatMatches($config, $chat)) return;
+    $token = bin2hex(random_bytes(24));
+    $db = tgDb();
+    $db->prepare('DELETE FROM verifications WHERE expires_at < ? OR used_at IS NOT NULL')->execute([time()]);
+    $db->prepare('INSERT INTO verifications (token_hash, chat_id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
+        ->execute([hash('sha256', $token), $chatId, $userId, time(), time() + TG_VERIFY_TTL]);
+    tgApi($config, 'sendMessage', ['chat_id' => $userId, 'text' => 'Tap Verify to join MonzeroOfficial. This button expires in 10 minutes.',
+        'reply_markup' => ['inline_keyboard' => [[['text' => '✅ Verify', 'callback_data' => 'verify:' . $token]]]]]);
+}
+
+function tgVerifyCallback(array $config, array $query): void {
+    $data = $query['data'] ?? '';
+    $from = $query['from']['id'] ?? null;
+    if (!is_string($data) || !preg_match('/\Averify:([a-f0-9]{48})\z/', $data) || !is_int($from)) return;
+    $db = tgDb();
+    $stmt = $db->prepare('SELECT rowid, chat_id, user_id FROM verifications WHERE token_hash = ? AND expires_at >= ? AND used_at IS NULL');
+    $stmt->execute([hash('sha256', substr($data, 7)), time()]);
+    $row = $stmt->fetch();
+    $ok = is_array($row) && (int)$row['user_id'] === $from;
+    if ($ok) {
+        $reply = tgApi($config, 'approveChatJoinRequest', ['chat_id' => (int)$row['chat_id'], 'user_id' => $from]);
+        $ok = ($reply['ok'] ?? false) === true;
+        if ($ok) $db->prepare('UPDATE verifications SET used_at = ? WHERE rowid = ?')->execute([time(), $row['rowid']]);
+    }
+    tgApi($config, 'answerCallbackQuery', ['callback_query_id' => (string)($query['id'] ?? ''), 'text' => $ok ? 'Verified — welcome to MonzeroOfficial.' : 'This verification link is invalid or expired.', 'show_alert' => !$ok]);
+    if ($ok && isset($query['message']['chat']['id'], $query['message']['message_id'])) tgApi($config, 'editMessageText', ['chat_id' => $query['message']['chat']['id'], 'message_id' => $query['message']['message_id'], 'text' => '✅ Verified. Your join request was accepted.']);
+}
+
 // Handle one webhook update; returns the reply text (or null for nothing to say).
 function tgHandle(array $update): ?string {
+    $config = tgConfig();
+    if ($config && is_array($update['chat_join_request'] ?? null)) { tgVerifyButton($config, $update['chat_join_request']); return null; }
+    if ($config && is_array($update['callback_query'] ?? null)) { tgVerifyCallback($config, $update['callback_query']); return null; }
     $message = $update['message'] ?? null;
     if (!is_array($message) || ($message['chat']['type'] ?? '') !== 'private' || !is_int($message['chat']['id'] ?? null) || !is_string($message['text'] ?? null)) return null;
     $chat = $message['chat']['id'];

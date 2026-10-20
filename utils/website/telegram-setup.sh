@@ -19,7 +19,7 @@ printf '%s\n%s\n%s\n' "$TOKEN" "$SECRET" "$USERNAME" | ssh -o BatchMode=yes "$WE
   'umask 077; read -r t; read -r s; read -r u
    printf "<?php return [\"bot_token\" => \"%s\", \"webhook_secret\" => \"%s\", \"bot_username\" => \"%s\"];\n" "$t" "$s" "$u" > ~/monzero-private/telegram-config.php.tmp && mv ~/monzero-private/telegram-config.php.tmp ~/monzero-private/telegram-config.php && echo "   written"'
 echo "== registering the webhook and commands"
-api setWebhook "{\"url\":\"$SITE/api/telegram/\",\"secret_token\":\"$SECRET\",\"allowed_updates\":[\"message\"],\"drop_pending_updates\":true}" | python3 -c 'import sys,json;d=json.load(sys.stdin);print("   webhook:",d.get("description",d))'
+api setWebhook "{\"url\":\"$SITE/api/telegram/\",\"secret_token\":\"$SECRET\",\"allowed_updates\":[\"message\",\"chat_join_request\",\"callback_query\"],\"drop_pending_updates\":true}" | python3 -c 'import sys,json;d=json.load(sys.stdin);print("   webhook:",d.get("description",d))'
 api setMyCommands '{"commands":[{"command":"watch","description":"Alerts for a pool address"},{"command":"list","description":"What you watch"},{"command":"stop","description":"Stop alerts (address or all)"},{"command":"drop","description":"Hashrate drop alert percent"},{"command":"offline","description":"Offline alert minutes"},{"command":"help","description":"How it works"}]}' >/dev/null
 api setMyDescription '{"description":"Alerts for Monzero pool miners: offline workers, hashrate drops and payouts. Send /watch with your pool address."}' >/dev/null
 curl -s -m 15 "$SITE/api/telegram/"; echo

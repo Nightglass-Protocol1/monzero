@@ -1482,6 +1482,18 @@ only records a starting point. Failures (for example the bot lost its admin
 rights) are shown on the admin announcements page. Personal alerts stay in
 private chats only.
 
+### Telegram join-request verification — 2026-10-20
+
+`@Monzero_bot` handles join requests for `@MonzeroOfficial`. It sends the
+requesting user a private, single-use Verify button valid for ten minutes. The
+callback is accepted only for the Telegram user who requested to join; on a
+successful Telegram response the bot calls `approveChatJoinRequest`. Tokens are
+hashed in the private SQLite database, expired/replayed tokens are rejected,
+and the webhook still requires Telegram's secret-token header. The bot must be
+an administrator with permission to invite users, the group must have join
+requests enabled, and the webhook must include `message`, `chat_join_request`
+and `callback_query` updates. `telegram-setup.sh` registers those update types.
+
 ### Crypto news — 2026-10-20 (Claude)
 
 `/news/` lists the day's top crypto headlines; the homepage shows the top 5.
