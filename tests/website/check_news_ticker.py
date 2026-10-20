@@ -1,4 +1,4 @@
-"""Homepage headline banner: links, hidden duplicate copy, scrolling, pause on hover/focus/button,
+"""Headline banner on every public page (added by site-nav.js): links, hidden duplicate copy, scrolling, pause on hover/focus/button,
 reduced motion, phone width, and hidden when there is no news."""
 import json,shutil,socket,subprocess,time
 from pathlib import Path
@@ -16,14 +16,14 @@ try:
   except OSError:time.sleep(.1)
  with sync_playwright() as p:
   browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'))
-  def home(body,width=1440,motion='no-preference'):
+  def home(body,width=1440,motion='no-preference',path='/'):
    ctx=browser.new_context(viewport={'width':width,'height':900},reduced_motion=motion);page=ctx.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    def route(r):
     u=r.request.url
     if '/news/data/latest.json' in u:return r.fulfill(status=200 if body else 404,content_type='application/json',body=json.dumps(body or {}))
     if '.php' in u or '/api/' in u or not u.startswith(f'http://127.0.0.1:{port}/'):return r.fulfill(status=503,body='{}')
     r.continue_()
-   page.route('**/*',route);page.goto(f'http://127.0.0.1:{port}/');page.wait_for_timeout(700);return ctx,page,errors
+   page.route('**/*',route);page.goto(f'http://127.0.0.1:{port}'+path);page.wait_for_timeout(700);return ctx,page,errors
   ctx,page,errors=home(news)
   t=page.locator('#news-ticker');assert t.is_visible()
   assert page.evaluate("document.getElementById('news-ticker').getBoundingClientRect().bottom <= document.querySelector('.site-header').getBoundingClientRect().top+1")  # above the menu
@@ -45,7 +45,14 @@ try:
   ctx,page,errors=home(news,motion='reduce')
   assert page.evaluate("getComputedStyle(document.getElementById('ticker-track')).animationName")=='none' and page.locator('#ticker-pause').is_hidden()
   assert page.locator('#ticker-track li:visible').count()==15;ctx.close()
-  ctx,page,errors=home(None);assert page.locator('#news-ticker').is_hidden() and not errors;ctx.close()
+  ctx,page,errors=home(None);assert page.locator('#news-ticker').count()==0 or page.locator('#news-ticker').is_hidden();assert not errors;ctx.close()
+  # Every kind of public page gets it once, above the menu; the admin area does not.
+  for path in ['/network/nodes/','/mining/benchmarks/submission.html','/faucet/','/community/voting/','/news/']:
+   ctx,page,errors=home(news,width=390,path=path)
+   assert page.locator('#news-ticker').count()==1 and page.locator('#news-ticker').is_visible(),path
+   assert page.evaluate("document.getElementById('news-ticker').getBoundingClientRect().bottom <= document.querySelector('.site-header').getBoundingClientRect().top+1"),path
+   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth') and not errors,(path,errors);ctx.close()
+  ctx,page,errors=home(news,path='/admin/');assert page.locator('#news-ticker').count()==0;ctx.close()
   browser.close()
 finally:server.terminate();server.wait(timeout=5)
-print('News ticker: links, hidden duplicate, unsafe links dropped, scrolling, pause on hover/focus/button, phone width, reduced motion, hidden without news passed')
+print('News ticker on every public page (not admin): links, hidden duplicate, unsafe links dropped, scrolling, pause on hover/focus/button, phone width, reduced motion, hidden without news passed')
