@@ -97,8 +97,14 @@ systemctl daemon-reload
 [ -e /var/lib/xmznodemap/dbip-country-lite.csv.gz ] || systemctl start xmznodemap-geo.service
 systemctl enable --now xmznodemap-geo.timer >/dev/null 2>&1
 echo "== dry run (country totals only)"
-sudo -u xmznodemap python3 -I /opt/xmznodemap/node_census.py --config /etc/xmznodemap/census.json --dry-run \
-  | python3 -c 'import sys,json;p=json.load(sys.stdin);print("  ",p["totals"],"countries:",", ".join(f"{k} {v[\"observed\"]}" for k,v in p["countries"].items()))'
+sudo -u xmznodemap python3 -I /opt/xmznodemap/node_census.py --config /etc/xmznodemap/census.json --dry-run > /tmp/xmznodemap-dry.json
+python3 - /tmp/xmznodemap-dry.json <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+print("  ", p["totals"], "from", p["geo_database"])
+print("   countries:", ", ".join("%s %d" % (code, c["observed"]) for code, c in p["countries"].items()) or "none")
+PY
+rm -f /tmp/xmznodemap-dry.json
 REMOTE
 
 echo "== giving the website the census secret"
