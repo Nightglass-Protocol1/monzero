@@ -44,7 +44,7 @@ export async function showPosts(url, schema, section, list, limit = 10) {
 }
 if (typeof document !== 'undefined') {
   const announcements = document.getElementById('announcements');
-  if (announcements) showPosts('/community/announcements.json', 'monzero-announcements-v1', announcements, document.getElementById('announcement-list'));
+  if (announcements) showPosts('/community/announcements.json', 'monzero-announcements-v1', announcements, document.getElementById('announcement-list'), Number(announcements.dataset.limit) || 10);
   const updates = document.getElementById('roadmap-updates');
   if (updates) showPosts('/roadmap/updates.json', 'monzero-roadmap-updates-v1', updates, document.getElementById('update-list'), 5);
 }

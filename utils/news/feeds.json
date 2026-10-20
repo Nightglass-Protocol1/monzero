@@ -1,0 +1,31 @@
+{
+  "note": "Crypto news outlets read for /news/. Order is the tie-break when several outlets cover one story. All verified reachable on 2026-10-20.",
+  "feeds": [
+    {"name": "CoinDesk", "home": "https://www.coindesk.com/", "feed": "https://www.coindesk.com/arc/outboundfeeds/rss/", "region": "US"},
+    {"name": "Cointelegraph", "home": "https://cointelegraph.com/", "feed": "https://cointelegraph.com/rss", "region": "Global"},
+    {"name": "The Block", "home": "https://www.theblock.co/", "feed": "https://www.theblock.co/rss.xml", "region": "US"},
+    {"name": "Decrypt", "home": "https://decrypt.co/", "feed": "https://decrypt.co/feed", "region": "US"},
+    {"name": "Blockworks", "home": "https://blockworks.co/", "feed": "https://blockworks.co/feed", "region": "US"},
+    {"name": "DL News", "home": "https://www.dlnews.com/", "feed": "https://www.dlnews.com/arc/outboundfeeds/rss/", "region": "Europe"},
+    {"name": "Bitcoin Magazine", "home": "https://bitcoinmagazine.com/", "feed": "https://bitcoinmagazine.com/feed", "region": "US"},
+    {"name": "The Defiant", "home": "https://thedefiant.io/", "feed": "https://thedefiant.io/api/feed", "region": "Global"},
+    {"name": "Unchained", "home": "https://unchainedcrypto.com/", "feed": "https://unchainedcrypto.com/feed/", "region": "US"},
+    {"name": "CryptoSlate", "home": "https://cryptoslate.com/", "feed": "https://cryptoslate.com/feed/", "region": "Europe"},
+    {"name": "Crypto.news", "home": "https://crypto.news/", "feed": "https://crypto.news/feed/", "region": "Global"},
+    {"name": "CryptoNews", "home": "https://cryptonews.com/", "feed": "https://cryptonews.com/news/feed/", "region": "Global"},
+    {"name": "Forkast", "home": "https://forkast.news/", "feed": "https://forkast.news/feed/", "region": "Asia"},
+    {"name": "The Cryptonomist", "home": "https://en.cryptonomist.ch/", "feed": "https://en.cryptonomist.ch/feed/", "region": "Europe"},
+    {"name": "BeInCrypto", "home": "https://beincrypto.com/", "feed": "https://beincrypto.com/feed/", "region": "Global"},
+    {"name": "Bitcoin.com News", "home": "https://news.bitcoin.com/", "feed": "https://news.bitcoin.com/feed/", "region": "Global"},
+    {"name": "CryptoBriefing", "home": "https://cryptobriefing.com/", "feed": "https://cryptobriefing.com/feed/", "region": "Global"},
+    {"name": "U.Today", "home": "https://u.today/", "feed": "https://u.today/rss", "region": "Europe"},
+    {"name": "CryptoPotato", "home": "https://cryptopotato.com/", "feed": "https://cryptopotato.com/feed/", "region": "Europe"},
+    {"name": "The Daily Hodl", "home": "https://dailyhodl.com/", "feed": "https://dailyhodl.com/feed/", "region": "US"},
+    {"name": "Coinspeaker", "home": "https://www.coinspeaker.com/", "feed": "https://www.coinspeaker.com/feed/", "region": "Europe"},
+    {"name": "AMBCrypto", "home": "https://ambcrypto.com/", "feed": "https://ambcrypto.com/feed/", "region": "Asia"},
+    {"name": "CoinGape", "home": "https://coingape.com/", "feed": "https://coingape.com/feed/", "region": "Asia"},
+    {"name": "NewsBTC", "home": "https://www.newsbtc.com/", "feed": "https://www.newsbtc.com/feed/", "region": "Global"},
+    {"name": "Bitcoinist", "home": "https://bitcoinist.com/", "feed": "https://bitcoinist.com/feed/", "region": "Global"},
+    {"name": "Watcher.Guru", "home": "https://watcher.guru/", "feed": "https://watcher.guru/news/feed", "region": "Global"}
+  ]
+}

@@ -24,6 +24,22 @@
     }
   }).catch(() => set("tile-faucet-detail", "Faucet status unavailable"));
 
+  get("/news/data/latest.json").then((d) => {
+    if (!d || d.schema !== "monzero-news-v1" || !Array.isArray(d.stories) || !d.stories.length) return;
+    const https = (v) => { try { return new URL(v).protocol === "https:"; } catch { return false; } };
+    const list = document.getElementById("news-strip-list");
+    list.replaceChildren(...d.stories.filter((s) => typeof s.title === "string" && https(s.url)).slice(0, 5).map((s) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = s.url; a.textContent = s.title; a.rel = "noopener noreferrer nofollow";
+      const meta = document.createElement("small");
+      meta.textContent = `${s.source}${s.outlets > 1 ? ` · ${s.outlets} outlets` : ""}`;
+      li.append(a, meta);
+      return li;
+    }));
+    if (list.children.length) document.getElementById("news-strip").hidden = false;
+  }).catch(() => {});
+
   status.then((s) => {
     const bad = (s.checks || []).filter((c) => c.state !== "ok").length;
     set("tile-status", s.overall === "ok" ? "All working" : `${bad} need${bad === 1 ? "s" : ""} attention`, s.overall === "ok" ? "" : s.overall);

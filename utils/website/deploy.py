@@ -21,7 +21,7 @@ from pathlib import Path
 WEBSITE = Path(__file__).resolve().parents[2] / "website"
 HOST = os.environ.get("DEPLOY_HOST", "monzero-webspace")
 LIVE_OWNED = [
-    "downloads/*", "releases/*", "WHITEPAPER.md", "network/data/*.json", "network/data/.history-*",
+    "downloads/*", "releases/*", "WHITEPAPER.md", "network/data/*.json", "network/data/.history-*", "news/data/*.json", "news/data/.news-*",
     # Edited from /admin; the live copy is authoritative once the admin area manages it.
     "exchanges/catalog.json", "ecosystem/catalog.json", "community/bounties/catalog.json",
     "mining/benchmarks/catalog.json", "community/announcements.json", "roadmap/updates.json",

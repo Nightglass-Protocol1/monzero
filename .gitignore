@@ -148,3 +148,5 @@ __pycache__/
 # Website private runtime data (databases, secrets) created by local previews
 monzero-private/
 monzero-data/
+/website/news/data/*.json
+/website/news/data/.news-*

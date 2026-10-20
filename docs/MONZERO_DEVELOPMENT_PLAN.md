@@ -1471,3 +1471,20 @@ hashrate and miner count. No finder or miner addresses are posted. The first run
 only records a starting point. Failures (for example the bot lost its admin
 rights) are shown on the admin announcements page. Personal alerts stay in
 private chats only.
+
+### Crypto news — 2026-10-20 (Claude)
+
+`/news/` lists the day's top crypto headlines; the homepage shows the top 5.
+`utils/news/news_collector.py` (EU node, every 30 minutes, `utils/news/deploy-eu.sh`)
+reads 26 outlets' RSS/Atom feeds (`utils/news/feeds.json`, US/Europe/Asia),
+keeps the last 24 hours, drops sponsored posts, press releases and
+price-prediction filler, removes tracking parameters, accepts only https links and
+refuses feeds that declare XML entities. Headlines about one story from different
+outlets are grouped by title similarity; stories rank by outlet count, then
+recency, and show "also covered by". Only titles, links, outlet names and times are
+stored: no article text or images. Uploads are gzip JSON signed with HMAC
+(`/api/news/`), validated, published to `news/data/latest.json` and one file per
+UTC day (30 days, `index.json`), all live-owned for deploys. If fewer than 5
+outlets answer, the published news is kept. German and Japanese outlets
+(BTC-ECHO, CoinPost) are not ranked because their headlines cannot be grouped
+with English coverage. Tests: `tests/website/test_news.py`.
