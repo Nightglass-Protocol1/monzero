@@ -94,3 +94,36 @@ miner has opted into reporting.
 On Windows the daemon's default data and mining log directory is
 `%PROGRAMDATA%\monzero`; the reporter diagnostic log remains under
 `%APPDATA%\Monzero`.
+
+Linux desktops can keep their opted-in reporter running with the user service:
+
+```bash
+install -Dm755 utils/monzero-miner-reporter.py ~/.local/share/monzero/monzero-miner-reporter.py
+install -Dm644 utils/systemd/monzero-miner-reporter.service ~/.config/systemd/user/monzero-miner-reporter.service
+# Save the operator-provided ingest token privately in ~/.monzero/miner-stats-token.txt.
+chmod 600 ~/.monzero/miner-stats-token.txt
+systemctl --user daemon-reload
+systemctl --user enable --now monzero-miner-reporter.service
+```
+
+Run these commands from the repository root. The service reads only the local
+mining status and log, sends a heartbeat every 30 seconds, and never starts or
+stops mining. It starts with the user's systemd session. Inspect failures with
+`journalctl --user -u monzero-miner-reporter.service`.
+An explicit inactive heartbeat removes a stopped miner immediately; without a
+heartbeat its entry expires after three minutes. Older reporters remain supported.
+A reported count of zero means no active reporters, not necessarily no mining.
+Individual unreported miners and their speeds cannot be inferred from chain data.
+
+Validate the API and reporter without blockchain nodes:
+`python3 -m unittest discover -s utils/tests -p test_miner_stats.py -v`.
+
+## Roadmap maintenance
+
+Update `roadmap/index.html` when a development milestone is verified complete.
+Use the actual test result and its scope; label compilation-only work, running tests,
+failed checks and unfinished app integration separately from completed milestones.
+Keep a dated latest update while preserving the meaning of historical checkpoints.
+Do not infer public-network readiness or a revised delivery date from component tests.
+Publish aggregate results only, without private wallet material or local machine paths.
+A local source update is not proof that the public site has been deployed.

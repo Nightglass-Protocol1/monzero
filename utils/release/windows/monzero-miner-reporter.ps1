@@ -62,20 +62,20 @@ try {
             if ($status.status -ne 'OK') {
                 throw "daemon returned status $($status.status)"
             }
-            if ($status.active) {
-                $payload = @{
-                    installation_id = $installationId
-                    hashrate = [math]::Max(0, [int64]$status.speed)
-                    blocks_found = Get-BlocksFound
-                } | ConvertTo-Json -Compress
-                $headers = @{ Authorization = "Bearer $token" }
-                $result = Invoke-RestMethod -Method Post -Uri $Endpoint -Headers $headers `
-                    -ContentType 'application/json' -Body $payload -TimeoutSec 8
-                if ($result.status -ne 'OK') {
-                    throw "website returned status $($result.status)"
-                }
-                Write-ReporterLog "reported $($status.speed) H/s"
+            $speed = if ($status.active) { [math]::Max(0, [int64]$status.speed) } else { 0 }
+            $payload = @{
+                installation_id = $installationId
+                active = [bool]$status.active
+                hashrate = $speed
+                blocks_found = Get-BlocksFound
+            } | ConvertTo-Json -Compress
+            $headers = @{ Authorization = "Bearer $token" }
+            $result = Invoke-RestMethod -Method Post -Uri $Endpoint -Headers $headers `
+                -ContentType 'application/json' -Body $payload -TimeoutSec 8
+            if ($result.status -ne 'OK') {
+                throw "website returned status $($result.status)"
             }
+            Write-ReporterLog "reported $speed H/s; active=$($status.active)"
         } catch {
             Write-ReporterLog "report failed: $($_.Exception.Message)"
         }

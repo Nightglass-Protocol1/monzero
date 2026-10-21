@@ -15,7 +15,7 @@ import uuid
 from pathlib import Path
 
 
-FOUND_BLOCK = re.compile(r"Found block <?[0-9a-f]+>? at height ", re.IGNORECASE)
+FOUND_BLOCK = re.compile(r"\[miner \d+\].*miner\.cpp:\d+\s+Found block <[0-9a-f]{64}> at height \d+", re.IGNORECASE)
 
 
 def json_request(url: str, body: dict | None = None, token: str = "") -> dict:
@@ -50,9 +50,15 @@ def blocks_found(log_path: Path) -> int:
 
 def report(args: argparse.Namespace) -> None:
     status = json_request(args.rpc.rstrip("/") + "/mining_status", {})
+    if status.get("status") != "OK" or not isinstance(status.get("active"), bool):
+        raise RuntimeError("daemon returned invalid mining status")
+    speed = status.get("speed")
+    if status["active"] and (type(speed) not in (int, float) or not 0 <= speed <= 1_000_000_000_000):
+        raise RuntimeError("daemon returned invalid mining speed")
     payload = {
         "installation_id": installation_id(args.id_file),
-        "hashrate": int(status.get("speed", 0)) if status.get("active") else 0,
+        "active": status["active"],
+        "hashrate": int(speed) if status["active"] else 0,
         "blocks_found": blocks_found(args.log),
     }
     result = json_request(args.endpoint, payload, args.token)
@@ -70,12 +76,18 @@ def main() -> None:
     parser.add_argument("--endpoint", default="https://monzero.org/api/miner-stats/")
     parser.add_argument("--rpc", default="http://127.0.0.1:6175")
     parser.add_argument("--token", default=os.environ.get("MONZERO_STATS_TOKEN", ""))
+    parser.add_argument("--token-file", type=Path, default=default_data / "miner-stats-token.txt")
     parser.add_argument("--id-file", type=Path, default=default_data / "telemetry-id")
     parser.add_argument("--log", type=Path, default=default_data / "monzero.log")
     parser.add_argument("--interval", type=int, default=0, help="repeat every N seconds")
     args = parser.parse_args()
     if not args.token:
-        parser.error("set MONZERO_STATS_TOKEN or pass --token")
+        try:
+            args.token = args.token_file.read_text(encoding="ascii").strip()
+        except OSError:
+            parser.error("create a private --token-file or set MONZERO_STATS_TOKEN")
+    if not args.token:
+        parser.error("miner-stat token is empty")
     if args.interval and args.interval < 30:
         parser.error("--interval must be at least 30 seconds")
 
@@ -84,6 +96,8 @@ def main() -> None:
             report(args)
         except (OSError, ValueError, urllib.error.URLError, RuntimeError) as error:
             print(f"report failed: {error}")
+            if not args.interval:
+                raise SystemExit(1)
         if not args.interval:
             break
         time.sleep(args.interval)

@@ -1,0 +1,12 @@
+[Unit]
+Description=Monzero opt-in anonymous miner statistics
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u %h/.local/share/monzero/monzero-miner-reporter.py --interval 30
+Restart=on-failure
+RestartSec=15
+UMask=0077
+
+[Install]
+WantedBy=default.target
