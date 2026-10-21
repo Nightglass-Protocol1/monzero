@@ -5,7 +5,7 @@ const sample = () => ({schema:'monzero-network-history-v1',network:'mainnet',gen
 test('valid observations retain exact values and future block timestamps', () => {
   const d=sample(); assert.equal(validateHistory(d,'24h'), d);
   assert.equal(historyFreshness(d,100000),'recent');
-  assert.equal(historyFreshness(d,100301),'stale');
+  assert.equal(historyFreshness(d,100901),'stale');
   assert.equal(historyFreshness(d,99999),'clock-mismatch');
 });
 test('empty archives in every range', () => {

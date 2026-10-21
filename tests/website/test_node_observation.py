@@ -53,7 +53,7 @@ class ObservationTest(unittest.TestCase):
    self.setUp();self.header[field]=value;result=self.get()
    self.assertFalse(result['tip_fresh']);self.assertIsNone(result['tip_reward_atomic']);self.assertIsNone(result['tip_height'])
  def test_server_freshness_policy(self):
-  for age,accepted in [(120,True),(1000,False),(-200,True),(-400,False)]:
+  for age,accepted in [(120,True),(2000,False),(-200,True),(-400,False)]:
    self.clear_cache()
    self.header['timestamp']=int(time.time())-age
    self.assertEqual(self.get()['tip_fresh'],accepted)
@@ -71,7 +71,7 @@ class ObservationTest(unittest.TestCase):
   self.assertEqual(self.calls,5) # failed observations also cool down
  def test_cached_tip_freshness_recomputed(self):
   self.get();path=next(Path(self.temp.name).glob('monzero-node-status-*/observation.json'))
-  state=json.loads(path.read_text());state['header']['timestamp']=int(time.time())-901;path.write_text(json.dumps(state))
+  state=json.loads(path.read_text());state['header']['timestamp']=int(time.time())-1801;path.write_text(json.dumps(state))
   self.assertFalse(self.get()['tip_fresh']);self.assertEqual(self.calls,2)
  def test_busy_cache_does_not_fetch(self):
   self.get();path=next(Path(self.temp.name).glob('monzero-node-status-*/observation.json'))

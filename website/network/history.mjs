@@ -48,5 +48,5 @@ export function validateHistory(data, range) {
 export function historyFreshness(data, now = Date.now() / 1000) {
   if (!Number.isFinite(now) || now < data.generated_at) return 'clock-mismatch';
   if (data.archive_samples === 0) return 'empty';
-  return now - data.generated_at > 300 || now - data.archive_last_observed_at > 300 ? 'stale' : 'recent';
+  return now - data.generated_at > 900 || now - data.archive_last_observed_at > 900 ? 'stale' : 'recent';
 }

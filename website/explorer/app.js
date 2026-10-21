@@ -47,7 +47,7 @@ function updateStats(info, latestHeader = null) {
   const tipAgeSeconds = latestHeader?.timestamp
     ? Math.floor(Date.now() / 1000 - latestHeader.timestamp)
     : null;
-  const tipFresh = tipAgeSeconds !== null && tipAgeSeconds <= 900 && tipAgeSeconds >= -300;
+  const tipFresh = tipAgeSeconds !== null && tipAgeSeconds <= 1800 && tipAgeSeconds >= -300;
   const peerCount = (info.incoming_connections_count || 0) + (info.outgoing_connections_count || 0);
   if (info.status !== 'OK') {
     $('#node-label').textContent = info.status || 'Node unavailable';

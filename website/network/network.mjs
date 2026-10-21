@@ -8,7 +8,7 @@ let generation=0,controller,current;
 function status(){
  if(!current)return;
  const state=historyFreshness(current);
- const message=({recent:'Recent observations.',stale:'Historical data — collection or export is over five minutes old.',empty:'No observations have been collected.', 'clock-mismatch':'Clock mismatch — this export is ahead of your browser clock; freshness cannot be verified.'})[state]+(current.points.length?'':' No samples in this selected range.');
+ const message=({recent:'Recent observations.',stale:'Historical data — collection or export is over 15 minutes old.',empty:'No observations have been collected.', 'clock-mismatch':'Clock mismatch — this export is ahead of your browser clock; freshness cannot be verified.'})[state]+(current.points.length?'':' No samples in this selected range.');
  if($('status').textContent!==message)$('status').textContent=message;
 }
 function svgElement(name,attributes,text){const el=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attributes))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;return el;}
