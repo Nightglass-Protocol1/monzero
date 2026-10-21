@@ -1,5 +1,3 @@
-const menuButton = document.querySelector('.menu-toggle');
-const nav = document.querySelector('#site-nav');
 const toast = document.querySelector('.toast');
 
 // The Menu button is handled by site-nav.js on every page.
@@ -33,6 +31,8 @@ const fields = {
   observed: document.querySelector('#metric-observed'),
 };
 
+let lastSuccessfulUpdate = null;
+
 async function updateNodeStatus() {
   try {
     const response = await fetch('/api/node-info/index.php', {
@@ -44,13 +44,17 @@ async function updateNodeStatus() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const info = await response.json();
     if (info.status !== 'OK' || info.nettype !== 'mainnet' || !Number.isSafeInteger(info.height) || info.height < 1) throw new Error('Invalid mainnet observation');
+    const observationFresh = Number.isSafeInteger(info.observed_at) && info.observed_at > 0
+      && Date.now() / 1000 - info.observed_at <= 90 && info.observed_at <= Date.now() / 1000 + 30;
+    lastSuccessfulUpdate = new Date();
     fields.observed.textContent = Number.isSafeInteger(info.observed_at)
-      ? `Node observed ${new Date(info.observed_at * 1000).toLocaleString()} (shared cache up to 15 seconds). Rewards include transaction fees.`
-      : `Node status retrieved ${new Date().toLocaleString()}. Rewards include transaction fees.`;
+      ? `Node observed ${new Date(info.observed_at * 1000).toLocaleString('en-GB')} (shared cache up to 15 seconds). Rewards include transaction fees.`
+      : `Node status retrieved ${new Date().toLocaleString('en-GB')}. Rewards include transaction fees.`;
     // get_info height counts blocks; the newest block is one below it.
     fields.height.textContent = `#${number.format(Math.max(0, (info.height ?? 1) - 1))}`;
+    fields.height.removeAttribute('aria-label');
     const tipAge = info.tip_age_seconds;
-    fields.tipAge.textContent = Number.isFinite(tipAge) ? `Last block found ${formatAge(tipAge)} ago` : 'Last block time unavailable';
+    fields.tipAge.textContent = Number.isFinite(tipAge) && tipAge >= 0 ? `Last block found ${formatAge(tipAge)} ago` : 'Last block time unavailable';
     fields.difficulty.textContent = Number.isFinite(info.difficulty) && info.difficulty > 0 && info.difficulty_top64 === 0 ? number.format(info.difficulty) : 'Unavailable';
     const target = info.target;
     fields.target.textContent = Number.isFinite(target) && target > 0 ? `${target} seconds` : 'Unavailable';
@@ -64,7 +68,10 @@ async function updateNodeStatus() {
       ? 'Connection counts are intentionally hidden by the public restricted RPC.'
       : 'Current incoming and outgoing P2P peer nodes, not unique people.';
     fields.rpc.textContent = info.restricted ? 'RESTRICTED' : 'ONLINE';
-    if (info.synchronized !== true) {
+    if (!observationFresh) {
+      fields.state.textContent = 'Observation stale or undated';
+      fields.dot.className = 'status-dot offline';
+    } else if (info.synchronized !== true) {
       fields.state.textContent = 'Node unsynchronized';
       fields.dot.className = 'status-dot offline';
     } else if (info.tip_fresh !== true) {
@@ -80,8 +87,9 @@ async function updateNodeStatus() {
     return info;
   } catch {
     for (const key of ['height', 'difficulty', 'networkHashrate', 'connections', 'target']) fields[key].textContent = '—';
-    fields.observed.textContent = 'Current node status unavailable. Rewards include transaction fees.';
+    fields.observed.textContent = 'Data temporarily unavailable.' + (lastSuccessfulUpdate ? ` Last successful update: ${lastSuccessfulUpdate.toLocaleString('en-GB')}.` : ' No successful update yet.');
     fields.state.textContent = 'Status unavailable';
+    fields.height.setAttribute('aria-label', 'Latest block height unavailable');
     fields.rpc.textContent = '—';
     fields.tipAge.textContent = 'Network data unavailable';
     fields.dot.className = 'status-dot offline';
@@ -114,9 +122,9 @@ async function updateChainStrip(readiness) {
     if (!Array.isArray(headers) || !headers.length || headers[0].height !== readiness.height - 1 || data.info.synchronized !== true) throw new Error('No matching ready tip');
     const latest = headers[0];
     document.querySelector('#metric-reward').textContent = Number.isSafeInteger(latest.reward) && latest.reward >= 0
-      ? `${new Intl.NumberFormat(undefined, {maximumFractionDigits: 11}).format(latest.reward / 1e11)} XMZ` : 'Unavailable';
+      ? `${new Intl.NumberFormat('en-GB', {maximumFractionDigits: 11}).format(latest.reward / 1e11)} XMZ` : 'Unavailable';
     document.querySelector('#metric-block-time').textContent = Number.isSafeInteger(latest.timestamp) && latest.timestamp > 0
-      ? new Date(latest.timestamp * 1000).toLocaleString() : 'Unavailable';
+      ? new Date(latest.timestamp * 1000).toLocaleString('en-GB') : 'Unavailable';
     const now = Date.now() / 1000;
     chainStrip.replaceChildren(...headers.slice(0, 8).reverse().map((block) => {
       const item = document.createElement('li');
@@ -140,13 +148,27 @@ async function updateChainStrip(readiness) {
   }
 }
 
+let networkUpdating = false;
+let lastNetworkAttempt = 0;
 async function updateNetwork() {
-  const readiness = await updateNodeStatus();
-  await updateChainStrip(readiness);
+  if (networkUpdating) return;
+  networkUpdating = true;
+  lastNetworkAttempt = Date.now();
+  document.querySelector('.live-card').setAttribute('aria-busy', 'true');
+  try {
+    const readiness = await updateNodeStatus();
+    await updateChainStrip(readiness);
+  } finally {
+    networkUpdating = false;
+    document.querySelector('.live-card').setAttribute('aria-busy', 'false');
+  }
 }
 
 updateNetwork();
-window.setInterval(updateNetwork, 30000);
+window.setInterval(() => { if (!document.hidden) updateNetwork(); }, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && Date.now() - lastNetworkAttempt >= 60000) updateNetwork();
+});
 
 function formatHashrate(value) {
   let rate = Number(value) || 0;

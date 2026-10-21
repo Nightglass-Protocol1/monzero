@@ -1,19 +1,4 @@
-:root {
-  --ink: #edf3f7;
-  --muted: #a8bac8;
-  --bg: #0b1118;
-  --surface: #111c27;
-  --surface-raised: #192833;
-  --line: rgba(105, 213, 194, .24);
-  --lime: #69d5c2;
-  --mint: #9ae4d7;
-  --accent-muted: #407f73;
-  --success: #93d9b6;
-  --copper: #edc48d;
-  --danger: #ff6b8a;
-  --mono: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
-  --sans: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
+/* Shared tokens are defined in site-shell.css, loaded last on every page. */
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }

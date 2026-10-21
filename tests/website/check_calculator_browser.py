@@ -54,7 +54,7 @@ try:
   page.goto(url)
   assert page.locator('button[type=submit]').is_disabled()
   assert page.locator('[name=hashrate]').is_disabled()
-  assert page.locator('noscript').is_visible()
+  assert page.locator('main noscript').is_visible()
   assert '?' not in page.url
   print('No-JavaScript form is disabled; inputs cannot be submitted')
   browser.close()

@@ -1,0 +1,418 @@
+{
+  "checked_at": "2026-10-20T19:31:03.741510+00:00",
+  "scope": "Shared colours, typography, layouts and navigation across all monzero.org public pages and the admin shell.",
+  "navigation": {
+    "definition": "website/lib/site-nav-submenus.json",
+    "public_routes": 35,
+    "javascript_widths": [
+      320,
+      390,
+      768,
+      1300,
+      1440
+    ],
+    "no_javascript_width": 390,
+    "page_view_checks": 210,
+    "result": "passed",
+    "covers": [
+      "identical top-level links and destinations",
+      "current page and section",
+      "all public routes reachable",
+      "shared computed colours",
+      "visible Get started CTA",
+      "desktop hover and keyboard submenus",
+      "mobile toggles and Escape",
+      "no-JavaScript menu and focused skip target",
+      "no horizontal page overflow"
+    ],
+    "static_php_header_parity": "Byte-for-byte match on seven representative paths"
+  },
+  "accessibility": {
+    "local_scans": 72,
+    "local_widths": [
+      390,
+      1440
+    ],
+    "local_routes": [
+      "/",
+      "/app/",
+      "/community/",
+      "/community/bounties/",
+      "/community/voting/",
+      "/developers/",
+      "/developers/api/",
+      "/developers/payments/",
+      "/download/",
+      "/ecosystem/",
+      "/exchanges/",
+      "/explorer/",
+      "/faucet/",
+      "/founder/",
+      "/fund/",
+      "/markets/",
+      "/mining/",
+      "/mining/benchmarks/",
+      "/mining/calculator/",
+      "/mining/dashboard/",
+      "/mining/leaderboard/",
+      "/network/",
+      "/network/nodes/",
+      "/news/",
+      "/payments/request/",
+      "/press/",
+      "/privacy/",
+      "/roadmap/",
+      "/security/",
+      "/stats/",
+      "/status/",
+      "/terms/",
+      "/upgrade/",
+      "/wallets/",
+      "/mining/benchmarks/submission.html",
+      "/admin/"
+    ],
+    "local_data": "API outage fixtures; admin sign-in included",
+    "local_violations": 0,
+    "production_scans": 16,
+    "production_widths": [
+      390,
+      1440
+    ],
+    "production_routes": [
+      "/",
+      "/app/",
+      "/developers/",
+      "/explorer/",
+      "/faucet/",
+      "/mining/calculator/",
+      "/roadmap/",
+      "/stats/"
+    ],
+    "production_violations": 0,
+    "engine": "axe-core",
+    "rules": [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21aa",
+      "best-practice"
+    ],
+    "limit": "Automated scans do not replace manual screen-reader testing."
+  },
+  "regression_suites": {
+    "passed": [
+      "check_homepage_redesign.py",
+      "check_calculator_browser.py",
+      "check_pool_dashboard.py",
+      "check_pool_alerts.py",
+      "check_benchmarks.py",
+      "check_network_history.py",
+      "check_bounties.py",
+      "check_explorer_assets.py",
+      "check_payment_request.py",
+      "check_exchanges.py",
+      "check_ecosystem.py",
+      "check_homepage_tiles.py",
+      "check_home_observations.py",
+      "check_news_ticker.py",
+      "test_upgrade.py",
+      "check_fund_goals.py",
+      "check_leaderboard.py",
+      "test_admin.py",
+      "test_admin_content.py",
+      "test_voting.py",
+      "test_faucet.py"
+    ],
+    "count": 21,
+    "calculator_note": "Updated the no-JavaScript assertion to target the calculator notice inside main; both viewport tests and the no-JavaScript case passed on rerun."
+  },
+  "static_checks": {
+    "navigation_generation": "passed; idempotent",
+    "seo_generation": "passed",
+    "seo_unit_tests": 2,
+    "php_syntax": [
+      "website/admin/lib.php",
+      "website/lib/site-header.php",
+      "website/faucet/index.php",
+      "website/community/voting/index.php"
+    ],
+    "javascript_syntax": "website/site-nav.js passed",
+    "git_diff_check": "passed"
+  },
+  "production": {
+    "http_routes": [
+      {
+        "path": "/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/app/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/community/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/community/bounties/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/community/voting/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/developers/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/developers/api/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/developers/payments/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/download/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/ecosystem/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/exchanges/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/explorer/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/faucet/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/founder/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/fund/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/markets/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/mining/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/mining/benchmarks/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/mining/calculator/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/mining/dashboard/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/mining/leaderboard/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/network/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/network/nodes/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/news/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/payments/request/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/press/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/privacy/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/roadmap/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/security/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/stats/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/status/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/terms/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/upgrade/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/wallets/",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      },
+      {
+        "path": "/mining/benchmarks/submission.html",
+        "status": 200,
+        "navigation_matches": true,
+        "shell_loaded": true,
+        "csp": true
+      }
+    ],
+    "browser_visits": 43,
+    "mobile_routes": 35,
+    "desktop_routes": 8,
+    "page_errors": 0,
+    "no_js_routes": [
+      "/",
+      "/app/",
+      "/roadmap/",
+      "/wallets/",
+      "/faucet/"
+    ],
+    "chainquiry_image": "Decoded successfully in both live viewport sizes; original badge remains in the homepage hero.",
+    "network": "Live API requests enabled; checks wait for rendered navigation, not a globally idle network."
+  },
+  "deployment": {
+    "uploaded_files": 49,
+    "tracked_files": 200,
+    "backup": "/home/www/Monzero-backups/deploy-20261020T192711Z",
+    "sha256_verification": "passed",
+    "final_dry_run": "0 files to upload",
+    "live_owned_data": "Excluded by the existing deployment tool; no catalog, funding, release or runtime data uploaded."
+  },
+  "shared_asset_sha256": {
+    "site-shell.css": "d09987a7d0a583f6f7e712f8ad40c3089563bf4d67a0586d2990cb46efd344bc",
+    "site-nav.css": "a9b1ba35bb92acaf7ce2c55e26c59f629c8bce1eda0502ce38fa9cc0a9538ee6",
+    "no-script.css": "b1f36051a4ef84b4815401a9e0c17fd25a7a2c25effff514267406313ba38c8b",
+    "lib/site-header.php": "dc57f2e1f59377832d125181fda87200a4d68dcad9ce5b10f54b51e234b2ac19",
+    "lib/site-nav-submenus.json": "01d17bc290f898fcd10321064e1470174a6a375d04252a54de15214855e15f9c"
+  }
+}

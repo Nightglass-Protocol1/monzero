@@ -9,6 +9,9 @@ python3 tests/website/test_node_observation.py
 MONZERO_TEST_STREAM_HTTP=1 python3 tests/website/test_node_observation.py
 python3 tests/website/check_calculator_browser.py
 python3 tests/website/check_home_network.py
+node --check website/homepage-live.js
+node --test tests/website/homepage-funding.test.mjs
+python3 tests/website/check_homepage_redesign.py
 
 php -l website/mining/dashboard/api.php
 php tests/website/pool-contract.php
@@ -26,6 +29,7 @@ python3 tests/website/check_benchmarks.py
 node --check website/site-nav.js
 python3 -I utils/website/nav_submenus.py --check
 python3 -I utils/website/seo.py --check
+python3 tests/website/test_seo.py
 python3 tests/website/check_navigation.py
 
 php -l website/stats/api.php
@@ -58,6 +62,7 @@ python3 tests/website/test_node_census.py
 python3 tests/website/test_history_upload.py
 python3 tests/website/test_deploy.py
 python3 tests/website/check_homepage_tiles.py
+python3 tests/website/check_home_observations.py
 python3 tests/website/test_news.py
 python3 tests/website/check_news_ticker.py
 python3 tests/website/test_upgrade.py

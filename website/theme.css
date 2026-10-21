@@ -1,29 +1,5 @@
 /* Shared Monzero theme. Page styles retain their functional layouts. */
-:root {
-  color-scheme: dark;
-  --bg: #0b1118;
-  --ink: #edf3f7;
-  --text: var(--ink);
-  --muted: #a8bac8;
-  --dim: #9caebb;
-  --surface: #111c27;
-  --panel: var(--surface);
-  --surface-raised: #192833;
-  --raised: var(--surface-raised);
-  --panel2: var(--surface-raised);
-  --input: #0e1821;
-  --line: #293b49;
-  --accent: #69d5c2;
-  --lime: var(--accent);
-  --green: var(--accent);
-  --mint: #9ae4d7;
-  --bright: var(--mint);
-  --accent-muted: #407f73;
-  --success: #93d9b6;
-  --warning: #edc48d;
-  --orange: var(--warning);
-  --copper: var(--warning);
-}
+/* Shared tokens are defined in site-shell.css, loaded last on every page. */
 body { background: var(--bg); -webkit-font-smoothing: antialiased; line-height: 1.7; }
 body::before { display: none; }
 ::selection { background: #275e58; color: white; }

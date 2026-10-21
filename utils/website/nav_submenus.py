@@ -1,89 +1,104 @@
-"""Add the hover/focus submenus to every page's existing header navigation.
+"""Maintain the same header and shared styles on every static public page.
 
-  python3 -I utils/website/nav_submenus.py            # rewrite pages in place
-  python3 -I utils/website/nav_submenus.py --check    # exit 1 if any page is out of date
+  python3 -I utils/website/nav_submenus.py          # update pages
+  python3 -I utils/website/nav_submenus.py --check  # verify without writing
 
-The owner's top-level links are kept exactly as each page has them (labels, order, relative or
-absolute hrefs); this only wraps six of them with a submenu. Re-running it is idempotent.
-The faucet's PHP header reads website/lib/site-nav-submenus.json, which this script also writes.
+website/lib/site-nav-submenus.json is the single navigation definition. The PHP
+header reads it directly; this script renders it into static HTML. Page content,
+tool controls, metadata and scripts are preserved.
 """
-import html, json, re, sys
+import html
+import json
+import re
+import sys
 from pathlib import Path
 
 WEBSITE = Path(__file__).resolve().parents[2] / "website"
-SUBMENUS = {
-    "Explorer": [("/explorer/", "Block explorer"), ("/network/", "Network history"), ("/network/nodes/", "Node map")],
-    "Stats": [("/stats/", "Network stats"), ("/status/", "Service status"), ("/news/", "Crypto news"), ("/markets/", "Markets"), ("/exchanges/", "Exchanges")],
-    "Public wallets": [("/wallets/", "Public wallets"), ("/payments/request/", "Payment request")],
-    "Roadmap": [("/roadmap/", "Roadmap"), ("/community/", "Community"), ("/community/voting/", "Community voting"), ("/community/bounties/", "Bounty board"), ("/ecosystem/", "Ecosystem")],
-    "Whitepaper": [("/WHITEPAPER.md?rev=1.5-20261017", "Whitepaper"), ("/upgrade/", "Upgrade to v1.0.0"), ("/press/", "Press kit"), ("/developers/", "Developers"), ("/developers/api/", "API v1"),
-                   ("/developers/payments/", "Accept XMZ")],
-    "Mining": [("/#mine", "How to mine"), ("/mining/calculator/", "Mining calculator"), ("/mining/dashboard/", "Your mining"),
-               ("/mining/benchmarks/", "CPU benchmarks"), ("/mining/leaderboard/", "Mining leaderboard"), ("/faucet/", "Faucet")],
-}
-NAV = re.compile(r'(<nav id="site-nav" aria-label="Primary navigation">)(.*?)(</nav>)', re.S)
-TOP = re.compile(r'<a href="([^"]*)"( aria-current="page")?>([^<]*)</a>')
-
-
-def slug(label):
-    return re.sub(r"[^a-z]+", "-", label.lower()).strip("-")
+REVISION = "20261020-sitewide"
+HEADER = re.compile(r'<header\b(?=[^>]*\bclass="[^"]*\bsite-header\b[^"]*")[^>]*>.*?</header>', re.S)
 
 
 def page_path(file):
-    rel = file.relative_to(WEBSITE).parent.as_posix()
-    return "/" if rel == "." else f"/{rel}/"
+    rel = file.relative_to(WEBSITE).as_posix()
+    return "/" if rel == "index.html" else "/" + (rel[:-10] if rel.endswith("index.html") else rel)
 
 
-def render(inner, path):
-    # Strip a previous run, keeping only the original top-level anchors.
-    inner = re.sub(r'<div class="nav-sub"[^>]*>.*?</div>', "", inner, flags=re.S)
-    inner = re.sub(r'<button class="nav-sub-toggle".*?</button>', "", inner, flags=re.S)
-    inner = re.sub(r'</?div[^>]*>', "", inner)
-    anchors = TOP.findall(inner)
-    if not anchors or TOP.sub("", inner).strip():
-        raise ValueError("unexpected navigation markup")
+def section_matches(href, path):
+    return href.startswith("/") and "#" not in href and "?" not in href and (
+        href == path or (href != "/" and href.endswith("/") and path.startswith(href)))
+
+
+def render_navigation(config, path):
     out = []
-    for href, current, label in anchors:
-        subs = SUBMENUS.get(html.unescape(label))
+    for href, label in config["links"]:
+        subs = config["submenus"].get(label, [])
+        current = ' aria-current="page"' if href == path else ""
+        top = f'<a href="{html.escape(href, quote=True)}"{current}>{html.escape(label)}</a>'
         if not subs:
-            out.append(f'<a href="{href}"{current}>{label}</a>')
+            out.append(top)
             continue
-        here = [h for h, _ in subs if h.split("?")[0] == path and h != "/#mine"]
-        group = ' class="nav-group current"' if here or current else ' class="nav-group"'
-        top_current = current if not here or here[0] == subs[0][0] else ""
-        mark = ' aria-current="page"'
-        items = "".join(f'<a href="{h}"{mark if h in here and h != subs[0][0] else ""}>{html.escape(t)}</a>' for h, t in subs)
-        sid = f"nav-sub-{slug(label)}"
-        out.append(f'<div{group}><a href="{href}"{top_current}>{label}</a>'
-                   f'<button class="nav-sub-toggle" type="button" aria-expanded="false" aria-controls="{sid}">'
-                   f'<span class="visually-hidden">{label} pages</span></button>'
-                   f'<div class="nav-sub" id="{sid}">{items}</div></div>')
-    return "".join(out)
+        group = 'nav-group current' if any(section_matches(h, path) for h, _ in subs) else 'nav-group'
+        sid = "nav-sub-" + re.sub(r"[^a-z]+", "-", label.lower()).strip("-")
+        # Announce the current page once, on its top-level link when it has one.
+        items = "".join(f'<a href="{html.escape(h, quote=True)}"' +
+                        (' aria-current="page"' if h == path and not current else '') +
+                        f'>{html.escape(title)}</a>' for h, title in subs)
+        out.append(f'<div class="{group}">{top}<button class="nav-sub-toggle" type="button" aria-expanded="false" aria-controls="{sid}">'
+                   f'<span class="visually-hidden">{html.escape(label)} pages</span></button><div class="nav-sub" id="{sid}">{items}</div></div>')
+    return ''.join(out)
+
+
+def render_header(config, path):
+    return ('<header class="site-header"><a class="brand" href="/" aria-label="Monzero home">'
+            '<img class="brand-mark brand-coin" src="/assets/monzero-coin-transparent-20261018-96.webp" alt="" width="32" height="32"><span>MONZERO</span></a>'
+            '<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>'
+            '<nav id="site-nav" aria-label="Primary navigation">' + render_navigation(config, path) + '</nav>'
+            '<a class="header-cta" href="/#get-started">Get started</a></header>')
+
+
+def shared_shell(text):
+    def body(match):
+        tag = match[0]
+        classes = re.search(r'\bclass="([^"]*)"', tag)
+        if classes:
+            if 'site-shell' not in classes[1].split():
+                tag = tag[:classes.start(1)] + classes[1] + ' site-shell' + tag[classes.end(1):]
+        else:
+            tag = tag[:-1] + ' class="site-shell">'
+        return tag
+    text = re.sub(r'<body\b[^>]*>', body, text, count=1)
+    # Make the native skip link focus the content with JavaScript disabled too.
+    text = re.sub(r'<main\b(?![^>]*\bid=)', '<main id="main"', text, count=1)
+    if not re.search(r'<a\b[^>]*class="[^"]*\bskip(?:-link)?\b', text):
+        text = re.sub(r'(<body\b[^>]*>)', r'\1<a class="skip-link" href="#main">Skip to content</a>', text, count=1)
+    text = re.sub(r'<main\b(?=[^>]*\bid="main")(?![^>]*\btabindex=)', '<main tabindex="-1"', text, count=1)
+    text = re.sub(r'<noscript>\s*<link[^>]*href="/no-script\.css[^\"]*"[^>]*>\s*</noscript>\s*', '', text)
+    text = re.sub(r'<link[^>]*href="/site-shell\.css[^\"]*"[^>]*>\s*', '', text)
+    text = re.sub(r'(href="[^\"]+\.css)(?:\?[^\"]*)?(")', rf'\1?v={REVISION}\2', text)
+    text = re.sub(r'(src="[^\"]*site-nav\.js)(?:\?[^\"]*)?(")', rf'\1?v={REVISION}\2', text)
+    styles = f'<link rel="stylesheet" href="/site-shell.css?v={REVISION}"><noscript><link rel="stylesheet" href="/no-script.css?v={REVISION}"></noscript>'
+    return text.replace('</head>', styles + '</head>', 1)
 
 
 def main():
-    check = "--check" in sys.argv[1:]
+    check = '--check' in sys.argv[1:]
+    config = json.loads((WEBSITE / 'lib/site-nav-submenus.json').read_text())
     stale = []
-    for file in sorted(WEBSITE.rglob("*.html")):
-        text = file.read_text(encoding="utf-8")
-        match = NAV.search(text)
-        if not match:
+    for file in sorted(WEBSITE.rglob('*.html')):
+        text = file.read_text(encoding='utf-8')
+        match = HEADER.search(text)
+        if not match or 'aria-label="Primary navigation"' not in match[0]:
             continue
-        updated = text[:match.start(2)] + render(match.group(2), page_path(file)) + text[match.end(2):]
-        if updated != text:
+        new = text[:match.start()] + render_header(config, page_path(file)) + text[match.end():]
+        new = shared_shell(new)
+        if new != text:
             stale.append(file.relative_to(WEBSITE).as_posix())
             if not check:
-                file.write_text(updated, encoding="utf-8")
-    data = json.dumps({k: v for k, v in SUBMENUS.items()}, indent=1) + "\n"
-    target = WEBSITE / "lib/site-nav-submenus.json"
-    if not target.exists() or target.read_text(encoding="utf-8") != data:
-        stale.append("lib/site-nav-submenus.json")
-        if not check:
-            target.write_text(data, encoding="utf-8")
+                file.write_text(new, encoding='utf-8')
     if check and stale:
-        sys.exit("navigation submenus out of date: " + ", ".join(stale))
-    print(("up to date" if not stale else "updated: " + ", ".join(stale)) if not check else "navigation submenus up to date")
+        sys.exit('navigation/shared styles out of date: ' + ', '.join(stale))
+    print('navigation and shared styles up to date' if not stale else 'updated: ' + ', '.join(stale))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -13,6 +13,14 @@ spending={'schema':'monzero-fund-spending-v1','updated_at':'2026-10-20','records
  {'id':'fee','date':'2026-10-19','goal':'listing','description':'Listing fee','paid_to':'Exchange X','amount':'900','currency':'USDT','amount_usd':'900.00','evidence_url':'https://example.org/receipt'},
  {'id':'dns','date':'2026-10-10','goal':'general','description':'Domain','paid_to':'IONOS','amount':'20','currency':'USD','amount_usd':'20.00','evidence_url':None}]}
 donations={'updatedAt':int(time.time()),'pricesUsd':{'btc':50000},'coins':[{'id':'btc','name':'Bitcoin','symbol':'BTC','address':'bc1pzsjv3e7mcst6khqr3msq85wlq67hnh48yjrm6eepycvze4htazyqyruvng','decimals':8,'received':'3000000','balance':'3000000','transactions':2,'current':True,'addressUrl':'https://mempool.space/address/x','txUrl':'https://mempool.space/tx/'}],'recent':[]}
+# Match the complete endpoint contract; missing currencies must not become a total.
+donations['schema']='monzero-donations-v1'
+donations['pricedAt']=int(time.time())
+donations['coins'][0]['fetchedAt']=int(time.time())
+addresses={'ltc':'ltc1qjsmmr8f92pt3k8ztmvg8tc0veu08whc8pklm5x','bch':'qq0je5u6qfkx56e9pl3y6mw26ma4qnwvav9evttxpe','doge':'DQGNxF1SEyh9cXH11mgns749frKwq7Xo1e','eth':'0xD0Eb7C50Db766c897B085A492387135123f0A6b9','usdt-sol':'5LpU8TxNqWvs5ACyhxCXNVFXNMq6mnvvK1YvMGkBWXog'}
+for ident,decimals in [('ltc',8),('bch',8),('doge',8),('eth',18),('usdt-sol',6)]:
+ donations['pricesUsd'][ident]=1
+ donations['coins'].append({'id':ident,'name':ident,'symbol':ident.upper(),'address':addresses[ident],'decimals':decimals,'received':'0','balance':'0','transactions':0,'current':True,'fetchedAt':int(time.time()),'addressUrl':'https://example.org','txUrl':'https://example.org/'})
 with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
 server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(root/'website')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 try:
@@ -44,8 +52,8 @@ try:
   page,errors=open_page('/fund/',g=bad,sp=None)
   assert 'Biconomy' in page.locator('ol.goals').inner_text() and page.locator('#spending').is_hidden() and not errors;page.close()
   page,errors=open_page('/',width=390)
-  assert page.locator('#support-goal-name').inner_text()=='Listing on Exchange X' and page.locator('#support-goal-target').inner_text()=='$1,000' and page.locator('#support-all-target').inner_text()=='$4,000'
-  assert page.locator('#support-goal-percent').inner_text()=='100%' and not errors,errors;page.close()
+  assert page.locator('#support-goal-name').inner_text()=='Listing on Exchange X' and page.locator('#support-goal-target').inner_text()=='US$1,000'
+  assert page.locator('#support-remaining').inner_text()=='US$0' and page.locator('#support-raised').inner_text()=='US$1,500' and not errors,errors;page.close()
   browser.close()
 finally:server.terminate();server.wait(timeout=5)
 print('Fund goals: data-driven goals in order, closed hidden, live fill, spending with receipts, invalid fallback, homepage targets passed')

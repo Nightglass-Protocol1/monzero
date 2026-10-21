@@ -22,11 +22,11 @@ function page(string $title, string $body, ?array $member = null, bool $turnstil
     $account = $member ? '<form method="post" action="/faucet/?do=logout" class="signout"><input type="hidden" name="csrf" value="' . authH($member['csrf']) . '"><span>' . authH($member['email']) . '</span><button type="submit">Sign out</button></form>' : '';
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . authH($title) . ' · Monzero faucet</title>'
         . '<meta name="description" content="Claim 0.1 XMZ once every 24 hours with a verified, two-factor protected account.">'
-        . '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/theme.css?v=20261021-unified"><link rel="stylesheet" href="/community/community.css?v=20261020-posts"><link rel="stylesheet" href="/faucet/faucet.css?v=20261021"><link rel="stylesheet" href="/site-nav.css?v=20261020-upgrade">'
+        . '<link rel="stylesheet" href="/styles.css?v=20261020-sitewide"><link rel="stylesheet" href="/theme.css?v=20261020-sitewide"><link rel="stylesheet" href="/community/community.css?v=20261020-sitewide"><link rel="stylesheet" href="/faucet/faucet.css?v=20261020-sitewide"><link rel="stylesheet" href="/site-nav.css?v=20261020-sitewide">'
         . ($turnstile ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : '')
-        . '</head><body><a class="skip-link" href="#main">Skip to content</a>' . siteHeader('/faucet/')
-        . '<main id="main"><p class="eyebrow">XMZ FAUCET</p><h1>' . authH($title) . '</h1>' . $account . $body . '</main><footer><a href="/community/">Monzero community</a></footer>'
-        . '<script src="/site-nav.js?v=20261020-upgrade" defer></script>' . ($qr ? '<script type="module" src="/faucet/faucet.mjs?v=20261021"></script>' : '') . '</body></html>';
+        . '<link rel="stylesheet" href="/site-shell.css?v=20261020-sitewide"><noscript><link rel="stylesheet" href="/no-script.css?v=20261020-sitewide"></noscript></head><body class="site-shell"><a class="skip-link" href="#main">Skip to content</a>' . siteHeader('/faucet/')
+        . '<main id="main" tabindex="-1"><p class="eyebrow">XMZ FAUCET</p><h1>' . authH($title) . '</h1>' . $account . $body . '</main><footer><p><a href="/community/">Monzero community</a> · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Website Terms</a></p></footer>'
+        . '<script src="/site-nav.js?v=20261020-sitewide" defer></script>' . ($qr ? '<script type="module" src="/faucet/faucet.mjs?v=20261021"></script>' : '') . '</body></html>';
 }
 
 function notice(string $text, bool $error = false): string { return '<p class="notice' . ($error ? ' error" role="alert"' : '" role="status"') . '>' . authH($text) . '</p>'; }

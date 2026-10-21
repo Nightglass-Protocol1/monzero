@@ -1,4 +1,4 @@
-"""Headline banner on every public page (added by site-nav.js): links, hidden duplicate copy, scrolling, pause on hover/focus/button,
+"""Headline banner where enabled (added by site-nav.js): links, hidden duplicate copy, scrolling, pause on hover/focus/button,
 reduced motion, phone width, and hidden when there is no news."""
 import json,shutil,socket,subprocess,time
 from pathlib import Path
@@ -16,7 +16,7 @@ try:
   except OSError:time.sleep(.1)
  with sync_playwright() as p:
   browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'))
-  def home(body,width=1440,motion='no-preference',path='/'):
+  def home(body,width=1440,motion='no-preference',path='/explorer/'):
    ctx=browser.new_context(viewport={'width':width,'height':900},reduced_motion=motion);page=ctx.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    def route(r):
     u=r.request.url
@@ -52,7 +52,9 @@ try:
    assert page.locator('#news-ticker').count()==1 and page.locator('#news-ticker').is_visible(),path
    assert page.evaluate("document.getElementById('news-ticker').getBoundingClientRect().bottom <= document.querySelector('.site-header').getBoundingClientRect().top+1"),path
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth') and not errors,(path,errors);ctx.close()
+  for path in ['/', '/download/', '/mining/']:
+   ctx,page,errors=home(news,path=path);assert page.locator('#news-ticker').count()==0 and not errors;ctx.close()
   ctx,page,errors=home(news,path='/admin/');assert page.locator('#news-ticker').count()==0;ctx.close()
   browser.close()
 finally:server.terminate();server.wait(timeout=5)
-print('News ticker on every public page (not admin): links, hidden duplicate, unsafe links dropped, scrolling, pause on hover/focus/button, phone width, reduced motion, hidden without news passed')
+print('News ticker on service pages; absent on home, guides and admin: links, hidden duplicate, unsafe links dropped, scrolling, pause on hover/focus/button, phone width, reduced motion, hidden without news passed')

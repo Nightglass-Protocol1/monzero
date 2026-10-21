@@ -12,9 +12,11 @@ function votePage(string $title, string $body, int $status = 200): never {
     header('X-Frame-Options: DENY');
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . authH($title) . ' · Monzero community voting</title>'
         . '<meta name="description" content="Non-binding Monzero community polls. Faucet members vote once per proposal.">'
-        . '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/theme.css?v=20261021-unified"><link rel="stylesheet" href="/community/community.css?v=20261020-posts"><link rel="stylesheet" href="/community/voting/voting.css?v=20261020"><link rel="stylesheet" href="/site-nav.css?v=20261020-upgrade"></head>'
-        . '<body><a class="skip-link" href="#main">Skip to content</a>' . siteHeader('/community/voting/')
-        . '<main id="main"><p class="eyebrow">COMMUNITY VOTING</p><h1>' . authH($title) . '</h1>' . $body . '</main><script src="/site-nav.js?v=20261020-upgrade" defer></script></body></html>';
+        . '<link rel="stylesheet" href="/styles.css?v=20261020-sitewide"><link rel="stylesheet" href="/theme.css?v=20261020-sitewide"><link rel="stylesheet" href="/community/community.css?v=20261020-sitewide"><link rel="stylesheet" href="/community/voting/voting.css?v=20261020-sitewide"><link rel="stylesheet" href="/site-nav.css?v=20261020-sitewide"><link rel="stylesheet" href="/site-shell.css?v=20261020-sitewide"><noscript><link rel="stylesheet" href="/no-script.css?v=20261020-sitewide"></noscript></head>'
+        . '<body class="site-shell"><a class="skip-link" href="#main">Skip to content</a>' . siteHeader('/community/voting/')
+        . '<main id="main" tabindex="-1"><p class="eyebrow">COMMUNITY VOTING</p><h1>' . authH($title) . '</h1>' . $body . '</main>'
+        . '<footer><p><a href="/community/">Monzero community</a> · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Website Terms</a></p></footer>'
+        . '<script src="/site-nav.js?v=20261020-sitewide" defer></script></body></html>';
     exit;
 }
 

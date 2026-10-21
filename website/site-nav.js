@@ -6,6 +6,15 @@
   if (!nav) return;
   nav.classList.add("nav-js");
   const groups = Array.from(nav.querySelectorAll(".nav-group"));
+  // Desktop CSS also opens submenus on hover/focus. Keep the announced state
+  // aligned with what is visible, including when the viewport changes.
+  const syncExpanded = () => requestAnimationFrame(() => {
+    groups.forEach((group) => {
+      const submenu = group.querySelector(".nav-sub");
+      const toggle = group.querySelector(".nav-sub-toggle");
+      if (submenu && toggle) toggle.setAttribute("aria-expanded", String(submenu.getClientRects().length > 0));
+    });
+  });
   const setGroup = (group, open) => {
     group.classList.toggle("open", open);
     group.classList.toggle("dismissed", !open && group.contains(document.activeElement));
@@ -31,7 +40,11 @@
     group.addEventListener("focusout", (event) => { if (!group.contains(event.relatedTarget)) { setGroup(group, false); group.classList.remove("dismissed"); } });
     group.addEventListener("mouseleave", () => group.classList.remove("dismissed"));
     group.addEventListener("focusin", () => group.classList.remove("dismissed"));
+    for (const event of ["mouseenter", "mouseleave", "focusin", "focusout"]) {
+      group.addEventListener(event, syncExpanded);
+    }
   });
+  window.addEventListener("resize", syncExpanded);
   nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", close));
   document.addEventListener("click", (event) => { if (!nav.contains(event.target)) closeGroups(); });
   document.addEventListener("keydown", (event) => {
@@ -43,7 +56,9 @@
       setGroup(open, false);
       return;
     }
+    const wasOpen = nav.classList.contains("open");
     close();
+    if (wasOpen && button) button.focus();
   });
 })();
 
@@ -53,7 +68,7 @@
   "use strict";
   const header = document.querySelector(".site-header");
   const nav = document.getElementById("site-nav");
-  if (!header || !nav || nav.getAttribute("aria-label") !== "Primary navigation" || document.getElementById("news-ticker")) return;
+  if (!header || !nav || document.body.dataset.newsTicker === "off" || nav.getAttribute("aria-label") !== "Primary navigation" || document.getElementById("news-ticker")) return;
   const ticker = document.createElement("div");
   ticker.className = "news-ticker"; ticker.id = "news-ticker"; ticker.hidden = true;
   ticker.setAttribute("role", "region"); ticker.setAttribute("aria-label", "Top crypto headlines");
@@ -145,7 +160,11 @@
       hide.setAttribute("aria-label", "Hide the upgrade notice for a day");
       hide.addEventListener("click", () => { bar.remove(); try { localStorage.setItem(KEY, String(Date.now() + 86400000)); } catch { /* fine */ } });
       bar.append(text, hide);
-      (document.getElementById("news-ticker") || header).before(bar);
+      // The landing page and guides have an in-content destination so a delayed
+      // API reply cannot push the first screen down after it has been painted.
+      const slot = document.querySelector("[data-upgrade-slot]");
+      if (slot) slot.replaceChildren(bar);
+      else (document.getElementById("news-ticker") || header).before(bar);
     })
     .catch(() => {});
 })();

@@ -1,6 +1,6 @@
 """Crypto news: feed parsing (RSS/Atom), sponsored/filler/press-release/http/stale/future/entity
 filtering, tracking removal, cross-outlet ranking, a failing outlet, signed ingest (signature, replay,
-validation, ordering, 30-day archive), the /news/ page with archive days, and the homepage strip."""
+validation, ordering, 30-day archive), the /news/ page with archive days, and access from the homepage."""
 import gzip,hashlib,hmac,http.server,json,os,secrets,shutil,socket,subprocess,sys,tempfile,threading,time
 from email.utils import formatdate
 from pathlib import Path
@@ -77,7 +77,7 @@ with tempfile.TemporaryDirectory() as tmp:
               {**later,'generated_at':now+3,'extra':1}]:
    assert raw(pack(bad)).status_code==400,bad
   assert raw(b'not gzip').status_code==400
-  # Page and homepage strip.
+  # News remains available on its own page and through homepage navigation.
   from playwright.sync_api import sync_playwright
   with sync_playwright() as p:
    browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'))
@@ -91,8 +91,9 @@ with tempfile.TemporaryDirectory() as tmp:
     pg.select_option('#day',yesterday);pg.wait_for_selector(f'#news-title:has-text("{yesterday}")')
     assert pg.evaluate('document.documentElement.scrollWidth <= innerWidth') and not errors,errors;pg.close()
    pg=browser.new_page();pg.route('**/news/data/latest.json*',lambda r:r.fulfill(status=200,content_type='application/json',body=(data/'latest.json').read_text()))
-   pg.route('**/*.php*',lambda r:r.fulfill(status=503,body='{}'));pg.goto(base+'/');pg.wait_for_selector('#news-strip:not([hidden])')
-   assert pg.locator('#news-strip-list li').count()==min(5,len(payload['stories'])) and 'BlackRock' in pg.locator('#news-strip-list').inner_text();pg.close()
+   pg.route('**/api/**',lambda r:r.fulfill(status=503,body='{}'));pg.goto(base+'/')
+   assert pg.locator('#news-strip').count()==0
+   assert pg.locator('.home-footer a[href="news/"]').is_visible();pg.close()
    browser.close()
  finally:server.terminate();server.wait(timeout=5);fs.shutdown()
-print('News: RSS/Atom parsing, sponsored/filler/press/http/stale/future/entity filtering, ranking, failing outlets, signed ingest, archive, page, homepage strip passed')
+print('News: RSS/Atom parsing, sponsored/filler/press/http/stale/future/entity filtering, ranking, failing outlets, signed ingest, archive, page, homepage access passed')

@@ -1,0 +1,450 @@
+{
+  "date": "2026-10-20",
+  "site": "https://monzero.org/",
+  "scope": "Website functionality, accessibility, performance and release integrity. Not an independent security audit or legal review.",
+  "lighthouse_mobile": {
+    "version": "13.5.0",
+    "fetch_time": "2026-10-20T19:02:28.961Z",
+    "scores": {
+      "performance": 97,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "metrics": {
+      "first-contentful-paint": "1.5\u00a0s",
+      "largest-contentful-paint": "1.9\u00a0s",
+      "total-blocking-time": "0\u00a0ms",
+      "cumulative-layout-shift": "0"
+    },
+    "note": "Single simulated mobile lab run; not field measurements."
+  },
+  "axe": {
+    "version": "4.14.0",
+    "scans": 28,
+    "pages": [
+      "/",
+      "/community/",
+      "/download/",
+      "/mining/",
+      "/privacy/",
+      "/security/",
+      "/terms/"
+    ],
+    "widths": [
+      390,
+      1440
+    ],
+    "states": [
+      "default",
+      "expanded menu/details"
+    ],
+    "violations": 0,
+    "javascript_page_errors": 0,
+    "manual_review_rule_ids": [
+      "color-contrast"
+    ],
+    "note": "Automated rules and accessibility-tree/keyboard checks do not establish full WCAG conformance or actual screen-reader usability."
+  },
+  "routes": [
+    {
+      "url": "https://monzero.org/",
+      "status": 200,
+      "bytes": 27344,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/app/",
+      "status": 200,
+      "bytes": 18387,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/community/",
+      "status": 200,
+      "bytes": 10561,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/community/bounties/",
+      "status": 200,
+      "bytes": 7458,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/community/voting/",
+      "status": 200,
+      "bytes": 4866,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/developers/",
+      "status": 200,
+      "bytes": 15989,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/developers/api/",
+      "status": 200,
+      "bytes": 11240,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/developers/payments/",
+      "status": 200,
+      "bytes": 13049,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/download/",
+      "status": 200,
+      "bytes": 11352,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/ecosystem/",
+      "status": 200,
+      "bytes": 7107,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/exchanges/",
+      "status": 200,
+      "bytes": 6689,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/explorer/",
+      "status": 200,
+      "bytes": 7438,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/faucet/",
+      "status": 200,
+      "bytes": 5911,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/founder/",
+      "status": 200,
+      "bytes": 12225,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/fund/",
+      "status": 200,
+      "bytes": 22520,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/markets/",
+      "status": 200,
+      "bytes": 6377,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/mining/",
+      "status": 200,
+      "bytes": 11639,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/mining/benchmarks/",
+      "status": 200,
+      "bytes": 7859,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/mining/calculator/",
+      "status": 200,
+      "bytes": 8811,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/mining/dashboard/",
+      "status": 200,
+      "bytes": 13264,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/mining/leaderboard/",
+      "status": 200,
+      "bytes": 8801,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/network/",
+      "status": 200,
+      "bytes": 10306,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/network/nodes/",
+      "status": 200,
+      "bytes": 8460,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/news/",
+      "status": 200,
+      "bytes": 6524,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/payments/request/",
+      "status": 200,
+      "bytes": 8888,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/press/",
+      "status": 200,
+      "bytes": 11048,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/privacy/",
+      "status": 200,
+      "bytes": 15502,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/roadmap/",
+      "status": 200,
+      "bytes": 102326,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/security/",
+      "status": 200,
+      "bytes": 9453,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/stats/",
+      "status": 200,
+      "bytes": 9015,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/status/",
+      "status": 200,
+      "bytes": 6448,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/terms/",
+      "status": 200,
+      "bytes": 13307,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/upgrade/",
+      "status": 200,
+      "bytes": 8983,
+      "csp": true
+    },
+    {
+      "url": "https://monzero.org/wallets/",
+      "status": 200,
+      "bytes": 6573,
+      "csp": true
+    }
+  ],
+  "release_archives": [
+    {
+      "path": "/downloads/monzero-gui-profiles-20261018-source.tar.gz",
+      "bytes": 34145423,
+      "sha256": "22640117e4b189b6e85c983ce98950a5ba3f9e76f6cd827968a52475622d8760",
+      "verified": true
+    },
+    {
+      "path": "/downloads/monzero-v1.0.0-gui-source.tar.gz",
+      "bytes": 35973400,
+      "sha256": "73c3c382e3037a85d98882de66aa4a8840e7fa1ac245b930d7d7db6e07024622",
+      "verified": true
+    },
+    {
+      "path": "/downloads/monzero-v1.0.0-linux-x86_64.tar.gz",
+      "bytes": 26864499,
+      "sha256": "5931364f536b654553b8e72d550ceec63c8c99ffe4d94c4e28f6a3cccdd3cece",
+      "verified": true
+    },
+    {
+      "path": "/downloads/monzero-v1.0.0-source.tar.gz",
+      "bytes": 21323077,
+      "sha256": "b238a2a16242e453b69dc21d95e344798f38c9ebce572cd30eb30df85052a404",
+      "verified": true
+    },
+    {
+      "path": "/downloads/monzero-v1.0.0-windows-gui-profiles-20261018-x64.zip",
+      "bytes": 61021914,
+      "sha256": "91dacd571e14f974fe52ee378ded3f39019c2ea5254d988abc3f40513afcf2c2",
+      "verified": true
+    },
+    {
+      "path": "/downloads/monzero-v1.0.0-windows-gui-x64.zip",
+      "bytes": 55638184,
+      "sha256": "6be94574fd731e7c58fa40fcb22a3202db9a38f2a38b6801ae6929b44c204ad2",
+      "verified": true
+    },
+    {
+      "path": "/downloads/monzero-v1.0.0-windows-x64.zip",
+      "bytes": 23836334,
+      "sha256": "bcdd7005e1368916635b2c6611c02c8194a95aa951a066fc3d8d119f73e3acd5",
+      "verified": true
+    }
+  ],
+  "release_signature": {
+    "manifest": "https://monzero.org/releases/v1.0.0.json",
+    "primary_fingerprint": "4C37C618789F86D81FEF28DF390AEFB735F270D6",
+    "verified": true,
+    "note": "Signature verified against published key; independent signer identity not established. GUI update remains unsigned. Binaries were not run."
+  },
+  "other_checks": [
+    "Five redesigned/new documents at 320, 390, 768 and 1440 px; no horizontal overflow",
+    "Delayed-navigation-script layout-shift regression passed",
+    "Live Chainquiry badge loads and honours reduced motion",
+    "Live funding target and all six contribution currency observations load",
+    "Live node/supply/service observations load",
+    "Production no-JavaScript menu and skip-link keyboard focus passed",
+    "Primary page landmarks checked through Chromium accessibility tree",
+    "Shared navigation across 31 pre-existing service routes at 1440/1300/390 px and without JavaScript",
+    "Upgrade-banner regression passed",
+    "Funding unit tests, SEO tests/generation, navigation generation, PHP syntax, diff whitespace passed"
+  ],
+  "deployments": {
+    "main_backup": "/home/www/Monzero-backups/deploy-20261020T190201Z",
+    "followup_backups": [
+      "/home/www/Monzero-backups/deploy-20261020T190511Z",
+      "/home/www/Monzero-backups/deploy-20261020T190611Z"
+    ],
+    "method": "Existing non-deleting deploy.py with per-file SHA-256 verification",
+    "goals_initialisation": "Created missing admin-owned fund/goals.json exclusively after matching both published titles and targets. SHA-256 00f51c1b16c91feb4770337b2d344c3640bb4060380aef1a62d37ebd4170c87e; subsequent deploys exclude it."
+  },
+  "website_source_sha256": {
+    "website/app.js": "3d16f61b8d56677f9347d81bacf2896afe3d966808b7bb249791ee8aef357244",
+    "website/app/index.html": "cb7a323459e143cbfc2eba6e1e63181583ceb1e78359a4fef2916350db31e0ea",
+    "website/community/index.html": "91b0fef6485cd31fea57af19a05d88c9a65870ca3a978b3bad6e9a5ad56e3416",
+    "website/community/voting/index.php": "8d793b4d5329dd114e94696f088215438ed6e912b1b913e76fb8344893f9b375",
+    "website/download/index.html": "a13b29408f2176bd1bdda05240460e1233859c9d8fba48a37d7f30315fdd3870",
+    "website/faucet/index.php": "e9e673202421624eeaac6243f83653a85a883fad9ac7d00049a91e553a7d9f2d",
+    "website/guide.js": "55cdac3c219d47abcbd2cb5ebc85ddc86ac76f8ac8b8293f64ff06eb72b1be69",
+    "website/homepage-funding.mjs": "5db9d4844698a0acbbb19cf06c6a25af888779b65495638d6f0714e0bd8a8b23",
+    "website/homepage-live.js": "0757e3e66c283767d6a0aabee1a7cf4bfc9227dae1fb5f83ac1ed847365272b1",
+    "website/homepage.css": "04f99e7313086298f91eb320e93c0f9299a04b1e44be8b29147e9779bbf76a3d",
+    "website/index.html": "78738b869008f095e22dab61998dcc1c66103c8efff29f70b8b46a1b535fc537",
+    "website/mining/dashboard/index.html": "559e78274a2c0fdbd879b232dc02a62e4dbd52d79a3e3b7457ed7fdfe9aefa72",
+    "website/mining/index.html": "31b6d023e72f68c320f5ad0f02ce38625525d0eb8bf4ff5cd96c92f4ee8706ec",
+    "website/no-script.css": "126f05bf440eb0025bd264290abf7c314233b77830e4fa13dd83d5105adc5be3",
+    "website/privacy/index.html": "61c41597e38cf46d06d9a81ae234ff13200cb4a2cf29da902a584d851fe0ddb5",
+    "website/security/index.html": "0feea90e311649b99ca5e10566c29526dbedfc5fef283f5c303c7a906f5338cf",
+    "website/site-nav.js": "c1390e7341db9b56107fc4fb9e63e296395d415417158068ed5c88a4f617b3b4",
+    "website/sitemap.xml": "974bcaeb59f0fe117b3f4da75d81852a943a48503269298eec56a732ffab98d3",
+    "website/terms/index.html": "2b380b1e3dd83a486bad50a83ae004189a27fcef5a99e9d40915bb2eee3acdd7"
+  },
+  "remaining": [
+    "Privacy Policy and Terms are drafts requiring applicable-law/provider/retention review; operator identity/country intentionally not disclosed at owner request",
+    "Independent security audit",
+    "Formal exchange quote and confirmed listing",
+    "Authorised publication of dedicated donation view key and signed address statement",
+    "Native Windows validation for GUI update",
+    "Manual testing with actual screen-reader users"
+  ],
+  "contrast_followup": {
+    "method": "Computed contrast from live browser colours. Hero uses a conservative composite of both radial overlays at maximum alpha; solid button backgrounds use their live CSS colours. Open-menu obscuration and decorative non-text glyphs require separate visual judgement.",
+    "measurements": [
+      {
+        "element": "hero body and captions",
+        "foreground_rgb": [
+          169,
+          192,
+          197
+        ],
+        "background_rgb": [
+          20.560000000000002,
+          46.6,
+          51.080000000000005
+        ],
+        "ratio": 7.46,
+        "minimum_required_used": 4.5
+      },
+      {
+        "element": "hero eyebrow",
+        "foreground_rgb": [
+          154,
+          228,
+          215
+        ],
+        "background_rgb": [
+          20.560000000000002,
+          46.6,
+          51.080000000000005
+        ],
+        "ratio": 9.77,
+        "minimum_required_used": 4.5
+      },
+      {
+        "element": "hero title",
+        "foreground_rgb": [
+          237,
+          243,
+          247
+        ],
+        "background_rgb": [
+          20.560000000000002,
+          46.6,
+          51.080000000000005
+        ],
+        "ratio": 12.69,
+        "minimum_required_used": 4.5
+      },
+      {
+        "element": "hero accent title",
+        "foreground_rgb": [
+          105,
+          213,
+          194
+        ],
+        "background_rgb": [
+          20.560000000000002,
+          46.6,
+          51.080000000000005
+        ],
+        "ratio": 8.04,
+        "minimum_required_used": 4.5
+      },
+      {
+        "element": "primary button label",
+        "foreground_rgb": [
+          9,
+          40,
+          32
+        ],
+        "background_rgb": [
+          105,
+          213,
+          194
+        ],
+        "ratio": 8.91,
+        "minimum_required_used": 4.5
+      },
+      {
+        "element": "secondary button label",
+        "foreground_rgb": [
+          237,
+          243,
+          247
+        ],
+        "background_rgb": [
+          16,
+          36,
+          45
+        ],
+        "ratio": 14.3,
+        "minimum_required_used": 4.5
+      }
+    ]
+  }
+}

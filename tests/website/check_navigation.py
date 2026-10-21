@@ -1,19 +1,20 @@
 """Shared navigation acceptance; external data requests are blocked."""
-import importlib.util, socket, subprocess, time, shutil
+import json, socket, subprocess, time, shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[2]
-routes=['/faucet/','/mining/leaderboard/','/developers/api/','/ecosystem/','/exchanges/','/markets/','/payments/request/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/','/','/explorer/','/stats/','/wallets/','/app/','/founder/','/fund/','/roadmap/','/security/','/mining/calculator/','/mining/dashboard/','/mining/benchmarks/','/network/nodes/','/status/','/community/voting/','/news/','/upgrade/','/press/','/mining/benchmarks/submission.html']
+expected=json.loads((root/'website/lib/site-nav-submenus.json').read_text())['links']
+routes=['/download/','/mining/','/privacy/','/terms/','/faucet/','/mining/leaderboard/','/developers/api/','/ecosystem/','/exchanges/','/markets/','/payments/request/','/developers/payments/','/developers/','/community/bounties/','/community/','/network/','/','/explorer/','/stats/','/wallets/','/app/','/founder/','/fund/','/roadmap/','/security/','/mining/calculator/','/mining/dashboard/','/mining/benchmarks/','/network/nodes/','/status/','/community/voting/','/news/','/upgrade/','/press/','/mining/benchmarks/submission.html']
 submenu_paths={'/','/network/nodes/','/faucet/','/mining/calculator/'}
 def check_submenus(page,js,width,path):
  mining=page.locator('#site-nav .nav-group:has(> a:text-is("Mining"))');sub=mining.locator('.nav-sub');toggle=mining.locator('.nav-sub-toggle')
- assert sub.locator('a').all_inner_texts()==['How to mine','Mining calculator','Your mining','CPU benchmarks','Mining leaderboard','Faucet'],path
+ assert sub.locator('a').all_inner_texts()==['How to mine','Mining calculator','Your mining','CPU benchmarks','Mining leaderboard','Faucet','Mining pool'],path
  if not js:return
  if width>=1340:
   assert not sub.is_visible(),path
   mining.locator('> a').hover();assert sub.is_visible(),path
   page.mouse.move(5,900);assert not sub.is_visible(),path
-  explorer=page.locator('#site-nav .nav-group:has(> a:text-is("Explorer"))')
+  explorer=page.locator('#site-nav .nav-group:has(> a:text-is("Network"))')
   explorer.locator('.nav-sub-toggle').click();assert explorer.locator('.nav-sub').is_visible() and explorer.locator('.nav-sub-toggle').get_attribute('aria-expanded')=='true',path
   page.mouse.move(5,900);assert explorer.locator('.nav-sub').is_visible(),path  # clicked open stays open
   page.keyboard.press('Escape');assert not explorer.locator('.nav-sub').is_visible() and explorer.locator('.nav-sub-toggle').get_attribute('aria-expanded')=='false',path
@@ -37,7 +38,7 @@ try:
  else:raise RuntimeError('Preview unavailable')
  with sync_playwright() as p:
   browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'))
-  for js,width in [(True,1440),(True,1300),(True,390),(False,390)]:
+  for js,width in [(True,1440),(True,1300),(True,768),(True,390),(True,320),(False,390)]:
    for path in routes:
     page=browser.new_page(java_script_enabled=js,viewport={'width':width,'height':1000})
     def intercept(r):
@@ -51,19 +52,30 @@ try:
      page.keyboard.press('Escape');assert not page.locator('#site-nav').is_visible(),path
     if width==1440:
      assert page.locator('.site-header nav').is_visible(),path
-    # Every page uses the homepage header: logo, the same twelve links and the Download button.
+    # The public header and visual tokens are identical, including PHP-rendered pages.
     assert page.locator('.site-header .brand img').evaluate('(img)=>img.complete && img.naturalWidth > 0'),path
-    if path!='/':
-     assert [a.strip() for a in page.locator('#site-nav > a, #site-nav > .nav-group > a').all_inner_texts()]==['Home','Explorer','Stats','Public wallets','Studio','Roadmap','Whitepaper','Mining','Pool','Founder','Donate','Security'],path
+    actual=page.locator('#site-nav > a, #site-nav > .nav-group > a').evaluate_all('(as)=>as.map(a=>[a.getAttribute("href"),a.textContent])')
+    assert actual==expected,(path,actual)
+    assert page.locator('.header-cta').is_visible() and page.locator('.header-cta').get_attribute('href')=='/#get-started',path
+    assert page.locator('body').evaluate('b=>getComputedStyle(b).backgroundColor')=='rgb(11, 23, 32)',path
+    assert page.locator('body').evaluate('b=>getComputedStyle(b).getPropertyValue("--surface").trim()')=='#10242d',path
+    assert page.locator('.site-header').evaluate('h=>getComputedStyle(h).backgroundColor')=='rgb(11, 23, 32)',path
+    assert page.locator('.header-cta').evaluate('h=>getComputedStyle(h).backgroundColor')=='rgb(105, 213, 194)',path
+    if path!='/mining/benchmarks/submission.html':
+     assert page.locator('#site-nav [aria-current="page"]').count()==1,path
+     assert page.locator('#site-nav [aria-current="page"]').get_attribute('href')==path,path
+    if not js:
+     assert page.locator('#site-nav a').last.is_visible(),path
+     page.locator('a[href="#main"]').first.focus();page.keyboard.press('Enter')
+     assert page.locator('main').evaluate('m=>m===document.activeElement'),path
     if width<1340:assert menu.count()==1,path
     # Every page reaches every public route through the menu or its submenus.
     hrefs={h.split('?')[0] for h in page.locator('#site-nav a').evaluate_all('(as)=>as.map(a=>new URL(a.getAttribute("href"),location.href).pathname)')}
     missing=[r for r in routes if r.split('#')[0] not in hrefs and r!='/mining/benchmarks/submission.html'];assert not missing,(path,missing)
     if path in submenu_paths:check_submenus(page,js,width,path)
-    if path not in ['/','/explorer/']:
-     assert page.evaluate('document.querySelector(".site-header").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top+1'),(path,width,js)
+    assert page.evaluate('document.querySelector(".site-header").getBoundingClientRect().bottom <= document.querySelector("main").getBoundingClientRect().top+1'),(path,width,js)
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(path,width,js)
     page.close()
-   print(f'{width}px JS={js}: all {len(routes)} pages passed navigation visibility/menu/logo/no overflow')
+   print(f'{width}px JS={js}: all {len(routes)} pages passed navigation visibility/menu/logo/no overflow',flush=True)
   browser.close()
 finally:server.terminate();server.wait(timeout=5)

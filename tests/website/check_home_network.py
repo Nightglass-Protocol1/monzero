@@ -10,11 +10,11 @@ try:
  time.sleep(.4)
  with sync_playwright() as p:
   browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'))
-  for width in (1440,390):
+  for width in (1440,768,390,320):
    page=browser.new_page(viewport={'width':width,'height':1000});errors=[]
    page.on('pageerror',lambda e:errors.append(str(e)))
    state={'offline':False,'missing':False}
-   info={'status':'OK','nettype':'mainnet','height':100,'target':120,'difficulty':3600000,'difficulty_top64':0,'tip_age_seconds':12,'synchronized':True,'tip_fresh':True,'peer_ready':True,'connections_hidden':True,'restricted':True}
+   info={'observed_at':int(time.time()),'status':'OK','nettype':'mainnet','height':100,'target':120,'difficulty':3600000,'difficulty_top64':0,'tip_age_seconds':12,'synchronized':True,'tip_fresh':True,'peer_ready':True,'connections_hidden':True,'restricted':True}
    def route(r):
     url=r.request.url
     if '/api/node-info/' in url:
@@ -29,16 +29,20 @@ try:
    page.route('**/*',route)
    page.goto(f'http://127.0.0.1:{port}/')
    page.wait_for_function("document.querySelector('#metric-reward').textContent === '2 XMZ'")
+   assert page.locator('#node-state').inner_text()=='Node synchronized'
    assert page.locator('#metric-target').inner_text()=='120 seconds'
    assert page.locator('#metric-connections').inner_text()=='Unavailable'
    assert page.locator('#mine a[href="mining/calculator/"]').count()==1
-   assert page.locator('.hero-actions a[href="https://t.me/MonzeroOfficial"]').count()==1
+   assert page.locator('.hero-actions a[href="download/"]').count()==1
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow'
    for field in ('synchronized','tip_fresh'):
     info[field]=False;page.evaluate('updateNetwork()')
     assert page.locator('#metric-reward').inner_text()=='—'
     assert page.locator('#chain-strip li').count()==0
     info[field]=True
+   info['observed_at']=int(time.time())-3600;page.evaluate('updateNetwork()')
+   assert page.locator('#node-state').inner_text()=='Observation stale or undated'
+   info['observed_at']=int(time.time())
    state['missing']=True;page.evaluate('updateNodeStatus()')
    page.wait_for_function("document.querySelector('#metric-target').textContent === 'Unavailable'")
    assert page.locator('#metric-network-hashrate').inner_text()=='Unavailable'

@@ -2,6 +2,7 @@
 
 Updated: 2026-10-20. Status: Release 1 implementation accepted and deployed to
 production; continue monitoring public endpoints and live-owned content.
+The homepage redesign and second review recorded below remain local, not deployed.
 Active priority: website expansion; DEX work is deferred. Local mining and builds
 remain stopped by owner request. No automatic payouts, new wallet custody, chain
 changes or browser wallet are authorized by this plan. The owner explicitly excludes all
@@ -1596,8 +1597,10 @@ them on /fund/ (closed goals hidden, a spending table with receipts) and asks
 fund.js to refill the bars from the live donation total; without valid files the
 page keeps its built-in goals. The homepage summary takes the first goal and total
 target from the file. Validators are in the fuzz cross-check (18,097 cases).
-The seed file reproduces the current two goals and must be put on the live site
-once (it is live-owned, so deploys never overwrite it).
+The seed file reproduces the current two goals. It was initialised on the live site
+once on 20 October 2026 after comparing both targets with the published funding
+page; exclusive creation prevented replacement of an administrator-owned file.
+It remains live-owned, so subsequent deploys never overwrite it.
 
 ### Founder disclosure publishing — 2026-10-20
 
@@ -1609,3 +1612,259 @@ server-side validation mirrors the browser checks, requires all reserve-proof
 fields together, and rejects malformed addresses, keys, paths, amounts and text.
 The checked-in seed is deliberately empty so no wallet secret or unverified
 balance is published by a deploy.
+
+
+## Homepage redesign — 20 October 2026
+
+Initially implemented locally; subsequently deployed in the release-check pass
+below. The homepage now leads with
+privacy, CPU participation and independent verification, followed by verified
+network observations, onboarding, ecosystem availability, development status,
+funding context and technical resources. It retains the dark teal palette, shared
+controls and existing services. A lightweight inline SVG replaces the promotional
+coin banner; no dependencies or application framework were added.
+
+Audit evidence: root `WHITEPAPER.md` documents privacy mechanisms and RandomX;
+`website/exchanges/catalog.json` records Biconomy as planned with no trading URL;
+`website/fund/goals.json` records targets and the next-listing retention policy;
+`website/community/index.html` verifies Telegram/GitHub but no Bitcointalk/X URL;
+existing release copy and `website/roadmap/index.html` retain release and native
+Windows validation limitations. No independent audit or operational exchange is
+claimed. No exchange quote was available to verify the target as a formal fee.
+
+New `/download/` and `/mining/` pages preserve the original download links, hashes,
+signature details, warnings, Windows instructions, node addresses and FAQ. Old
+homepage mining/download anchors remain useful. The homepage menu groups all
+previous destinations; the footer groups project, network, resources, community
+and security links without inventing legal documents. SEO maintenance includes
+the new routes. Other pages retain their existing shared navigation.
+
+Homepage components: `homepage.css`, `homepage-funding.js`, inline network SVG,
+feature/onboarding/roadmap cards and grouped footer. `guide.js` provides the moved
+node-address copy controls. Existing network code now polls at most once per minute
+while visible, retains the last successful retrieval time on failure, and labels
+supply observation age. Funding totals require complete usable records and prices;
+missing values are not zero, and stale/undated inputs are labelled. Donation
+addresses, APIs, protocol, wallet logic and binaries are unchanged.
+
+Verification: 90 JavaScript unit tests and 15 focused Python tests (deployment,
+node observation and API v1) passed. All original release download/signature/
+checksum links and displayed hashes were checked against the previous homepage. Network fixtures passed at 320, 390,
+768 and 1440px. Shared navigation checks passed across 31 existing routes at
+1440/1300/390px and with JavaScript disabled. Homepage tiles and fundraising goals
+checks passed. New redesign acceptance covers local page links, moved guides,
+failure placeholders, reduced motion, keyboard Escape/focus, no-JavaScript menus
+and all four viewport sizes. Desktop/mobile screenshots were generated locally.
+SEO check and diff whitespace check passed. The site is static HTML/CSS/JS with PHP
+endpoints and has no frontend production build or TypeScript step; core builds and
+mining were not started.
+
+Release checks still required: production smoke-test the new document routes and
+real API freshness; release binaries/whitepaper are deployment-managed rather than
+present in this checkout. This task does not establish native Windows validation,
+an independent security audit, exchange acceptance, or missing social identities.
+Published donation view key/address-signature gaps remain explicitly disclosed.
+
+
+### Homepage second review — 20 October 2026
+
+The same brief was reviewed again and the local implementation refined. This was
+a second review in the current session, not an external-model review or a deployment.
+
+Visual and content changes: the repeated card layout now varies by purpose: an
+open feature layout with lightweight SVG icons, three onboarding actions, explicit
+ecosystem availability labels, a three-stage roadmap timeline and a concise
+technical-resource list. Repeated mining/download sections were combined while
+retaining their incoming anchors. Copy distinguishes published website tools from
+unfinished wallet validation and exchange work, using the deployment record above.
+Mobile controls have larger targets; the download and mining guides share the new
+header, preserve complete instructions/checksums and use more readable text.
+
+Maintenance corrections: `nav_submenus.py` now supports an explicit homepage/guide
+profile, so regeneration no longer destroys the new information hierarchy. Other
+service pages keep their existing menu groups. `seo.py` now parses metadata
+independently of attribute order; formatting cannot silently empty social
+descriptions or duplicate canonical URLs. The guides participate in normal SEO
+generation. Hover/focus submenu visibility now agrees with `aria-expanded`, and
+Escape restores focus to the mobile menu control.
+
+Data corrections: `homepage-funding.mjs` reuses the existing goal validator and
+requires all six public-chain currency records, valid amounts/prices and unique
+identifiers before reporting a total. It labels stale/undated sources and the
+oldest source timestamp; the target gap is clearly an estimate, not an available
+balance. Supply rejects blank, malformed and future-dated observations. Invalid
+service, census and faucet responses stay unavailable rather than becoming healthy
+or zero-valued results. Node observations flag stale/undated snapshots. Requests
+do not overlap; polling pauses while hidden and resumes on return after its normal
+interval. Backend endpoints, addresses, release binaries and financial logic are
+unchanged.
+
+Regression coverage was extended for these specific failures. All 95 JavaScript
+tests passed, as did metadata-formatting tests, node/supply/funding fixtures and
+responsive page checks at 320/390/768/1440px. Shared navigation passed across all
+31 existing service routes at 1440/1300/390px and with JavaScript disabled. The
+existing news assertions were updated for the intentional move from homepage
+headlines to the dedicated news page; feed, archive and service-page ticker
+coverage remains. Download links, release signatures and displayed SHA-256 values
+were compared with the original homepage and preserved.
+
+Website regression checks completed successfully in batches after updating the
+runner and its old homepage expectations. No environment-dependent checks were
+skipped: supply, catalog validation (18,097 cases), admin content/authentication,
+voting, Telegram fixtures, status, API v1, miner history and faucet checks all
+passed, alongside the mining/explorer/payment/news/upgrade/deployment checks. The
+last homepage checks passed again after the visibility-refresh and touch-target
+changes. SEO generation, navigation generation and diff whitespace checks pass.
+At the end of this second review the change was still local. The subsequent
+release-check pass below records deployment and closes the production checks;
+external verification limits are retained explicitly.
+
+
+### Homepage release checks and publication — 20 October 2026
+
+The redesign is now live at https://monzero.org/. The original Chainquiry badge
+and destination are restored within the opening hero, with its original reduced-
+motion variant, fixed dimensions and a sponsored-directory disclosure. The
+project owner confirmed `https://x.com/MonzeroXMZ`; the official X link and the
+corroborated Bitcointalk announcement are now present on the homepage and community
+page. The obsolete pre13 wording on the security page now describes the current
+v1.0.0 release and the GUI update's actual verification limits.
+
+The follow-up audit found and fixed three concrete accessibility/performance
+issues: a low-contrast download label, the mobile menu's expansion/collapse during
+script loading, and a skip link that scrolled without reliably transferring focus.
+The no-JavaScript navigation styles now load only through `<noscript>`, and the
+homepage/guides place the asynchronous upgrade notice in their content instead of
+inserting it above the first screen. Existing service-page banners, dismissal and
+upgrade behaviour are preserved. Legal links in secondary footers are grouped so
+separators do not become standalone rows on narrow screens.
+
+The production goals catalogue was missing (HTTP 404), although `/fund/` already
+published the same two targets as the repository: $15,000 for the proposed listing
+and initial trading funds, followed by $5,000 for bug bounties. After comparing the
+published titles and targets, `fund/goals.json` was created exclusively and its
+SHA-256 verified. No existing live-owned catalogue was replaced. The homepage now
+loads the target and complete six-currency contribution observations successfully;
+zero is displayed only when supported by those records. Donation addresses,
+transaction handling, APIs, release archives, wallet logic and consensus remain
+unchanged.
+
+`/privacy/` and `/terms/` are substantive drafts based on the actual site code,
+linked from the footer and relevant account/tool pages. They describe sessions,
+faucet accounts and claims, voting, local drafts and labels, optional miner history,
+Telegram subscriptions, third-party badge/Turnstile requests, data-retention gaps,
+software risks and existing donation conditions. The project owner requested that
+no personal identity or country be published. The drafts therefore use the Monzero
+project name and existing project email, explicitly disclose that the operator is
+not publicly identified, and make no claim of legal completeness. No company,
+registered address, jurisdiction, audit or exchange quote was invented.
+
+Reference material for the drafts: the [ICO privacy-information guidance](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/individual-rights/the-right-to-be-informed/what-privacy-information-should-we-provide/)
+and [Cloudflare Turnstile Privacy Addendum](https://www.cloudflare.com/turnstile-privacy-policy/).
+These references do not establish the operator's legal obligations or replace legal
+review of the site's actual operation.
+
+Verification evidence is recorded in `docs/website-homepage-checks-20261020.json`.
+The production mobile Lighthouse run reported performance 97, accessibility 100,
+best practices 100 and SEO 100; LCP 1.9 seconds, total blocking time 0 milliseconds
+and cumulative layout shift 0. These are one lab run's measurements, not a field
+performance guarantee. All 34 sitemap routes returned HTTP 200 HTML with headings
+and Content-Security-Policy headers. Live browser checks verified the loaded
+Chainquiry badge, fresh node/supply observations, the published funding target,
+contribution totals and service status without JavaScript page errors.
+
+Automated axe checks covered seven pages at 390px and 1440px in default and expanded
+menu/details states (28 scans), with no reported violations. Axe still flagged
+manual contrast judgement for pseudo-elements, decorative glyphs and content
+covered by an open menu. A separate calculation using live text colours and a
+conservative maximum-alpha composite of both hero gradients confirmed at least
+4.5:1 for its text and action labels; exact ratios are in the verification record.
+The final keyboard checks include the skip link,
+mobile menu, Escape/focus restoration and no-JavaScript navigation. The browser
+accessibility tree exposes the expected page landmarks; a closed mobile menu is
+correctly excluded until opened. This does not substitute for testing with actual
+screen-reader users. Local acceptance covers five new/redesigned documents at
+320/390/768/1440px, failed APIs, reduced motion and delayed script loading. Shared
+navigation continues to pass across the 31 existing service routes. Upgrade-banner
+regressions, funding unit tests, SEO/navigation generation, PHP syntax and whitespace
+checks pass; the full website suite had already passed in the second review above.
+
+Seven live release archives were streamed and their SHA-256 digests matched the
+published release manifests; the five displayed checksums also matched their
+sidecar files and page text. The stable release manifest's OpenPGP signature
+verified against the published primary fingerprint
+`4C37C618789F86D81FEF28DF390AEFB735F270D6`. This confirms integrity against that
+published key, not an independently established signer identity or security audit.
+The newer GUI update remains explicitly unsigned. No downloaded binary was run.
+
+Deployment used the existing non-deleting, SHA-256-verifying deploy tool. The main
+19-file rollout saved replaced files at
+`/home/www/Monzero-backups/deploy-20261020T190201Z`; subsequent footer and keyboard
+fixes saved incremental backups at `deploy-20261020T190511Z` and
+`deploy-20261020T190611Z` in the same directory. The missing goals catalogue was
+initialised separately because it is intentionally excluded from normal deployment.
+
+Remaining work requiring evidence or outside review:
+
+- Legal review of the draft Privacy Policy/Terms, including the decision not to
+  identify the operator, lawful bases, providers/transfers and retention practices.
+- An independent security audit and a formal exchange fee quote or confirmed
+  listing. An internal website check cannot supply either of these.
+- Publication of the dedicated donation view key and signed address statement by
+  the authorised wallet owner; no wallet secrets were accessed during this task.
+- Native Windows validation for the GUI update and manual screen-reader testing.
+
+All requested homepage sections are implemented and published. The unfinished
+items above are not represented as completed functionality or verified credentials.
+
+
+### Site-wide styling and navigation follow-through — 20 October 2026
+
+Published the homepage's dark teal visual system across all 35 public routes,
+including the benchmark submission helper, faucet and voting pages. The admin
+shell uses the same colours, typography and controls while retaining its
+permission-aware account navigation. The original Chainquiry badge remains near
+the top of the homepage.
+
+`website/site-shell.css` now owns the shared palette, typography, content widths,
+form surfaces and footer treatment. Navigation styling lives in `site-nav.css`.
+The eight public navigation sections, their submenus and active-page state come
+from one definition in `website/lib/site-nav-submenus.json`; the static generator
+and PHP header render matching markup. Run
+`python3 -I utils/website/nav_submenus.py` after changing that definition, then
+`--check` to verify the static pages. Stylesheets use a shared cache revision.
+
+The pass also fixed the roadmap's tablet grid overflow, aligned its inner sections
+with the page column, enabled keyboard scrolling of developer code examples and
+the benchmark table, and supplied consistent focusable skip targets. Studio's
+preview surfaces and the public-wallet accent now use shared colour tokens.
+Status colours, chart scales, QR backgrounds and press-kit logo previews retain
+their functional distinctions.
+
+Verification is recorded in
+[`website-sitewide-style-checks-20261020.json`](website-sitewide-style-checks-20261020.json):
+
+- All 35 public routes passed navigation, palette and overflow checks at
+  320/390/768/1300/1440px, plus navigation and skip-link checks without JavaScript
+  at 390px: 210 page-view checks.
+- 72 local axe scans covered 35 public routes and admin sign-in at phone and
+  desktop widths with API outage fixtures; no violations were reported.
+- 21 existing tool/account regression suites passed, including calculations,
+  mining dashboards, explorer assets, payment requests, catalogs, funding,
+  announcements, upgrade notices, admin permissions, voting and faucet flows.
+  The calculator's no-JavaScript test needed a narrower selector because the
+  shared fallback adds another `noscript` element; its rerun passed.
+- Static navigation and SEO generation, SEO unit tests, PHP/JavaScript syntax,
+  header-rendering parity and whitespace checks passed.
+- Every public route returned HTTP 200 with the shared header, stylesheet and CSP.
+  Live browser checks covered all 35 mobile routes and eight desktop routes,
+  including 16 axe scans with no violations or page errors during those visits.
+  Five representative live routes also passed without JavaScript. Chainquiry's
+  original image loaded at both viewport sizes. Automated checks are additional
+  evidence; they do not replace manual screen-reader testing.
+
+Deployment uploaded and SHA-256-verified 49 files, with replaced files backed up
+at `/home/www/Monzero-backups/deploy-20261020T192711Z`. The final dry run reports
+200 tracked files and zero pending uploads. Live-owned catalogs, funding data,
+releases and runtime files remained excluded by the deploy tool. This styling
+follow-through does not change the evidence requirements listed above.

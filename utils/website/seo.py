@@ -9,13 +9,14 @@ og:description (the homepage's wording) are kept. Re-running it is idempotent.
 """
 import html, re, sys
 from pathlib import Path
+from html.parser import HTMLParser
 
 WEBSITE = Path(__file__).resolve().parents[2] / "website"
 SITE = "https://monzero.org"
 IMAGE = (f"{SITE}/assets/monzero-share-1200x630.jpg", 1200, 630, "Monzero XMZ coin with the words Private by design. Open by nature.")
 SKIP = {"/mining/benchmarks/submission.html"}   # a form helper, not a page to list
 BEGIN, END = "<!-- seo:begin -->", "<!-- seo:end -->"
-OG = re.compile(r'\s*<meta (?:property="og:[^"]+"|name="twitter:[^"]+")[^>]*>|\s*<link rel="canonical"[^>]*>')
+OG = re.compile(r'\s*<meta\b(?=[^>]*\b(?:property="og:[^"]+"|name="twitter:[^"]+"))[^>]*>|\s*<link\b(?=[^>]*\brel="canonical")[^>]*>')
 
 
 def page_url(file):
@@ -28,9 +29,22 @@ def meta(text, pattern):
     return html.unescape(m.group(1).strip()) if m else None
 
 
+class Metadata(HTMLParser):
+    def __init__(self, text):
+        super().__init__()
+        self.values = {}
+        self.feed(text)
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "meta":
+            attrs = dict(attrs)
+            self.values[attrs.get("property") or attrs.get("name")] = attrs.get("content", "")
+
+
 def block(text, url):
-    title = meta(text, r'<meta property="og:title" content="([^"]*)"') or meta(text, r"<title>(.*?)</title>") or "Monzero"
-    desc = meta(text, r'<meta property="og:description" content="([^"]*)"') or meta(text, r'<meta name="description" content="([^"]*)"') or ""
+    tags = Metadata(text).values
+    title = tags.get("og:title") or meta(text, r"<title>(.*?)</title>") or "Monzero"
+    desc = tags.get("og:description") or tags.get("description") or ""
     a = lambda v: html.escape(v, quote=True)
     lines = [f'<link rel="canonical" href="{SITE}{url}">', '<meta property="og:type" content="website">', '<meta property="og:site_name" content="Monzero">',
              f'<meta property="og:url" content="{SITE}{url}">', f'<meta property="og:title" content="{a(title)}">', f'<meta property="og:description" content="{a(desc)}">',
